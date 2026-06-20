@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "joc:block/coord_navigator",
+      "x": 90
+    },
+    "facing=up": {
+      "model": "joc:block/coord_navigator",
+      "x": -90
+    },
+    "facing=north": {
+      "model": "joc:block/coord_navigator"
+    },
+    "facing=south": {
+      "model": "joc:block/coord_navigator",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "joc:block/coord_navigator",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "joc:block/coord_navigator",
+      "y": 90
+    }
+  }
+}

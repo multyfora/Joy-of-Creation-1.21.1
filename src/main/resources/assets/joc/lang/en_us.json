@@ -1,0 +1,26 @@
+{
+  "itemGroup.joc": "Aeronautics: Joy of Creation",
+  "block.joc.balloon": "Balloon",
+  "block.joc.coord_navigator": "Coordinate Navigator",
+  "block.joc.player_direction": "Player Direction",
+
+  "item.joc.portable_typewriter": "Portable Typewriter",
+  "item.joc.portable_throttle": "Portable Throttle Lever",
+  "screen.joc.portable_throttle.hint": "Click a slot with an item to set frequency, right-click to clear",
+  "screen.joc.portable_throttle.saved": "\u00a7aSaved",
+  "screen.joc.portable_throttle.bound_strength": "Sending signal strength %s",
+  "screen.joc.portable_typewriter.selected_hint": "Click a Redstone Link to bind the selected key",
+  "screen.joc.portable_typewriter.click_hint": "Click a key to select it for binding",
+  "screen.joc.portable_typewriter.bound_count": "%s keys bound",
+
+  "screen.joc.coord_navigator": "Coordinate Navigator",
+  "screen.joc.coord_navigator.set": "Set Target",
+  "screen.joc.coord_navigator.current_pos": "Use Current",
+
+  "joc.configuration.title": "Aeronautics: Joy of Creation Configs",
+  "joc.configuration.section.joc.common.toml": "Aeronautics: Joy of Creation Configs",
+  "joc.configuration.section.joc.common.toml.title": "Aeronautics: Joy of Creation Configs",
+
+  "joc.configuration.balloon.liftPerBalloon": "Lift per balloon block",
+  "joc.configuration.balloon.dragCoefficient": "Air drag coefficient for balloons"
+}

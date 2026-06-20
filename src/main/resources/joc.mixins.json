@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.multyfora.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "joc.refmap.json",
+  "mixins": [
+    "RopeStrandHolderBehaviorMixin",
+    "RopeItemMixin",
+    "RopeConnectorBlockEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
