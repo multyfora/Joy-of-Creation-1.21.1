@@ -26,6 +26,7 @@ import net.multyfora.network.PortableTypewriterBindPacket;
 import net.multyfora.network.PortableThrottleBindPacket;
 import net.multyfora.network.PortableThrottleConfigPacket;
 import net.multyfora.network.PortableThrottleSignalPacket;
+import net.multyfora.network.PortableTypewriterSetFreqPacket;
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
 import net.multyfora.content.portable_typewriter.PortableTypewriterServerHandler;
 import net.multyfora.content.portable_throttle.PortableThrottleServerHandler;
@@ -136,6 +137,12 @@ public class AeronauticsJoyofcreation {
             registrar.playToServer(
                     PortableThrottleSignalPacket.TYPE,
                     PortableThrottleSignalPacket.CODEC,
+                    (payload, context) -> context.enqueueWork(() -> payload.handle(context.player()))
+            );
+            // Server-bound: sets frequency items for a typewriter key binding directly
+            registrar.playToServer(
+                    PortableTypewriterSetFreqPacket.TYPE,
+                    PortableTypewriterSetFreqPacket.CODEC,
                     (payload, context) -> context.enqueueWork(() -> payload.handle(context.player()))
             );
         });

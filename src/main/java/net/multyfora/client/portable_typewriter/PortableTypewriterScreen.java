@@ -1,26 +1,27 @@
 package net.multyfora.client.portable_typewriter;
 
+import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler.Frequency;
+
+import net.createmod.catnip.data.Couple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-import org.lwjgl.glfw.GLFW;
-
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
+import net.multyfora.network.PortableTypewriterSetFreqPacket;
+import net.neoforged.neoforge.network.PacketDistributor;
+
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * GUI screen showing a US keyboard layout for binding keys to redstone frequencies.
- * Each key is rendered as a widget; bound keys are highlighted green, the selected key
- * is highlighted blue. Clicking a key selects it for binding to a redstone link.
- **/
 public class PortableTypewriterScreen extends Screen {
 
-    // Layout constants for the keyboard grid
     static final int KEY_W = 18;
     static final int KEY_H = 18;
     static final int GAP = 2;
@@ -29,8 +30,16 @@ public class PortableTypewriterScreen extends Screen {
     static final int TOTAL_UNITS = 15;
     static final int TOTAL_W = TOTAL_UNITS * UNIT - GAP;
 
+    private static final int FREQ_SLOT_SIZE = 22;
+    private static final int INV_SLOT = 18;
+
     private final List<KeyWidget> keyWidgets = new ArrayList<>();
     private int selectedKeyCode = -1;
+
+    private ItemStack firstFreqItem = ItemStack.EMPTY;
+    private ItemStack secondFreqItem = ItemStack.EMPTY;
+
+    private ItemStack cursorItem = ItemStack.EMPTY;
 
     protected PortableTypewriterScreen() {
         super(Component.translatable("item.joc.portable_typewriter"));
@@ -39,19 +48,16 @@ public class PortableTypewriterScreen extends Screen {
     @Override
     protected void init() {
         keyWidgets.clear();
-        selectedKeyCode = -1;
 
-        // Load the previously selected key from the item stack
         ItemStack held = getHeldItem();
+        selectedKeyCode = -1;
         if (held != null)
             selectedKeyCode = PortableTypewriterItem.getSelectedKey(held);
 
-        // Position the keyboard centered on screen
         int cx = width / 2;
         int startX = cx - TOTAL_W / 2;
-        int startY = height / 2 - 100;
+        int startY = keyboardTop();
 
-        // Build key widgets from the keyboard layout
         KeyRow[] rows = getKeyboardLayout();
         int y = startY;
         for (KeyRow row : rows) {
@@ -64,10 +70,49 @@ public class PortableTypewriterScreen extends Screen {
             y += KEY_H + ROW_GAP;
         }
 
+        loadFreqForSelectedKey();
         updateKeyWidgetStates();
     }
 
-    // Updates each widget's bound/selected state from the item stack
+    private int keyboardTop() {
+        return height / 2 - 105;
+    }
+
+    private int keyboardBottom() {
+        return keyboardTop() + 5 * KEY_H + 4 * ROW_GAP;
+    }
+
+    private int freqSlotsTop() {
+        return keyboardBottom() + 8;
+    }
+
+    private int freqSlotsCenterX() {
+        return width / 2;
+    }
+
+    private int invTopY() {
+        return freqSlotsTop() + FREQ_SLOT_SIZE + 18;
+    }
+
+    private int invLeft() {
+        return width / 2 - 9 * INV_SLOT / 2;
+    }
+
+    private void loadFreqForSelectedKey() {
+        firstFreqItem = ItemStack.EMPTY;
+        secondFreqItem = ItemStack.EMPTY;
+        if (selectedKeyCode < 0) return;
+        Minecraft mc = Minecraft.getInstance();
+        ItemStack held = getHeldItem();
+        if (held == null || mc.level == null) return;
+        var registries = mc.level.registryAccess();
+        Couple<Frequency> freq = PortableTypewriterItem.getKeyBinding(held, selectedKeyCode, registries);
+        if (freq != null) {
+            firstFreqItem = freq.getFirst().getStack();
+            secondFreqItem = freq.getSecond().getStack();
+        }
+    }
+
     private void updateKeyWidgetStates() {
         ItemStack held = getHeldItem();
         if (held == null) return;
@@ -86,24 +131,81 @@ public class PortableTypewriterScreen extends Screen {
 
         graphics.drawCenteredString(font,
                 Component.translatable("item.joc.portable_typewriter"),
-                width / 2, height / 2 - 125, 0xFFFFFF);
+                width / 2, height / 2 - 130, 0xFFFFFF);
 
-        // Render all key widgets
         for (KeyWidget kw : keyWidgets)
             kw.render(graphics, mouseX, mouseY);
 
-        // Hint text depending on whether a key is selected
-        Component hint = Component.translatable(selectedKeyCode >= 0
-                ? "screen.joc.portable_typewriter.selected_hint"
-                : "screen.joc.portable_typewriter.click_hint");
-        graphics.drawCenteredString(font, hint, width / 2, height / 2 + 70, 0x888888);
+        if (selectedKeyCode >= 0) {
+            int cx = freqSlotsCenterX();
+            int fy = freqSlotsTop();
+            int totalW = FREQ_SLOT_SIZE * 2 + 8;
+            int slotX1 = cx - totalW / 2;
+            int slotX2 = slotX1 + FREQ_SLOT_SIZE + 8;
 
-        // Count and display how many keys are bound
-        int boundCount = 0;
-        for (KeyWidget kw : keyWidgets)
-            if (kw.bound) boundCount++;
-        Component status = Component.translatable("screen.joc.portable_typewriter.bound_count", boundCount);
-        graphics.drawCenteredString(font, status, width / 2, height / 2 + 85, 0x666666);
+            renderFreqSlot(graphics, slotX1, fy, firstFreqItem, mouseX, mouseY);
+            renderFreqSlot(graphics, slotX2, fy, secondFreqItem, mouseX, mouseY);
+        }
+
+        renderInventory(graphics, mouseX, mouseY);
+
+        if (!cursorItem.isEmpty()) {
+            graphics.renderItem(cursorItem, mouseX - 8, mouseY - 8);
+            graphics.renderItemDecorations(font, cursorItem, mouseX - 8, mouseY - 8);
+        }
+    }
+
+    private void renderFreqSlot(GuiGraphics graphics, int x, int y, ItemStack stack, int mx, int my) {
+        boolean hovered = mx >= x && mx <= x + FREQ_SLOT_SIZE && my >= y && my <= y + FREQ_SLOT_SIZE;
+        int bg = hovered ? 0xFF555555 : 0xFF333333;
+        graphics.fill(x, y, x + FREQ_SLOT_SIZE, y + FREQ_SLOT_SIZE, 0xFF000000);
+        graphics.fill(x + 1, y + 1, x + FREQ_SLOT_SIZE - 1, y + FREQ_SLOT_SIZE - 1, bg);
+
+        if (!stack.isEmpty()) {
+            int ix = x + (FREQ_SLOT_SIZE - 16) / 2;
+            int iy = y + (FREQ_SLOT_SIZE - 16) / 2;
+            graphics.renderItem(stack, ix, iy);
+            graphics.renderItemDecorations(font, stack, ix, iy);
+        }
+    }
+
+    private void renderInventory(GuiGraphics graphics, int mouseX, int mouseY) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        Inventory inv = mc.player.getInventory();
+        int startX = invLeft();
+        int startY = invTopY();
+
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                int slotIdx = 9 + row * 9 + col;
+                int x = startX + col * INV_SLOT;
+                int y = startY + row * INV_SLOT;
+                boolean hovered = mouseX >= x && mouseX < x + INV_SLOT && mouseY >= y && mouseY < y + INV_SLOT;
+                int bg = hovered ? 0xFF555555 : 0xFF333333;
+                graphics.fill(x, y, x + INV_SLOT, y + INV_SLOT, 0xFF000000);
+                graphics.fill(x + 1, y + 1, x + INV_SLOT - 1, y + INV_SLOT - 1, bg);
+                ItemStack stack = inv.getItem(slotIdx);
+                if (!stack.isEmpty()) {
+                    graphics.renderItem(stack, x + 1, y + 1);
+                    graphics.renderItemDecorations(font, stack, x + 1, y + 1);
+                }
+            }
+        }
+
+        int hotbarY = startY + 3 * INV_SLOT + 2;
+        for (int col = 0; col < 9; col++) {
+            int x = startX + col * INV_SLOT;
+            boolean hovered = mouseX >= x && mouseX < x + INV_SLOT && mouseY >= hotbarY && mouseY < hotbarY + INV_SLOT;
+            int bg = hovered ? 0xFF555555 : 0xFF333333;
+            graphics.fill(x, hotbarY, x + INV_SLOT, hotbarY + INV_SLOT, 0xFF000000);
+            graphics.fill(x + 1, hotbarY + 1, x + INV_SLOT - 1, hotbarY + INV_SLOT - 1, bg);
+            ItemStack stack = inv.getItem(col);
+            if (!stack.isEmpty()) {
+                graphics.renderItem(stack, x + 1, hotbarY + 1);
+                graphics.renderItemDecorations(font, stack, x + 1, hotbarY + 1);
+            }
+        }
     }
 
     @Override
@@ -113,12 +215,114 @@ public class PortableTypewriterScreen extends Screen {
                 if (kw.isHovered(mouseX, mouseY)) {
                     selectedKeyCode = kw.def.glfwCode;
                     PortableTypewriterClientHandler.setSelectedKey(selectedKeyCode);
+                    loadFreqForSelectedKey();
                     updateKeyWidgetStates();
                     return true;
                 }
             }
+
+            if (selectedKeyCode >= 0) {
+                int cx = freqSlotsCenterX();
+                int fy = freqSlotsTop();
+                int totalW = FREQ_SLOT_SIZE * 2 + 8;
+                int slotX1 = cx - totalW / 2;
+                int slotX2 = slotX1 + FREQ_SLOT_SIZE + 8;
+
+                if (isInSlot(mouseX, mouseY, slotX1, fy, FREQ_SLOT_SIZE)) {
+                    handleFreqSlotClick(0);
+                    return true;
+                }
+                if (isInSlot(mouseX, mouseY, slotX2, fy, FREQ_SLOT_SIZE)) {
+                    handleFreqSlotClick(1);
+                    return true;
+                }
+            }
+
+            if (handleInvClick(mouseX, mouseY)) return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean handleInvClick(double mx, double my) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return false;
+        Inventory inv = mc.player.getInventory();
+        int startX = invLeft();
+        int startY = invTopY();
+
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                int slotIdx = 9 + row * 9 + col;
+                int x = startX + col * INV_SLOT;
+                int y = startY + row * INV_SLOT;
+                if (mx >= x && mx < x + INV_SLOT && my >= y && my < y + INV_SLOT) {
+                    ItemStack stack = inv.getItem(slotIdx);
+                    if (!stack.isEmpty()) {
+                        cursorItem = stack.copyWithCount(1);
+                    }
+                    return true;
+                }
+            }
+        }
+
+        int hotbarY = startY + 3 * INV_SLOT + 2;
+        for (int col = 0; col < 9; col++) {
+            int x = startX + col * INV_SLOT;
+            if (mx >= x && mx < x + INV_SLOT && my >= hotbarY && my < hotbarY + INV_SLOT) {
+                ItemStack stack = inv.getItem(col);
+                if (!stack.isEmpty()) {
+                    cursorItem = stack.copyWithCount(1);
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void handleFreqSlotClick(int slotIndex) {
+        if (selectedKeyCode < 0) return;
+
+        if (!cursorItem.isEmpty()) {
+            if (slotIndex == 0) {
+                firstFreqItem = cursorItem.copy();
+            } else {
+                secondFreqItem = cursorItem.copy();
+            }
+            cursorItem = ItemStack.EMPTY;
+        } else {
+            if (slotIndex == 0) {
+                firstFreqItem = ItemStack.EMPTY;
+            } else {
+                secondFreqItem = ItemStack.EMPTY;
+            }
+        }
+
+        saveFreqForSelectedKey();
+        updateKeyWidgetStates();
+    }
+
+    private void saveFreqForSelectedKey() {
+        if (selectedKeyCode < 0) return;
+        Minecraft mc = Minecraft.getInstance();
+        ItemStack held = getHeldItem();
+        if (held == null || mc.level == null) return;
+        var registries = mc.level.registryAccess();
+
+        if (firstFreqItem.isEmpty() || secondFreqItem.isEmpty()) {
+            PortableTypewriterItem.clearKeyBinding(held, selectedKeyCode);
+        } else {
+            Couple<Frequency> freq = Couple.create(Frequency.of(firstFreqItem), Frequency.of(secondFreqItem));
+            PortableTypewriterItem.setKeyBinding(held, selectedKeyCode, freq, registries);
+        }
+
+        CompoundTag firstTag = firstFreqItem.isEmpty() ? new CompoundTag() : (CompoundTag) firstFreqItem.save(registries, new CompoundTag());
+        CompoundTag secondTag = secondFreqItem.isEmpty() ? new CompoundTag() : (CompoundTag) secondFreqItem.save(registries, new CompoundTag());
+        PacketDistributor.sendToServer(new PortableTypewriterSetFreqPacket(selectedKeyCode, firstTag, secondTag));
+    }
+
+    private boolean isInSlot(double mx, double my, int sx, int sy, int size) {
+        return mx >= sx && mx <= sx + size && my >= sy && my <= sy + size;
     }
 
     @Override
@@ -135,10 +339,8 @@ public class PortableTypewriterScreen extends Screen {
         return held.getItem() instanceof PortableTypewriterItem ? held : null;
     }
 
-    // Keyboard layout definition: 5 rows of keys with standard US keyboard arrangement
     private static KeyRow[] getKeyboardLayout() {
         return new KeyRow[] {
-            // Row 1: number row + escape + backspace
             new KeyRow(0,
                 new KeyDef("Esc", GLFW.GLFW_KEY_ESCAPE, 1.5f),
                 new KeyDef("1", GLFW.GLFW_KEY_1, 1),
@@ -155,7 +357,6 @@ public class PortableTypewriterScreen extends Screen {
                 new KeyDef("=", GLFW.GLFW_KEY_EQUAL, 1),
                 new KeyDef("Bck", GLFW.GLFW_KEY_BACKSPACE, 1.5f)
             ),
-            // Row 2: QWERTY row + tab
             new KeyRow(0.5f,
                 new KeyDef("Tab", GLFW.GLFW_KEY_TAB, 1.5f),
                 new KeyDef("Q", GLFW.GLFW_KEY_Q, 1),
@@ -172,7 +373,6 @@ public class PortableTypewriterScreen extends Screen {
                 new KeyDef("]", GLFW.GLFW_KEY_RIGHT_BRACKET, 1),
                 new KeyDef("\\", GLFW.GLFW_KEY_BACKSLASH, 1.5f)
             ),
-            // Row 3: home row + caps lock + enter
             new KeyRow(0.75f,
                 new KeyDef("Caps", GLFW.GLFW_KEY_CAPS_LOCK, 1.75f),
                 new KeyDef("A", GLFW.GLFW_KEY_A, 1),
@@ -188,7 +388,6 @@ public class PortableTypewriterScreen extends Screen {
                 new KeyDef("'", GLFW.GLFW_KEY_APOSTROPHE, 1),
                 new KeyDef("Ent", GLFW.GLFW_KEY_ENTER, 2.25f)
             ),
-            // Row 4: shift row
             new KeyRow(1.25f,
                 new KeyDef("Shift", GLFW.GLFW_KEY_LEFT_SHIFT, 2.25f),
                 new KeyDef("Z", GLFW.GLFW_KEY_Z, 1),
@@ -203,7 +402,6 @@ public class PortableTypewriterScreen extends Screen {
                 new KeyDef("/", GLFW.GLFW_KEY_SLASH, 1),
                 new KeyDef("Shift", GLFW.GLFW_KEY_RIGHT_SHIFT, 2.75f)
             ),
-            // Row 5: bottom row (ctrl, alt, space)
             new KeyRow(1.75f,
                 new KeyDef("Ctrl", GLFW.GLFW_KEY_LEFT_CONTROL, 1.25f),
                 new KeyDef("Alt", GLFW.GLFW_KEY_LEFT_ALT, 1.25f),
@@ -214,12 +412,11 @@ public class PortableTypewriterScreen extends Screen {
         };
     }
 
-    // Visual representation of a single key on the keyboard
     private static class KeyWidget {
         final int x, y, w, h;
         final KeyDef def;
-        boolean bound;    // Whether this key has a frequency bound
-        boolean selected; // Whether this key is currently selected
+        boolean bound;
+        boolean selected;
 
         KeyWidget(int x, int y, int w, int h, KeyDef def) {
             this.x = x;
@@ -238,15 +435,14 @@ public class PortableTypewriterScreen extends Screen {
 
             int fillColor;
             if (selected) {
-                fillColor = 0xFF4488FF; // Blue for selected
+                fillColor = 0xFF4488FF;
             } else if (bound) {
-                fillColor = 0xFF22AA44; // Green for bound
+                fillColor = 0xFF22AA44;
             } else {
-                fillColor = 0xFF333333; // Dark gray for unbound
+                fillColor = 0xFF333333;
             }
             if (hovered) fillColor = lighten(fillColor);
 
-            // Draw key outline and fill
             graphics.fill(x, y, x + w, y + h, 0xFF000000);
             graphics.fill(x + 1, y + 1, x + w - 1, y + h - 1, fillColor);
 
@@ -258,7 +454,6 @@ public class PortableTypewriterScreen extends Screen {
             graphics.drawString(Minecraft.getInstance().font, label, tx, ty, textColor);
         }
 
-        // Lightens a color by adding 40 to each RGB component for hover effect
         private static int lighten(int color) {
             int r = Math.min(255, (color >> 16 & 0xFF) + 40);
             int g = Math.min(255, (color >> 8 & 0xFF) + 40);
@@ -267,10 +462,8 @@ public class PortableTypewriterScreen extends Screen {
         }
     }
 
-    // Defines a key's label, GLFW code, and width in "units" (multiples of KEY_W + GAP)
     record KeyDef(String label, int glfwCode, float widthUnits) {}
 
-    // Defines a row of keys with a horizontal offset (for staggered keyboard layout)
     static class KeyRow {
         final float offset;
         final KeyDef[] keys;

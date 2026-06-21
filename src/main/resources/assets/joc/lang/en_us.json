@@ -6,10 +6,11 @@
 
   "item.joc.portable_typewriter": "Portable Typewriter",
   "item.joc.portable_throttle": "Portable Throttle Lever",
-  "screen.joc.portable_throttle.hint": "Click a slot with an item to set frequency, right-click to clear",
+  "screen.joc.portable_throttle.hint": "Click an inventory item, then click a frequency slot to set it",
   "screen.joc.portable_throttle.saved": "\u00a7aSaved",
   "screen.joc.portable_throttle.bound_strength": "Sending signal strength %s",
-  "screen.joc.portable_typewriter.selected_hint": "Click a Redstone Link to bind the selected key",
+  "screen.joc.portable_typewriter.frequency_label": "Frequency Items",
+  "screen.joc.portable_typewriter.selected_hint": "Click a Redstone Link to bind, or set frequency items above",
   "screen.joc.portable_typewriter.click_hint": "Click a key to select it for binding",
   "screen.joc.portable_typewriter.bound_count": "%s keys bound",
 
