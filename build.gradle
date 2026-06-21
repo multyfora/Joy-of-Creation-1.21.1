@@ -31,6 +31,8 @@ repositories {
     maven { url = "https://maven.ithundxr.dev/snapshots" } // Registrate
     maven { url = "https://api.modrinth.com/maven" } // Modrinth
     maven { url = "https://maven.ryanhcode.dev/releases" } // Sable companion, Veil
+    maven { url = "https://maven.blamejared.com" } // JEI
+    maven { url = "https://maven.terraformersmc.com/releases" } // EMI
 }
 
 base {
@@ -138,6 +140,18 @@ dependencies {
     // Simulated is jarjar'd inside create-aeronautics; extract and use for mixin compilation only
     simulatedExtracted("maven.modrinth:create-aeronautics:${create_aeronautics_version}") { transitive = false }
     compileOnly files(layout.buildDirectory.file("tmp/simulated-jar/dev.simulated_team.simulated.simulated-neoforge-1.21.1-1.2.1.jar"))
+
+    // JEI
+    compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
+    if (project.findProperty('enableJei') != 'false') {
+        localRuntime("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
+    }
+
+    // EMI
+    compileOnly("dev.emi:emi-neoforge:${emi_version}:api")
+    if (project.findProperty('enableEmi') != 'false') {
+        localRuntime("dev.emi:emi-neoforge:${emi_version}")
+    }
 }
 
 def extractSimulatedJar = tasks.register("extractSimulatedJar", Sync) {

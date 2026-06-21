@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -240,6 +241,24 @@ public class PortableThrottleScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    public @org.jetbrains.annotations.Nullable Rect2i getFreqSlotArea(int slotIndex) {
+        if (slotIndex < 0 || slotIndex > 1) return null;
+        int cx = freqSlotsCenterX();
+        int totalW = SLOT_SIZE * 2 + SLOT_GAP;
+        int x = cx - totalW / 2 + slotIndex * (SLOT_SIZE + SLOT_GAP);
+        return new Rect2i(x, freqSlotsY(), SLOT_SIZE, SLOT_SIZE);
+    }
+
+    public void acceptFreqSlotIngredient(int slotIndex, ItemStack stack) {
+        if (slotIndex < 0 || slotIndex > 1) return;
+        if (slotIndex == 0) {
+            firstItem = stack.copy();
+        } else {
+            secondItem = stack.copy();
+        }
+        save();
     }
 
     private static ItemStack getHeldItem() {

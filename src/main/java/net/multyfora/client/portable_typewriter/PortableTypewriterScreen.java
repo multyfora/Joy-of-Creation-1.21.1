@@ -6,6 +6,7 @@ import net.createmod.catnip.data.Couple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -328,6 +329,28 @@ public class PortableTypewriterScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    public @org.jetbrains.annotations.Nullable Rect2i getFreqSlotArea(int slotIndex) {
+        if (slotIndex < 0 || slotIndex > 1) return null;
+        if (selectedKeyCode < 0) return null;
+        int cx = freqSlotsCenterX();
+        int fy = freqSlotsTop();
+        int totalW = FREQ_SLOT_SIZE * 2 + 8;
+        int x = cx - totalW / 2 + slotIndex * (FREQ_SLOT_SIZE + 8);
+        return new Rect2i(x, fy, FREQ_SLOT_SIZE, FREQ_SLOT_SIZE);
+    }
+
+    public void acceptFreqSlotIngredient(int slotIndex, ItemStack stack) {
+        if (slotIndex < 0 || slotIndex > 1) return;
+        if (selectedKeyCode < 0) return;
+        if (slotIndex == 0) {
+            firstFreqItem = stack.copy();
+        } else {
+            secondFreqItem = stack.copy();
+        }
+        saveFreqForSelectedKey();
+        updateKeyWidgetStates();
     }
 
     private static ItemStack getHeldItem() {
