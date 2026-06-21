@@ -18,9 +18,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.slf4j.Logger;
 
-// Configuration screen for the Portable Throttle: shows two item slots representing
-// the two items that define the redstone link frequency. Left-click a slot to set
-// the held item, right-click to clear. Saved settings are sent to the server.
+/**
+ * Configuration screen for the Portable Throttle: shows two item slots representing
+ * the two items that define the redstone link frequency. Left-click a slot to set
+ * the held item, right-click to clear. Saved settings are sent to the server.
+ **/
 public class PortableThrottleScreen extends Screen {
 
     private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;

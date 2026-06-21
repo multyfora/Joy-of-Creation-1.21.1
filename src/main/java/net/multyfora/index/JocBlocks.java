@@ -10,8 +10,10 @@ import net.multyfora.content.balloon.BalloonBlock;
 import net.multyfora.content.coordnav.CoordNavBlock;
 import net.multyfora.content.playerdir.PlayerDirectionBlock;
 
-// Registry holder for all custom blocks in the mod.
-// Blocks are registered via AeronauticsJoyofcreation.BLOCKS DeferredRegister.
+/**
+ * Registry holder for all custom blocks in the mod.
+ * Blocks are registered via AeronauticsJoyofcreation.BLOCKS DeferredRegister.
+ **/
 public class JocBlocks {
     // Balloon block: a soft, non-occluding block available in 16 colors
     public static final DeferredBlock<BalloonBlock> BALLOON;

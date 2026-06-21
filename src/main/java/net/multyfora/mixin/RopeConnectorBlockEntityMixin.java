@@ -14,13 +14,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-// Mixin to RopeConnectorBlockEntity: sets the maximum rope attachments to unlimited
-// so that rope connectors can accept multiple simultaneous rope connections.
+/**
+ * Mixin to RopeConnectorBlockEntity: sets the maximum rope attachments to unlimited
+ * so that rope connectors can accept multiple simultaneous rope connections.
+ **/
 @Mixin(value = RopeConnectorBlockEntity.class, remap = false)
 public class RopeConnectorBlockEntityMixin {
 
-    // After behaviours are added to the connector, find the RopeStrandHolderBehavior
-    // and set its max attachments to Integer.MAX_VALUE
+    /**
+     * After behaviours are added to the connector, find the RopeStrandHolderBehavior
+     * and set its max attachments to Integer.MAX_VALUE
+     **/
     @Inject(method = "addBehaviours", at = @At("TAIL"))
     private void joc$setConnectorMultiRope(List<BlockEntityBehaviour> behaviours, CallbackInfo ci) {
         for (BlockEntityBehaviour behaviour : behaviours) {

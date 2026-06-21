@@ -54,8 +54,10 @@ public class AeronauticsJoyofcreation {
                 output.accept(JocItems.PORTABLE_THROTTLE.get());
             }).build());
 
-    // Constructor: registers all mod content (blocks, items, block entity types, creative tab)
-    // and sets up network packet handlers and tick listeners
+    /**
+     * Constructor: registers all mod content (blocks, items, block entity types, creative tab)
+     * and sets up network packet handlers and tick listeners
+     **/
     public AeronauticsJoyofcreation(IEventBus modEventBus, ModContainer modContainer) {
         // Register all content classes to trigger static initialisers and populate deferred registers
         JocBlocks.register();
@@ -66,8 +68,10 @@ public class AeronauticsJoyofcreation {
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
 
-        // Server tick listener: ticks the PortableTypewriter and PortableThrottle server handlers
-        // each level tick to manage timeouts and signal decay
+        /**
+         * Server tick listener: ticks the PortableTypewriter and PortableThrottle server handlers
+         * each level tick to manage timeouts and signal decay
+         **/
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (!event.getLevel().isClientSide()) {
                 PortableTypewriterServerHandler.tick(event.getLevel());

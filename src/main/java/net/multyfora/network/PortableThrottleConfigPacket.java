@@ -17,8 +17,10 @@ import net.multyfora.content.portable_throttle.PortableThrottleItem;
 
 import org.slf4j.Logger;
 
-// Client-to-server packet: sends updated frequency configuration for the Portable Throttle.
-// Carries two ItemStack NBT compounds representing the two items that define the frequency pair.
+/**
+ * Client-to-server packet: sends updated frequency configuration for the Portable Throttle.
+ * Carries two ItemStack NBT compounds representing the two items that define the frequency pair.
+ **/
 public class PortableThrottleConfigPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "throttle_config");
@@ -45,8 +47,10 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
 
     private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
 
-    // Server-side: finds the throttle item in the player's hand, deserialises the two item stacks,
-    // builds a frequency pair, and writes it to the item's NBT
+    /**
+     * Server-side: finds the throttle item in the player's hand, deserialises the two item stacks,
+     * builds a frequency pair, and writes it to the item's NBT
+     **/
     public void handle(net.minecraft.world.entity.player.Player player) {
         LOGGER.info("[THROTTLE_PACKET] ConfigPacket.handle ENTER: player={}", player.getName().getString());
 

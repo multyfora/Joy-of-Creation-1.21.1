@@ -24,11 +24,13 @@ import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
 
 import org.slf4j.Logger;
 
-// Portable Throttle item: a handheld wireless redstone transmitter.
-// Right-clicking a Redstone Link block binds the throttle to that link's frequency.
-// Right-clicking in air opens a config screen to set frequency items.
-// Left-clicking (or the client handler) opens a strength slider (0-15).
-// The throttle sends keepalive signals to the server for persistent output while active.
+/**
+ * Portable Throttle item: a handheld wireless redstone transmitter.
+ * Right-clicking a Redstone Link block binds the throttle to that link's frequency.
+ * Right-clicking in air opens a config screen to set frequency items.
+ * Left-clicking (or the client handler) opens a strength slider (0-15).
+ * The throttle sends keepalive signals to the server for persistent output while active.
+ **/
 public class PortableThrottleItem extends Item {
 
     private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
@@ -41,8 +43,10 @@ public class PortableThrottleItem extends Item {
         super(properties);
     }
 
-    // Called when right-clicking on a block with the throttle.
-    // If the target is a Redstone Link, initiates a bind operation.
+    /**
+     * Called when right-clicking on a block with the throttle.
+     * If the target is a Redstone Link, initiates a bind operation.
+     **/
     @Override
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext ctx) {
         Player player = ctx.getPlayer();
@@ -66,8 +70,10 @@ public class PortableThrottleItem extends Item {
         return InteractionResult.PASS;
     }
 
-    // Called when right-clicking in air (or on a non-interactable block).
-    // Opens the throttle configuration screen on the client.
+    /**
+     * Called when right-clicking in air (or on a non-interactable block).
+     * Opens the throttle configuration screen on the client.
+     **/
     @Override
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
         ItemStack heldItem = player.getItemInHand(hand);
@@ -81,8 +87,10 @@ public class PortableThrottleItem extends Item {
         return InteractionResultHolder.success(heldItem);
     }
 
-    // Reads the frequency pair stored on the item's CUSTOM_DATA component.
-    // Returns null if no frequency is set or data is malformed.
+    /**
+     * Reads the frequency pair stored on the item's CUSTOM_DATA component.
+     * Returns null if no frequency is set or data is malformed.
+     **/
     public static Couple<Frequency> getFrequency(ItemStack stack, HolderLookup.Provider registries) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) {

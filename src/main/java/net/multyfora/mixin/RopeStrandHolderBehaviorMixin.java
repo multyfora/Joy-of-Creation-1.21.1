@@ -37,13 +37,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-//TODO: BROKEN
+//TODO: BROKEN and I am NOT fixing this in the near future
 
-// Core mixin to RopeStrandHolderBehavior (Simulated mod) that extends the single-rope
-// system to support multiple simultaneous rope attachments on a single block.
-// Tracks multiple rope IDs (allAttachedIDs) and multiple owned server strands
-// (allOwnedStrands), intercepts rope creation and destruction, handles per-rope
-// destruction, and provides serialization for the extended state.
+/**
+ * Core mixin to RopeStrandHolderBehavior (Simulated mod) that extends the single-rope
+ * system to support multiple simultaneous rope attachments on a single block.
+ * Tracks multiple rope IDs (allAttachedIDs) and multiple owned server strands
+ * (allOwnedStrands), intercepts rope creation and destruction, handles per-rope
+ * destruction, and provides serialization for the extended state.
+ **/
 @Mixin(value = RopeStrandHolderBehavior.class, remap = false)
 public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavior {
 
@@ -128,8 +130,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         joc$allAttachedIDs.remove(ropeID);
     }
 
-    // Rope creation interception
-    // Saves the current state before createRope runs so we can restore/reference it after
+    /**
+     * Rope creation interception
+     * Saves the current state before createRope runs so we can restore/reference it after
+     **/
     @Inject(method = "createRope", at = @At("HEAD"))
     private void joc$savePreCreateState(RopeStrandHolderBehavior target, CallbackInfoReturnable<Boolean> cir) {
         if (joc$maxRopeAttachments > 1 && attachedRopeID != null) {
@@ -148,8 +152,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    // Redirects the destroyRope call inside createRope to skip it for multi-rope holders
-    // (we handle destruction ourselves to preserve other rope attachments)
+    /**
+     * Redirects the destroyRope call inside createRope to skip it for multi-rope holders
+     * (we handle destruction ourselves to preserve other rope attachments)
+     **/
     @Redirect(method = "createRope", at = @At(value = "INVOKE", target = "Ldev/simulated_team/simulated/content/blocks/rope/RopeStrandHolderBehavior;destroyRope(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/phys/Vec3;)V"))
     private void joc$skipDestroyForMulti(RopeStrandHolderBehavior instance, @Nullable ServerPlayer player, @Nullable Vec3 pos) {
         if (joc$maxRopeAttachments <= 1) {
@@ -196,8 +202,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         joc$targetPreExistingID = null;
     }
 
-    // Rope destruction interception
-    // Saves the end attachment position before rope destruction for balloon connector cleanup
+    /**
+     * Rope destruction interception
+     * Saves the end attachment position before rope destruction for balloon connector cleanup
+     **/
     @Inject(method = "destroyRope", at = @At("HEAD"))
     private void joc$saveEndAttachment(CallbackInfo ci) {
         joc$pendingEndPos = null;
@@ -219,8 +227,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    // Intercepts destroyRope to provide multi-rope destruction logic.
-    // If there are multiple ropes, cancels the original destroy and handles it ourselves.
+    /**
+     * Intercepts destroyRope to provide multi-rope destruction logic.
+     * If there are multiple ropes, cancels the original destroy and handles it ourselves.
+     **/
     @Inject(method = "destroyRope", at = @At("HEAD"), cancellable = true)
     private void joc$interceptDestroyRope(@Nullable ServerPlayer player, @Nullable Vec3 ropeDropPos, CallbackInfo ci) {
         if (joc$allAttachedIDs.size() <= 1 && joc$preExistingID == null) {
@@ -359,8 +369,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         joc$allOwnedStrands.clear();
     }
 
-    // Tick handler for extra strands: ensures they are active in the physics system
-    // and validates their end attachments still exist
+    /**
+     * Tick handler for extra strands: ensures they are active in the physics system
+     * and validates their end attachments still exist
+     **/
     @Inject(method = "tick", at = @At("RETURN"))
     private void joc$tickExtraStrands(CallbackInfo ci) {
         if (joc$allOwnedStrands.isEmpty()) return;
@@ -399,8 +411,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    // NBT serialization
-    // Writes the extended multi-rope data to NBT: all attached rope UUIDs and max attachments
+    /**
+     * NBT serialization
+     * Writes the extended multi-rope data to NBT: all attached rope UUIDs and max attachments
+     **/
     @Inject(method = "write", at = @At("RETURN"))
     private void joc$writeExtra(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket, CallbackInfo ci) {
         if (joc$allAttachedIDs.isEmpty()) return;
@@ -434,8 +448,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    // Cleanup
-    // On unload: clean up all extra-owned strands from the physics system
+    /**
+     * Cleanup
+     * On unload: clean up all extra-owned strands from the physics system
+     **/
     @Inject(method = "unload", at = @At("HEAD"))
     private void joc$cleanupOnUnload(CallbackInfo ci) {
         if (!joc$allOwnedStrands.isEmpty()) {

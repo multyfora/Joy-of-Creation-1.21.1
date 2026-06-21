@@ -16,9 +16,11 @@ import net.multyfora.network.PortableThrottleSignalPacket;
 
 import org.slf4j.Logger;
 
-// Vertical slider screen for adjusting the Portable Throttle's output signal strength (0-15).
-// Features an animated bar with a cursor that follows the mouse. Strength changes are
-// sent to the server immediately. The screen has no background overlay for a minimal UI.
+/**
+ * Vertical slider screen for adjusting the Portable Throttle's output signal strength (0-15).
+ * Features an animated bar with a cursor that follows the mouse. Strength changes are
+ * sent to the server immediately. The screen has no background overlay for a minimal UI.
+ **/
 public class PortableThrottleStrengthScreen extends Screen {
 
     private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;

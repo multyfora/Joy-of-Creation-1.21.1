@@ -7,8 +7,10 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
-// Holder for custom block and item tags used throughout the mod.
-// Tags reference conventions from the Sable and Simulated mods for cross-mod compatibility.
+/**
+ * Holder for custom block and item tags used throughout the mod.
+ * Tags reference conventions from the Sable and Simulated mods for cross-mod compatibility.
+ **/
 public class JocTags {
     // sable:super_light - blocks that are treated as very lightweight for ship/sublevel physics
     public static final TagKey<Block> SUPER_LIGHT = BlockTags.create(ResourceLocation.fromNamespaceAndPath("sable", "super_light"));

@@ -13,9 +13,11 @@ import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
 import java.util.ArrayList;
 import java.util.List;
 
-// GUI screen showing a US keyboard layout for binding keys to redstone frequencies.
-// Each key is rendered as a widget; bound keys are highlighted green, the selected key
-// is highlighted blue. Clicking a key selects it for binding to a redstone link.
+/**
+ * GUI screen showing a US keyboard layout for binding keys to redstone frequencies.
+ * Each key is rendered as a widget; bound keys are highlighted green, the selected key
+ * is highlighted blue. Clicking a key selects it for binding to a redstone link.
+ **/
 public class PortableTypewriterScreen extends Screen {
 
     // Layout constants for the keyboard grid

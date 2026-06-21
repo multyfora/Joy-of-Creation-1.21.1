@@ -20,9 +20,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-// Balloon block entity: handles rope tethering behaviour (via RopeStrandHolderBehavior) and
-// tracks the position of the connector block the balloon is tethered to (via ConnectorPosBehaviour).
-// The connector position is used by the client-side tether renderer to draw the rope line.
+/**
+ * Balloon block entity: handles rope tethering behaviour (via RopeStrandHolderBehavior) and
+ * tracks the position of the connector block the balloon is tethered to (via ConnectorPosBehaviour).
+ * The connector position is used by the client-side tether renderer to draw the rope line.
+ **/
 public class BalloonBlockEntity extends SmartBlockEntity implements RopeStrandHolderBlockEntity {
 
     // The rope holder behaviour from the Simulated mod, managing rope strand physics
@@ -65,9 +67,11 @@ public class BalloonBlockEntity extends SmartBlockEntity implements RopeStrandHo
         }
     }
 
-    // Custom BlockEntityBehaviour that persists the connector block position in NBT
-    // so it survives chunk loads and saves. This is separate from the rope system because
-    // the rope may not always be loaded when we need the connector position for rendering.
+    /**
+     * Custom BlockEntityBehaviour that persists the connector block position in NBT
+     * so it survives chunk loads and saves. This is separate from the rope system because
+     * the rope may not always be loaded when we need the connector position for rendering.
+     **/
     private static class ConnectorPosBehaviour extends BlockEntityBehaviour {
         // Unique type identifier for this behaviour
         public static final BehaviourType<ConnectorPosBehaviour> TYPE = new BehaviourType<>("joc:connector_pos");

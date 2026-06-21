@@ -16,9 +16,11 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 
 import net.multyfora.index.JocBlockEntityTypes;
 
-// Balloon block: a decorative/functional block available in 16 dye colors.
-// Implements IBE for Create's SmartBlockEntity integration and BlockSubLevelAssemblyListener
-// for Sable sublevel physics (balloons are super-light and can be assembled onto ships).
+/**
+ * Balloon block: a decorative/functional block available in 16 dye colors.
+ * Implements IBE for Create's SmartBlockEntity integration and BlockSubLevelAssemblyListener
+ * for Sable sublevel physics (balloons are super-light and can be assembled onto ships).
+ **/
 public class BalloonBlock extends Block implements IBE<BalloonBlockEntity>, BlockSubLevelAssemblyListener {
     // Integer property 0-15 representing the dye color index
     public static final IntegerProperty COLOR = IntegerProperty.create("color", 0, 15);

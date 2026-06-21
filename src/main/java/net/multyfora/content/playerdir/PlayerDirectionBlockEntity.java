@@ -22,10 +22,12 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-// Block entity for the Player Direction block.
-// Finds the nearest player within 10 blocks, captures their look direction, and computes
-// redstone signal outputs on each lateral side based on where the player is facing,
-// relative to the block's facing direction. Fully sublevel-aware.
+/**
+ * Block entity for the Player Direction block.
+ * Finds the nearest player within 10 blocks, captures their look direction, and computes
+ * redstone signal outputs on each lateral side based on where the player is facing,
+ * relative to the block's facing direction. Fully sublevel-aware.
+ **/
 public class PlayerDirectionBlockEntity extends SmartBlockEntity {
 
     // The player's look direction, cached and transformed into the block's local space
@@ -47,8 +49,10 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {}
 
-    // Server tick: finds the nearest player, captures their look direction, inverts and
-    // rotates it into the block's local coordinate space, and updates redstone outputs
+    /**
+     * Server tick: finds the nearest player, captures their look direction, inverts and
+     * rotates it into the block's local coordinate space, and updates redstone outputs
+     **/
     @Override
     public void tick() {
         super.tick();
@@ -71,8 +75,10 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
         );
         if (nearestPlayer == null) return;
 
-        // Get the player's look angle, invert it (we want the direction from player to block)
-        // and rotate by inverse sublevel rotation to get local-space direction
+        /**
+         * Get the player's look angle, invert it (we want the direction from player to block)
+         * and rotate by inverse sublevel rotation to get local-space direction
+         **/
         Vec3 lookAngle = nearestPlayer.getLookAngle();
         Quaterniond invRot = new Quaterniond(getSublevelRot()).invert();
         // Scale by -1 to invert the direction (we want the direction the player is looking toward, not away from)
@@ -109,8 +115,10 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
         level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
     }
 
-    // Computes redstone signal strength for a given direction based on how closely the
-    // player's look direction aligns with that direction on the block's facing plane.
+    /**
+     * Computes redstone signal strength for a given direction based on how closely the
+     * player's look direction aligns with that direction on the block's facing plane.
+     **/
     public int getRedstoneStrength(Direction direction) {
         if (level == null || !getBlockState().getValue(PlayerDirectionBlock.POWERED)) return 0;
 

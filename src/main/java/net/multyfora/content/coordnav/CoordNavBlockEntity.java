@@ -26,10 +26,12 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-// Block entity for the Coordinate Navigator.
-// Computes redstone signal strengths on each lateral side based on the direction from the
-// block to a configurable target coordinate. Includes sublevel-aware coordinate transforms
-// so it works correctly on moving ships.
+/**
+ * Block entity for the Coordinate Navigator.
+ * Computes redstone signal strengths on each lateral side based on the direction from the
+ * block to a configurable target coordinate. Includes sublevel-aware coordinate transforms
+ * so it works correctly on moving ships.
+ **/
 public class CoordNavBlockEntity extends SmartBlockEntity {
 
     // Target coordinates (in logical sublevel space)
@@ -172,10 +174,12 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
     public double getTargetZ() { return targetZ; }
     public boolean hasTarget() { return hasTarget; }
 
-    // Computes the redstone signal strength for a given direction.
-    // The strength is based on the dot product of the direction vector with the projected
-    // target direction on the plane perpendicular to the block's facing axis.
-    // Uses arcsin to map the angle to a 0-15 signal range.
+    /**
+     * Computes the redstone signal strength for a given direction.
+     * The strength is based on the dot product of the direction vector with the projected
+     * target direction on the plane perpendicular to the block's facing axis.
+     * Uses arcsin to map the angle to a 0-15 signal range.
+     **/
     public int getRedstoneStrength(Direction direction) {
         if (level == null) return 0;
 
@@ -200,8 +204,10 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
         Direction facing = getBlockState().getValue(CoordNavBlock.FACING);
         Vec3i facingNormal = facing.getNormal();
 
-        // Rotate the target vector by the sublevel's orientation so the computation
-        // works correctly on ships/rotated sublevels
+        /**
+         * Rotate the target vector by the sublevel's orientation so the computation
+         * works correctly on ships/rotated sublevels
+         **/
         Quaterniond rot = getSublevelRot();
         toTarget = rotateQuat(toTarget, rot);
 
@@ -233,8 +239,10 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
         lerpedAngleDegrees.chase(angle, 0.8, LerpedFloat.Chaser.EXP);
     }
 
-    // Recalculates the angle from this block toward the target, accounting for sublevel rotation
-    // and block facing direction. Only runs on the server side.
+    /**
+     * Recalculates the angle from this block toward the target, accounting for sublevel rotation
+     * and block facing direction. Only runs on the server side.
+     **/
     private void updateCurrentAngle() {
         if (level.isClientSide) {
             relativeAngle = 0;
@@ -310,8 +318,10 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
         return lastDistanceToTarget;
     }
 
-    // Checks each lateral direction for signal strength changes and updates neighbors accordingly.
-    // Returns true if any strength changed.
+    /**
+     * Checks each lateral direction for signal strength changes and updates neighbors accordingly.
+     * Returns true if any strength changed.
+     **/
     private boolean selectivelyUpdateNeighbors() {
         if (level == null || level.isClientSide) return false;
 
@@ -332,8 +342,10 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
         return updated;
     }
 
-    // Projects a vector onto a plane defined by a normal vector.
-    // Used to flatten the target direction onto the plane perpendicular to the block's facing axis.
+    /**
+     * Projects a vector onto a plane defined by a normal vector.
+     * Used to flatten the target direction onto the plane perpendicular to the block's facing axis.
+     **/
     public static Vec3 getPlaneProjectedPos(Vec3 vec, Vec3i normal) {
         Vec3 normalVec = Vec3.atLowerCornerOf(normal);
         double dot = vec.dot(normalVec);

@@ -17,8 +17,10 @@ import net.minecraft.world.item.ItemStack;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
 
-// Client-to-server packet: binds a selected keyboard key to a Redstone Link block's frequency.
-// Sent when the player right-clicks a Redstone Link while having a key selected in the typewriter GUI.
+/**
+ * Client-to-server packet: binds a selected keyboard key to a Redstone Link block's frequency.
+ * Sent when the player right-clicks a Redstone Link while having a key selected in the typewriter GUI.
+ **/
 public class PortableTypewriterBindPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "pt_bind");
@@ -43,8 +45,10 @@ public class PortableTypewriterBindPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    // Server-side: validates the player, finds the typewriter, reads the Redstone Link's
-    // frequency from its LinkBehaviour, and writes the binding on the typewriter item
+    /**
+     * Server-side: validates the player, finds the typewriter, reads the Redstone Link's
+     * frequency from its LinkBehaviour, and writes the binding on the typewriter item
+     **/
     public void handle(net.minecraft.world.entity.player.Player player) {
         if (!(player instanceof ServerPlayer sp) || sp.isSpectator() || !player.mayBuild()) return;
 

@@ -15,10 +15,12 @@ import net.multyfora.network.PortableTypewriterInputPacket;
 import java.util.Collection;
 import java.util.HashSet;
 
-// Client-side handler for the Portable Typewriter item.
-// Manages three modes: IDLE (inactive), ACTIVE (monitoring bound keys), and BIND (waiting
-// to bind a selected key to a redstone link). In ACTIVE mode, it detects key presses/releases
-// for bound keys and sends them to the server as input packets.
+/**
+ * Client-side handler for the Portable Typewriter item.
+ * Manages three modes: IDLE (inactive), ACTIVE (monitoring bound keys), and BIND (waiting
+ * to bind a selected key to a redstone link). In ACTIVE mode, it detects key presses/releases
+ * for bound keys and sends them to the server as input packets.
+ **/
 public class PortableTypewriterClientHandler {
 
     // Current mode of the typewriter
@@ -86,8 +88,10 @@ public class PortableTypewriterClientHandler {
         currentlyPressed.clear();
     }
 
-    // Client tick: processes binding, monitors key presses in ACTIVE mode, and sends
-    // appropriate packets to the server
+    /**
+     * Client tick: processes binding, monitors key presses in ACTIVE mode, and sends
+     * appropriate packets to the server
+     **/
     public static void tick() {
         if (MODE == Mode.IDLE) return;
         if (packetCooldown > 0) packetCooldown--;

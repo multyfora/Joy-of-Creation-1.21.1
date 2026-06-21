@@ -22,11 +22,13 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import net.multyfora.AeronauticsJoyofcreation;
 
-// Server-side handler for Portable Throttle signals.
-// Manages a per-world map of active throttle entries (ThrottleEntry) keyed by player UUID.
-// Each entry has a timeout counter that decrements every tick; expired entries are removed
-// and set the frequency's redstone power to 0. Keepalive packets from the client reset
-// the timeout to keep the signal alive.
+/**
+ * Server-side handler for Portable Throttle signals.
+ * Manages a per-world map of active throttle entries (ThrottleEntry) keyed by player UUID.
+ * Each entry has a timeout counter that decrements every tick; expired entries are removed
+ * and set the frequency's redstone power to 0. Keepalive packets from the client reset
+ * the timeout to keep the signal alive.
+ **/
 public class PortableThrottleServerHandler {
 
     // Per-world map: player UUID -> collection of active throttle entries (different frequencies)
@@ -76,8 +78,10 @@ public class PortableThrottleServerHandler {
         }
     }
 
-    // Forces all listeners on the given frequency to update their received strength.
-    // Iterates the network set and calls setReceivedStrength on each alive, listening node.
+    /**
+     * Forces all listeners on the given frequency to update their received strength.
+     * Iterates the network set and calls setReceivedStrength on each alive, listening node.
+     **/
     private static void forceUpdateListeners(LevelAccessor world, Couple<Frequency> freq, int power) {
         Set<IRedstoneLinkable> network = Create.REDSTONE_LINK_NETWORK_HANDLER.getNetworkOf(world, new ThrottleEntry(BlockPos.ZERO, freq, power));
         LOGGER.info("[THROTTLE_SERVER] forceUpdateListeners: freq=({}|{}) power={} network size={}",
@@ -118,9 +122,11 @@ public class PortableThrottleServerHandler {
         }
     }
 
-    // Called when a throttle signal packet is received from a client.
-    // Creates or updates a ThrottleEntry for the given player UUID and frequency,
-    // and propagates the signal to all listeners on that frequency.
+    /**
+     * Called when a throttle signal packet is received from a client.
+     * Creates or updates a ThrottleEntry for the given player UUID and frequency,
+     * and propagates the signal to all listeners on that frequency.
+     **/
     public static void receiveSignal(LevelAccessor world, BlockPos pos, UUID uniqueID, Couple<Frequency> freq, int strength) {
         LOGGER.info("[THROTTLE_SERVER] receiveSignal ENTER: uuid={} freq=({}|{}) strength={} pos={}", uniqueID,
             freq.getFirst().getStack().getHoverName().getString(),
@@ -172,10 +178,12 @@ public class PortableThrottleServerHandler {
         LOGGER.info("[THROTTLE_SERVER] receiveSignal EXIT (normal)");
     }
 
-    // Represents an active throttle signal in the redstone link network.
-    // Extends Pair<Integer, Couple<Frequency>> where first = timeout ticks remaining
-    // and second = the frequency pair. Implements IRedstoneLinkable to integrate with
-    // Create's redstone link network system.
+    /**
+     * Represents an active throttle signal in the redstone link network.
+     * Extends Pair<Integer, Couple<Frequency>> where first = timeout ticks remaining
+     * and second = the frequency pair. Implements IRedstoneLinkable to integrate with
+     * Create's redstone link network system.
+     **/
     static class ThrottleEntry extends Pair<Integer, Couple<Frequency>> implements IRedstoneLinkable {
 
         private BlockPos pos;

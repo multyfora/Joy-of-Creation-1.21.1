@@ -28,10 +28,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.network.CoordNavPayloads;
 
-// Coordinate Navigator block: a directional redstone source that points toward a configurable
-// target coordinate. It outputs redstone signals of varying strength on its lateral sides,
-// proportional to how closely each direction aligns with the target. The front face (facing
-// direction) never outputs a signal.
+/**
+ * Coordinate Navigator block: a directional redstone source that points toward a configurable
+ * target coordinate. It outputs redstone signals of varying strength on its lateral sides,
+ * proportional to how closely each direction aligns with the target. The front face (facing
+ * direction) never outputs a signal.
+ **/
 public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlockEntity>, IWrenchable {
 
     public static final DirectionProperty FACING = DirectionalBlock.FACING;
@@ -81,8 +83,10 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
         return ItemInteractionResult.SUCCESS;
     }
 
-    // Returns redstone signal strength for the given direction.
-    // The face the block is pointing toward always returns 0 (the "indicator" face has no output).
+    /**
+     * Returns redstone signal strength for the given direction.
+     * The face the block is pointing toward always returns 0 (the "indicator" face has no output).
+     **/
     @Override
     public int getSignal(BlockState state, BlockGetter getter, BlockPos pos, Direction direction) {
         if (getter.getBlockEntity(pos) instanceof CoordNavBlockEntity be) {
@@ -94,8 +98,10 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
         return 0;
     }
 
-    // Strong (direct) redstone power: only outputs on the face opposite the facing direction
-    // when the block faces horizontally, and also on the bottom face
+    /**
+     * Strong (direct) redstone power: only outputs on the face opposite the facing direction
+     * when the block faces horizontally, and also on the bottom face
+     **/
     @Override
     public int getDirectSignal(BlockState state, BlockGetter getter, BlockPos pos, Direction direction) {
         if (direction.getAxis() == state.getValue(FACING).getAxis()) {

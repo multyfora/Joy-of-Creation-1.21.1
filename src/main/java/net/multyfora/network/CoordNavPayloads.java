@@ -9,9 +9,11 @@ import net.minecraft.resources.ResourceLocation;
 
 import net.multyfora.AeronauticsJoyofcreation;
 
-// Holds the two custom payload types used by the Coordinate Navigator block:
-// OpenCoordNavPayload: sent from server to client to open the coordinate configuration GUI
-// UpdateCoordPayload: sent from client to server when the user sets new target coordinates
+/**
+ * Holds the two custom payload types used by the Coordinate Navigator block:
+ * OpenCoordNavPayload: sent from server to client to open the coordinate configuration GUI
+ * UpdateCoordPayload: sent from client to server when the user sets new target coordinates
+ **/
 public final class CoordNavPayloads {
     private CoordNavPayloads() {}
 

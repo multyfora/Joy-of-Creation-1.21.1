@@ -12,8 +12,10 @@ import net.minecraft.world.phys.Vec3;
 
 import net.multyfora.content.balloon.BalloonBlockEntity;
 
-// Client-side renderer for balloons: draws a brown tether line from the balloon
-// to its connected connector block. The line is segmented for a rope-like appearance.
+/**
+ * Client-side renderer for balloons: draws a brown tether line from the balloon
+ * to its connected connector block. The line is segmented for a rope-like appearance.
+ **/
 public class BalloonTetherRenderer implements BlockEntityRenderer<BalloonBlockEntity> {
     // Brown color for the rope
     private static final Vec3 ROPE_BROWN = new Vec3(0.5, 0.35, 0.15);

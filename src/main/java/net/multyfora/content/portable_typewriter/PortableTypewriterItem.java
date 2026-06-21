@@ -26,10 +26,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-// Portable Typewriter item: a handheld device that binds keyboard keys to redstone frequencies.
-// When activated (right-click in air toggles ACTIVE mode), it monitors bound keys and sends
-// press/release events to the server. Shift-right-click opens the keyboard layout GUI.
-// Right-clicking a Redstone Link block while a key is selected binds that key to the link's frequency.
+/**
+ * Portable Typewriter item: a handheld device that binds keyboard keys to redstone frequencies.
+ * When activated (right-click in air toggles ACTIVE mode), it monitors bound keys and sends
+ * press/release events to the server. Shift-right-click opens the keyboard layout GUI.
+ * Right-clicking a Redstone Link block while a key is selected binds that key to the link's frequency.
+ **/
 public class PortableTypewriterItem extends Item {
 
     // NBT keys for storing key bindings and the currently selected key
@@ -40,8 +42,10 @@ public class PortableTypewriterItem extends Item {
         super(properties);
     }
 
-    // Called when right-clicking on a block with the typewriter.
-    // If the target is a Redstone Link and a key is selected, initiates a bind.
+    /**
+     * Called when right-clicking on a block with the typewriter.
+     * If the target is a Redstone Link and a key is selected, initiates a bind.
+     **/
     @Override
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext ctx) {
         Player player = ctx.getPlayer();
@@ -62,9 +66,11 @@ public class PortableTypewriterItem extends Item {
         return InteractionResult.PASS;
     }
 
-    // Called when right-clicking in air.
-    // With shift: opens the keyboard layout GUI.
-    // Without shift: toggles ACTIVE mode (monitoring for key presses).
+    /**
+     * Called when right-clicking in air.
+     * With shift: opens the keyboard layout GUI.
+     * Without shift: toggles ACTIVE mode (monitoring for key presses).
+     **/
     @Override
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
         ItemStack heldItem = player.getItemInHand(hand);

@@ -16,9 +16,11 @@ import net.multyfora.network.PortableThrottleSignalPacket;
 
 import org.slf4j.Logger;
 
-// Client-side handler for the Portable Throttle item.
-// Manages: bind target tracking, left-click detection to open strength screen,
-// keepalive signal sending, and cleanup when the item is deselected.
+/**
+ * Client-side handler for the Portable Throttle item.
+ * Manages: bind target tracking, left-click detection to open strength screen,
+ * keepalive signal sending, and cleanup when the item is deselected.
+ **/
 public class PortableThrottleClientHandler {
 
     private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
@@ -57,8 +59,10 @@ public class PortableThrottleClientHandler {
         keepAliveCooldown = 0;
     }
 
-    // Called every client tick: handles bind packet sending, left-click detection,
-    // strength screen opening, and keepalive signal transmission
+    /**
+     * Called every client tick: handles bind packet sending, left-click detection,
+     * strength screen opening, and keepalive signal transmission
+     **/
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -119,8 +123,10 @@ public class PortableThrottleClientHandler {
         }
     }
 
-    // Resets all state: sends strength 0 to server, closes any open throttle screens,
-    // and clears tracking variables
+    /**
+     * Resets all state: sends strength 0 to server, closes any open throttle screens,
+     * and clears tracking variables
+     **/
     private static void reset() {
         LOGGER.info("[THROTTLE_CLIENT] reset: called, lastStrength={} bindTarget={}", lastStrength, bindTarget);
         Screen current = Minecraft.getInstance().screen;

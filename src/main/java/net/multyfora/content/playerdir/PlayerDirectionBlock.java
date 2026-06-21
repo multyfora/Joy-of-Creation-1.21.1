@@ -24,9 +24,11 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import net.multyfora.index.JocBlockEntityTypes;
 
-// Player Direction block: tracks the nearest player's look direction within 10 blocks and
-// outputs variable redstone signal strengths on its lateral sides based on where the player
-// is looking. Right-clicking toggles the block on/off via the POWERED property.
+/**
+ * Player Direction block: tracks the nearest player's look direction within 10 blocks and
+ * outputs variable redstone signal strengths on its lateral sides based on where the player
+ * is looking. Right-clicking toggles the block on/off via the POWERED property.
+ **/
 public class PlayerDirectionBlock extends DirectionalBlock implements IBE<PlayerDirectionBlockEntity>, IWrenchable {
 
     public static final DirectionProperty FACING = DirectionalBlock.FACING;
@@ -69,8 +71,10 @@ public class PlayerDirectionBlock extends DirectionalBlock implements IBE<Player
         return ItemInteractionResult.SUCCESS;
     }
 
-    // Returns redstone signal strength for the given direction.
-    // The face the block is pointing toward always returns 0.
+    /**
+     * Returns redstone signal strength for the given direction.
+     * The face the block is pointing toward always returns 0.
+     **/
     @Override
     public int getSignal(BlockState state, BlockGetter getter, BlockPos pos, Direction direction) {
         if (getter.getBlockEntity(pos) instanceof PlayerDirectionBlockEntity be) {

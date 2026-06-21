@@ -14,9 +14,11 @@ import net.multyfora.network.CoordNavPayloads;
 
 import net.neoforged.neoforge.network.PacketDistributor;
 
-// GUI screen for configuring the Coordinate Navigator's target coordinates.
-// Shows three input fields (X, Y, Z), a Set button to apply, and a Current Pos button
-// to fill in the block's own position.
+/**
+ * GUI screen for configuring the Coordinate Navigator's target coordinates.
+ * Shows three input fields (X, Y, Z), a Set button to apply, and a Current Pos button
+ * to fill in the block's own position.
+ **/
 public class CoordNavScreen extends Screen {
 
     // Position of the block being configured

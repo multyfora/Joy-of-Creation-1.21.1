@@ -19,9 +19,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-// Client-to-server packet: sends key press or release events for the Portable Typewriter.
-// Carries a list of GLFW key codes that were pressed or released, and a boolean flag
-// indicating whether this is a press (true) or release (false) event.
+/**
+ * Client-to-server packet: sends key press or release events for the Portable Typewriter.
+ * Carries a list of GLFW key codes that were pressed or released, and a boolean flag
+ * indicating whether this is a press (true) or release (false) event.
+ **/
 public class PortableTypewriterInputPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "pt_input");
@@ -45,8 +47,10 @@ public class PortableTypewriterInputPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    // Server-side: validates the player has a typewriter, resolves each key code to its
-    // bound frequency, and forwards to the server handler
+    /**
+     * Server-side: validates the player has a typewriter, resolves each key code to its
+     * bound frequency, and forwards to the server handler
+     **/
     public void handle(net.minecraft.world.entity.player.Player player) {
         if (!(player instanceof ServerPlayer sp) || sp.isSpectator()) return;
 

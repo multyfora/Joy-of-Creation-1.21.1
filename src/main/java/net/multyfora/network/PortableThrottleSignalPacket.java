@@ -17,8 +17,10 @@ import net.multyfora.content.portable_throttle.PortableThrottleServerHandler;
 
 import org.slf4j.Logger;
 
-// Client-to-server packet: sends the current throttle signal strength to the server.
-// The server then updates the redstone link network with the new power level.
+/**
+ * Client-to-server packet: sends the current throttle signal strength to the server.
+ * The server then updates the redstone link network with the new power level.
+ **/
 public class PortableThrottleSignalPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "throttle_signal");
@@ -41,8 +43,10 @@ public class PortableThrottleSignalPacket implements CustomPacketPayload {
 
     private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
 
-    // Server-side handling: validates the player has a throttle item, reads its frequency,
-    // and forwards the signal to the server handler
+    /**
+     * Server-side handling: validates the player has a throttle item, reads its frequency,
+     * and forwards the signal to the server handler
+     **/
     public void handle(net.minecraft.world.entity.player.Player player) {
         LOGGER.info("[THROTTLE_PACKET] SignalPacket.handle ENTER: player={} uuid={} strength={}", player.getName().getString(), player.getUUID(), strength);
 

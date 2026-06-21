@@ -11,8 +11,10 @@ import net.minecraft.world.phys.Vec3;
 
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
 
-// Client-side renderer for the Coordinate Navigator: draws a green pointer line
-// from the block toward its configured target position.
+/**
+ * Client-side renderer for the Coordinate Navigator: draws a green pointer line
+ * from the block toward its configured target position.
+ **/
 public class CoordNavRenderer implements BlockEntityRenderer<CoordNavBlockEntity> {
 
     public CoordNavRenderer(BlockEntityRendererProvider.Context ctx) {}

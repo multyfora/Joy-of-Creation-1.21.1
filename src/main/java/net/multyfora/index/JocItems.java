@@ -9,8 +9,10 @@ import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
 
-// Registry holder for all custom items in the mod.
-// Includes BlockItems for each custom block and standalone items for handheld tools.
+/**
+ * Registry holder for all custom items in the mod.
+ * Includes BlockItems for each custom block and standalone items for handheld tools.
+ **/
 public class JocItems {
     // Reference to the main mod's item DeferredRegister for convenience
     public static final DeferredRegister.Items ITEMS = AeronauticsJoyofcreation.ITEMS;
