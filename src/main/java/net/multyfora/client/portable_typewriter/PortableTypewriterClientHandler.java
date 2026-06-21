@@ -5,10 +5,13 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import net.multyfora.client.FreqScreenMenu;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
+import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.PortableTypewriterBindPacket;
 import net.multyfora.network.PortableTypewriterInputPacket;
 
@@ -56,7 +59,13 @@ public class PortableTypewriterClientHandler {
     // Opens the keyboard layout GUI and clears the selected key
     public static void openScreen() {
         Minecraft mc = Minecraft.getInstance();
-        mc.setScreen(new PortableTypewriterScreen());
+        if (mc.player == null) return;
+        FreqScreenMenu menu = new FreqScreenMenu(
+                JocMenuTypes.TYPEWRITER_SCREEN.get(),
+                0,
+                mc.player.getInventory());
+        mc.setScreen(new PortableTypewriterScreen(menu, mc.player.getInventory(),
+                Component.translatable("item.joc.portable_typewriter")));
         selectedKey = -1;
     }
 

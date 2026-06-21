@@ -20,6 +20,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocItems;
+import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.CoordNavPayloads;
 import net.multyfora.network.PortableTypewriterInputPacket;
 import net.multyfora.network.PortableTypewriterBindPacket;
@@ -63,8 +64,10 @@ public class AeronauticsJoyofcreation {
         // Register all content classes to trigger static initialisers and populate deferred registers
         JocBlocks.register();
         JocItems.register();
+        JocMenuTypes.register();
         // Register deferred registers with the mod event bus so NeoForge processes them
         JocBlockEntityTypes.BLOCK_ENTITY_TYPES.register(modEventBus);
+        JocMenuTypes.MENU_TYPES.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);

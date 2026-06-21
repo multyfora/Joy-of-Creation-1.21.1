@@ -5,7 +5,7 @@ import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler.Freq
 import net.createmod.catnip.data.Couple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.HolderLookup;
@@ -13,27 +13,42 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
+import net.multyfora.client.FreqScreenMenu;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.network.PortableThrottleConfigPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-public class PortableThrottleScreen extends Screen {
+import java.util.ArrayList;
+import java.util.List;
+
+public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMenu> {
 
     private static final int SLOT_SIZE = 22;
     private static final int SLOT_GAP = 8;
     private static final int INV_SLOT = 18;
     private static final int INV_GAP = 2;
 
+    private static final int CONTENT_W = 160;
+    private static final int CONTENT_H = 150;
+
     private ItemStack firstItem = ItemStack.EMPTY;
     private ItemStack secondItem = ItemStack.EMPTY;
     private ItemStack cursorItem = ItemStack.EMPTY;
 
-    protected PortableThrottleScreen() {
-        super(Component.translatable("item.joc.portable_throttle"));
+    public PortableThrottleScreen(FreqScreenMenu menu, Inventory inv, Component title) {
+        super(menu, inv, title);
+        this.imageWidth = CONTENT_W;
+        this.imageHeight = CONTENT_H;
     }
 
     @Override
     protected void init() {
+        this.imageWidth = CONTENT_W;
+        this.imageHeight = CONTENT_H;
+        super.init();
+        this.leftPos = (width - CONTENT_W) / 2;
+        this.topPos = freqSlotsY() - 10;
+
         Minecraft mc = Minecraft.getInstance();
         ItemStack held = getHeldItem();
         if (held != null && mc.level != null) {
@@ -65,6 +80,14 @@ public class PortableThrottleScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
 
+        if (!cursorItem.isEmpty()) {
+            graphics.renderItem(cursorItem, mouseX - 8, mouseY - 8);
+            graphics.renderItemDecorations(font, cursorItem, mouseX - 8, mouseY - 8);
+        }
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.drawCenteredString(font,
                 Component.translatable("item.joc.portable_throttle"),
                 width / 2, height / 2 - 80, 0xFFFFFF);
@@ -79,11 +102,10 @@ public class PortableThrottleScreen extends Screen {
         renderSlot(graphics, slotX2, cy, secondItem, mouseX, mouseY);
 
         renderInventory(graphics, mouseX, mouseY);
+    }
 
-        if (!cursorItem.isEmpty()) {
-            graphics.renderItem(cursorItem, mouseX - 8, mouseY - 8);
-            graphics.renderItemDecorations(font, cursorItem, mouseX - 8, mouseY - 8);
-        }
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
     }
 
     private void renderInventory(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -159,6 +181,11 @@ public class PortableThrottleScreen extends Screen {
         }
 
         if (handleInvClick(mouseX, mouseY)) return true;
+
+        if (!cursorItem.isEmpty()) {
+            cursorItem = ItemStack.EMPTY;
+            return true;
+        }
 
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -259,6 +286,12 @@ public class PortableThrottleScreen extends Screen {
             secondItem = stack.copy();
         }
         save();
+    }
+
+    public List<Rect2i> getExclusionAreas() {
+        List<Rect2i> areas = new ArrayList<>();
+        areas.add(new Rect2i(leftPos, topPos, imageWidth, imageHeight));
+        return areas;
     }
 
     private static ItemStack getHeldItem() {

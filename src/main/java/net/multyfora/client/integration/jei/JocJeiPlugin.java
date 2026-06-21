@@ -1,8 +1,12 @@
 package net.multyfora.client.integration.jei;
 
+import java.util.List;
+
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.resources.ResourceLocation;
 
 import net.multyfora.AeronauticsJoyofcreation;
@@ -21,5 +25,18 @@ public class JocJeiPlugin implements IModPlugin {
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
         registration.addGhostIngredientHandler(PortableTypewriterScreen.class, new TypewriterGhostHandler<>());
         registration.addGhostIngredientHandler(PortableThrottleScreen.class, new ThrottleGhostHandler<>());
+
+        registration.addGuiContainerHandler(PortableTypewriterScreen.class, new IGuiContainerHandler<>() {
+            @Override
+            public List<Rect2i> getGuiExtraAreas(PortableTypewriterScreen screen) {
+                return screen.getExclusionAreas();
+            }
+        });
+        registration.addGuiContainerHandler(PortableThrottleScreen.class, new IGuiContainerHandler<>() {
+            @Override
+            public List<Rect2i> getGuiExtraAreas(PortableThrottleScreen screen) {
+                return screen.getExclusionAreas();
+            }
+        });
     }
 }

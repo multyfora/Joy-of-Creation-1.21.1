@@ -5,13 +5,14 @@ import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler.Freq
 import net.createmod.catnip.data.Couple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
+import net.multyfora.client.FreqScreenMenu;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
 import net.multyfora.network.PortableTypewriterSetFreqPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -21,7 +22,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PortableTypewriterScreen extends Screen {
+public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreenMenu> {
 
     static final int KEY_W = 18;
     static final int KEY_H = 18;
@@ -34,6 +35,8 @@ public class PortableTypewriterScreen extends Screen {
     private static final int FREQ_SLOT_SIZE = 22;
     private static final int INV_SLOT = 18;
 
+    private static final int CONTENT_H = 235;
+
     private final List<KeyWidget> keyWidgets = new ArrayList<>();
     private int selectedKeyCode = -1;
 
@@ -42,12 +45,20 @@ public class PortableTypewriterScreen extends Screen {
 
     private ItemStack cursorItem = ItemStack.EMPTY;
 
-    protected PortableTypewriterScreen() {
-        super(Component.translatable("item.joc.portable_typewriter"));
+    public PortableTypewriterScreen(FreqScreenMenu menu, Inventory inv, Component title) {
+        super(menu, inv, title);
+        this.imageWidth = TOTAL_W;
+        this.imageHeight = CONTENT_H;
     }
 
     @Override
     protected void init() {
+        this.imageWidth = TOTAL_W;
+        this.imageHeight = CONTENT_H;
+        super.init();
+        this.leftPos = (width - TOTAL_W) / 2;
+        this.topPos = keyboardTop();
+
         keyWidgets.clear();
 
         ItemStack held = getHeldItem();
@@ -130,6 +141,14 @@ public class PortableTypewriterScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
 
+        if (!cursorItem.isEmpty()) {
+            graphics.renderItem(cursorItem, mouseX - 8, mouseY - 8);
+            graphics.renderItemDecorations(font, cursorItem, mouseX - 8, mouseY - 8);
+        }
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.drawCenteredString(font,
                 Component.translatable("item.joc.portable_typewriter"),
                 width / 2, height / 2 - 130, 0xFFFFFF);
@@ -149,11 +168,10 @@ public class PortableTypewriterScreen extends Screen {
         }
 
         renderInventory(graphics, mouseX, mouseY);
+    }
 
-        if (!cursorItem.isEmpty()) {
-            graphics.renderItem(cursorItem, mouseX - 8, mouseY - 8);
-            graphics.renderItemDecorations(font, cursorItem, mouseX - 8, mouseY - 8);
-        }
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
     }
 
     private void renderFreqSlot(GuiGraphics graphics, int x, int y, ItemStack stack, int mx, int my) {
@@ -240,6 +258,11 @@ public class PortableTypewriterScreen extends Screen {
             }
 
             if (handleInvClick(mouseX, mouseY)) return true;
+
+            if (!cursorItem.isEmpty()) {
+                cursorItem = ItemStack.EMPTY;
+                return true;
+            }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -351,6 +374,12 @@ public class PortableTypewriterScreen extends Screen {
         }
         saveFreqForSelectedKey();
         updateKeyWidgetStates();
+    }
+
+    public List<Rect2i> getExclusionAreas() {
+        List<Rect2i> areas = new ArrayList<>();
+        areas.add(new Rect2i(leftPos, topPos, imageWidth, imageHeight));
+        return areas;
     }
 
     private static ItemStack getHeldItem() {
