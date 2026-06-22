@@ -6,12 +6,12 @@ import dev.emi.emi.api.stack.EmiStack;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 
-import net.multyfora.client.portable_throttle.PortableThrottleScreen;
+import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 
-public class ThrottleDragHandler implements EmiDragDropHandler<PortableThrottleScreen> {
+public class ThrottleDragHandler implements EmiDragDropHandler<PortableThrottleLinkScreen> {
 
     @Override
-    public boolean dropStack(PortableThrottleScreen screen, EmiIngredient ingredient, int mouseX, int mouseY) {
+    public boolean dropStack(PortableThrottleLinkScreen screen, EmiIngredient ingredient, int mouseX, int mouseY) {
         for (int i = 0; i < 2; i++) {
             Rect2i area = screen.getFreqSlotArea(i);
             if (area != null && area.contains(mouseX, mouseY)) {

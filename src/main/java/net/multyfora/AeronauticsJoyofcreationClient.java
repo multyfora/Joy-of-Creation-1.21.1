@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import net.multyfora.client.balloon.BalloonTetherRenderer;
 import net.multyfora.client.coordnav.CoordNavRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
-import net.multyfora.client.portable_throttle.PortableThrottleScreen;
+import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 import net.multyfora.client.portable_typewriter.PortableTypewriterClientHandler;
 import net.multyfora.client.portable_typewriter.PortableTypewriterScreen;
 import net.multyfora.config.JocConfig;
@@ -49,7 +49,7 @@ public class AeronauticsJoyofcreationClient {
     @SubscribeEvent
     static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(JocMenuTypes.TYPEWRITER_SCREEN.get(), PortableTypewriterScreen::new);
-        event.register(JocMenuTypes.THROTTLE_SCREEN.get(), PortableThrottleScreen::new);
+        event.register(JocMenuTypes.THROTTLE_SCREEN.get(), PortableThrottleLinkScreen::new);
     }
 
     @SubscribeEvent

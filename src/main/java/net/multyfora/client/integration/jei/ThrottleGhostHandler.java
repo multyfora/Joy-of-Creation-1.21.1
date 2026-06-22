@@ -8,9 +8,9 @@ import mezz.jei.api.ingredients.ITypedIngredient;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 
-import net.multyfora.client.portable_throttle.PortableThrottleScreen;
+import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 
-public class ThrottleGhostHandler<R extends PortableThrottleScreen> implements IGhostIngredientHandler<R> {
+public class ThrottleGhostHandler<R extends PortableThrottleLinkScreen> implements IGhostIngredientHandler<R> {
 
     @Override
     public <I> List<Target<I>> getTargetsTyped(R screen, ITypedIngredient<I> ingredient, boolean doStart) {
