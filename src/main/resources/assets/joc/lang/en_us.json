@@ -23,5 +23,10 @@
   "joc.configuration.section.joc.common.toml.title": "Aeronautics: Joy of Creation Configs",
 
   "joc.configuration.balloon.liftPerBalloon": "Lift per balloon block",
-  "joc.configuration.balloon.dragCoefficient": "Air drag coefficient for balloons"
+  "joc.configuration.balloon.dragCoefficient": "Air drag coefficient for balloons",
+
+  "joc.configuration.creative_staff.enableCreativeStaff": "Enable creative staff entity grab/release",
+  "joc.configuration.creative_staff.canPickupPlayers": "Allow grabbing other players",
+  "joc.configuration.creative_staff.staffGrabRange": "Max grab range in blocks",
+  "joc.configuration.creative_staff.staffHoldDistance": "Default hold distance in blocks"
 }

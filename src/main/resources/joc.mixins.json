@@ -9,6 +9,10 @@
     "RopeItemMixin",
     "RopeConnectorBlockEntityMixin"
   ],
+  "client": [
+    "physics_staff.PhysicsStaffMouseHandlerMixin",
+    "physics_staff.PhysicsStaffClientHandlerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

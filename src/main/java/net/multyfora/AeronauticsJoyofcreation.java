@@ -28,7 +28,11 @@ import net.multyfora.network.PortableThrottleBindPacket;
 import net.multyfora.network.PortableThrottleConfigPacket;
 import net.multyfora.network.PortableThrottleSignalPacket;
 import net.multyfora.network.PortableTypewriterSetFreqPacket;
+import net.multyfora.config.JocConfig;
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
+import net.multyfora.content.physics_staff.EntityGrabClientState;
+import net.multyfora.network.EntityGrabPayloads;
 import net.multyfora.content.portable_typewriter.PortableTypewriterServerHandler;
 import net.multyfora.content.portable_throttle.PortableThrottleServerHandler;
 
@@ -72,6 +76,9 @@ public class AeronauticsJoyofcreation {
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
 
+        // Register common config
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, JocConfig.SPEC);
+
         /**
          * Server tick listener: ticks the PortableTypewriter and PortableThrottle server handlers
          * each level tick to manage timeouts and signal decay
@@ -82,6 +89,13 @@ public class AeronauticsJoyofcreation {
                 PortableThrottleServerHandler.tick(event.getLevel());
             }
         });
+
+        // Creative staff entity grab/release handlers
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, CreativeStaffCaptureHandler::onServerTick);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, CreativeStaffCaptureHandler::onEntityInteract);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickEmpty.class, CreativeStaffCaptureHandler::onRightClickEmpty);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock.class, CreativeStaffCaptureHandler::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent.class, CreativeStaffCaptureHandler::onPlayerLogout);
 
         // Register all custom network payloads (play-to-client and play-to-server)
         modEventBus.addListener(net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent.class, event -> {
@@ -147,6 +161,43 @@ public class AeronauticsJoyofcreation {
                     PortableTypewriterSetFreqPacket.TYPE,
                     PortableTypewriterSetFreqPacket.CODEC,
                     (payload, context) -> context.enqueueWork(() -> payload.handle(context.player()))
+            );
+
+            // Entity grab: client → server stop
+            registrar.playToServer(
+                    EntityGrabPayloads.Stop.TYPE,
+                    EntityGrabPayloads.Stop.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(() -> {
+                            if (context.player() instanceof net.minecraft.server.level.ServerPlayer sp) {
+                                CreativeStaffCaptureHandler.onEntityGrabStopC2S(payload, sp);
+                            }
+                        });
+                    }
+            );
+
+            // Entity grab: client → server grab request (long-range entity pick)
+            registrar.playToServer(
+                    EntityGrabPayloads.GrabRequest.TYPE,
+                    EntityGrabPayloads.GrabRequest.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(() -> {
+                            if (context.player() instanceof net.minecraft.server.level.ServerPlayer sp) {
+                                CreativeStaffCaptureHandler.onEntityGrabRequestC2S(payload, sp);
+                            }
+                        });
+                    }
+            );
+
+            // Entity grab: server → client start
+            registrar.playToClient(
+                    EntityGrabPayloads.Start.TYPE,
+                    EntityGrabPayloads.Start.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(() -> {
+                            EntityGrabClientState.grabbedEntityId = payload.entityId();
+                        });
+                    }
             );
         });
     }
