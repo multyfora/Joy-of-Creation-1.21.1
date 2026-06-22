@@ -249,22 +249,13 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     }
 
     private void handleFreqSlotClick(int slotIndex) {
-        if (!cursorItem.isEmpty()) {
-            if (slotIndex == 0) {
-                firstItem = cursorItem.copy();
-            } else {
-                secondItem = cursorItem.copy();
-            }
-            cursorItem = ItemStack.EMPTY;
-            save();
+        if (slotIndex == 0) {
+            firstItem = cursorItem.copy();
         } else {
-            if (slotIndex == 0) {
-                firstItem = ItemStack.EMPTY;
-            } else {
-                secondItem = ItemStack.EMPTY;
-            }
-            save();
+            secondItem = cursorItem.copy();
         }
+        cursorItem = ItemStack.EMPTY;
+        save();
     }
 
     private boolean isInBounds(Vector2i startPosition, Vector2i endPosition, Vector2i position) {
