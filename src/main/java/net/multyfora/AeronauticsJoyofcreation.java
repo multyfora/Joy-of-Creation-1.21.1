@@ -196,6 +196,20 @@ public class AeronauticsJoyofcreation {
                     (payload, context) -> {
                         context.enqueueWork(() -> {
                             EntityGrabClientState.grabbedEntityId = payload.entityId();
+                            EntityGrabClientState.holdDistance = payload.holdDistance();
+                        });
+                    }
+            );
+
+            // Entity grab: client → server set hold distance
+            registrar.playToServer(
+                    EntityGrabPayloads.SetHoldDistance.TYPE,
+                    EntityGrabPayloads.SetHoldDistance.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(() -> {
+                            if (context.player() instanceof net.minecraft.server.level.ServerPlayer sp) {
+                                CreativeStaffCaptureHandler.onSetHoldDistance(payload, sp);
+                            }
                         });
                     }
             );

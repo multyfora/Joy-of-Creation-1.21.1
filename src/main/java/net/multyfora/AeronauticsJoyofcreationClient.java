@@ -28,6 +28,7 @@ import net.multyfora.client.portable_typewriter.PortableTypewriterClientHandler;
 import net.multyfora.client.portable_typewriter.PortableTypewriterScreen;
 import net.multyfora.config.JocConfig;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
+import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.EntityGrabPayloads;
@@ -112,5 +113,33 @@ public class AeronauticsJoyofcreationClient {
             PacketDistributor.sendToServer(new EntityGrabPayloads.GrabRequest(target.getId()));
             event.setCanceled(true);
         }
+    }
+
+    @SubscribeEvent
+    static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
+        if (!JocConfig.ENABLE_CREATIVE_STAFF.get()) return;
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+
+        if (EntityGrabClientState.grabbedEntityId == 0) return;
+        if (!CreativeStaffCaptureHandler.isHoldingStaff(mc.player)) return;
+
+        double delta = event.getScrollDeltaY();
+        if (delta == 0) return;
+
+        double sensitivity = 0.5;
+        double newDist = EntityGrabClientState.holdDistance + delta * sensitivity;
+        double maxDist = JocConfig.STAFF_GRAB_RANGE.get();
+        newDist = Math.clamp(newDist, 0.5, maxDist);
+
+        if (newDist != EntityGrabClientState.holdDistance) {
+            EntityGrabClientState.holdDistance = newDist;
+            PacketDistributor.sendToServer(new EntityGrabPayloads.SetHoldDistance(
+                    EntityGrabClientState.grabbedEntityId, newDist
+            ));
+        }
+
+        event.setCanceled(true);
     }
 }

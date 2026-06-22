@@ -6,4 +6,5 @@ package net.multyfora.content.physics_staff;
  */
 public class EntityGrabClientState {
     public static int grabbedEntityId = 0;
+    public static double holdDistance = 5.0;
 }

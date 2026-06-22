@@ -64,7 +64,7 @@ public class CreativeStaffCaptureHandler {
         // Send start payload to client
         PacketDistributor.sendToPlayer(
                 (ServerPlayer) player,
-                new EntityGrabPayloads.Start(target.getId())
+                new EntityGrabPayloads.Start(target.getId(), session.holdDistance)
         );
     }
 
@@ -98,12 +98,19 @@ public class CreativeStaffCaptureHandler {
                     0, 0, 0);
         }
 
-        PacketDistributor.sendToPlayer(player, new EntityGrabPayloads.Start(target.getId()));
+        PacketDistributor.sendToPlayer(player, new EntityGrabPayloads.Start(target.getId(), holdDist));
     }
 
     public static void onEntityGrabStopC2S(EntityGrabPayloads.Stop payload, ServerPlayer player) {
         if (!JocConfig.ENABLE_CREATIVE_STAFF.get()) return;
         releaseSession(player);
+    }
+
+    public static void onSetHoldDistance(EntityGrabPayloads.SetHoldDistance payload, ServerPlayer player) {
+        EntityGrabSession session = GRAB_SESSIONS.get(player.getUUID());
+        if (session != null && session.grabbedEntityId == payload.entityId()) {
+            session.holdDistance = Math.clamp(payload.distance(), 0.5, JocConfig.STAFF_GRAB_RANGE.get());
+        }
     }
 
     public static void onRightClickEmpty(PlayerInteractEvent.RightClickEmpty event) {
