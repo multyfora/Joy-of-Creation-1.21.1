@@ -86,7 +86,7 @@ public class AeronauticsJoyofcreationClient {
             Entity viewer = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
             if (viewer == null) return;
 
-            float range = JocConfig.STAFF_GRAB_RANGE.get().floatValue();
+            float range = 64.0f;
             Vec3 start = viewer.getEyePosition();
             Vec3 look = viewer.getLookAngle();
             Vec3 end = start.add(look.scale(range));
@@ -130,7 +130,7 @@ public class AeronauticsJoyofcreationClient {
 
         double sensitivity = 0.5;
         double newDist = EntityGrabClientState.holdDistance + delta * sensitivity;
-        double maxDist = JocConfig.STAFF_GRAB_RANGE.get();
+        double maxDist = 64.0;
         newDist = Math.clamp(newDist, 0.5, maxDist);
 
         if (newDist != EntityGrabClientState.holdDistance) {

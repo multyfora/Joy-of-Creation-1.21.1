@@ -1,0 +1,5 @@
+[creative_staff]
+	#Enable creative staff entity grab/release functionality
+	enableCreativeStaff = true
+	#Allow the creative staff to grab other players
+	canPickupPlayers = false

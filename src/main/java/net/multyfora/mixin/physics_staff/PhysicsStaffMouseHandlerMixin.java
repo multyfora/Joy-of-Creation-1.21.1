@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import dev.simulated_team.simulated.util.click_interactions.InteractCallback.Result;
 import net.multyfora.AeronauticsJoyofcreation;
-import net.multyfora.config.JocConfig;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.network.EntityGrabPayloads;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -39,7 +38,7 @@ public class PhysicsStaffMouseHandlerMixin {
                 Entity viewer = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
                 if (viewer == null) return;
 
-                float range = JocConfig.STAFF_GRAB_RANGE.get().floatValue();
+                float range = 64.0f;
                 Vec3 start = viewer.getEyePosition();
                 Vec3 look = viewer.getLookAngle();
                 Vec3 end = start.add(look.scale(range));
