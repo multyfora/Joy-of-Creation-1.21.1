@@ -14,28 +14,37 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.client.FreqScreenMenu;
+import net.multyfora.client.graphics.GraphicsFiller;
+import net.multyfora.client.graphics.SimpleGraphicsFiller;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.network.PortableThrottleConfigPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.joml.Vector2i;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMenu> {
+public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScreenMenu> {
 
-    private static final int SLOT_SIZE = 22;
-    private static final int SLOT_GAP = 8;
-    private static final int INV_SLOT = 18;
-    private static final int INV_GAP = 2;
+    private static final int LINK_SLOT_SIZE = 22;
+    private static final int LINK_SLOT_GAP = 8;
+
+    private static final int INV_SLOT_SIZE = 18;
+    private static final int INV_SLOT_GAP = 2;
 
     private static final int CONTENT_W = 160;
     private static final int CONTENT_H = 150;
+
+    private static final int BACKGROUND_COLOR = 0xFF333333;
+    private static final int FOREGROUND_COLOR = 0xFF000000;
+    private static final int HOVER_BACKGROUND_COLOR = 0xFF555555;
+    private static final GraphicsFiller DEFAULT_GRAPHICS_FILLER = new SimpleGraphicsFiller(BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     private ItemStack firstItem = ItemStack.EMPTY;
     private ItemStack secondItem = ItemStack.EMPTY;
     private ItemStack cursorItem = ItemStack.EMPTY;
 
-    public PortableThrottleScreen(FreqScreenMenu menu, Inventory inv, Component title) {
+    public PortableThrottleLinkScreen(FreqScreenMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
         this.imageWidth = CONTENT_W;
         this.imageHeight = CONTENT_H;
@@ -69,11 +78,11 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
     }
 
     private int invTopY() {
-        return freqSlotsY() + SLOT_SIZE + 35;
+        return freqSlotsY() + LINK_SLOT_SIZE + 35;
     }
 
     private int invLeft() {
-        return width / 2 - 9 * INV_SLOT / 2;
+        return width / 2 - 9 * INV_SLOT_SIZE / 2;
     }
 
     @Override
@@ -88,25 +97,33 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.drawCenteredString(font,
-                Component.translatable("item.joc.portable_throttle"),
-                width / 2, height / 2 - 80, 0xFFFFFF);
+        graphics.drawCenteredString(
+            font,
+            Component.translatable("item.joc.portable_throttle"),
+            width / 2, height / 2 - 80, 0xFFFFFF
+        );
 
+        //Redstone Link Slots
         int cy = freqSlotsY();
         int cx = freqSlotsCenterX();
-        int totalW = SLOT_SIZE * 2 + SLOT_GAP;
+        int totalW = LINK_SLOT_SIZE * 2 + LINK_SLOT_GAP;
         int slotX1 = cx - totalW / 2;
-        int slotX2 = slotX1 + SLOT_SIZE + SLOT_GAP;
+        int slotX2 = slotX1 + LINK_SLOT_SIZE + LINK_SLOT_GAP;
 
-        renderSlot(graphics, slotX1, cy, firstItem, mouseX, mouseY);
-        renderSlot(graphics, slotX2, cy, secondItem, mouseX, mouseY);
+        Vector2i firstStart    = new Vector2i(slotX1, cy);
+        Vector2i secondStart   = new Vector2i(slotX2, cy);
+        Vector2i firstEnd      = new Vector2i(slotX1+LINK_SLOT_SIZE, cy+LINK_SLOT_SIZE);
+        Vector2i secondEnd     = new Vector2i(slotX2+LINK_SLOT_SIZE, cy+LINK_SLOT_SIZE);
+        Vector2i mousePosition = new Vector2i(mouseX, mouseY);
+
+        renderSlot(graphics, firstStart, firstEnd, mousePosition, firstItem);
+        renderSlot(graphics, secondStart, secondEnd, mousePosition, secondItem);
 
         renderInventory(graphics, mouseX, mouseY);
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-    }
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {}
 
     private void renderInventory(GuiGraphics graphics, int mouseX, int mouseY) {
         Minecraft mc = Minecraft.getInstance();
@@ -115,15 +132,24 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
         int startX = invLeft();
         int startY = invTopY();
 
+        Vector2i start, end;
+        Vector2i position = new Vector2i(mouseX, mouseY);
+
+        //Player Inventory
+        GraphicsFiller filler = DEFAULT_GRAPHICS_FILLER.clone();
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * INV_SLOT;
-                int y = startY + row * INV_SLOT;
-                boolean hovered = mouseX >= x && mouseX < x + INV_SLOT && mouseY >= y && mouseY < y + INV_SLOT;
-                int bg = hovered ? 0xFF555555 : 0xFF333333;
-                graphics.fill(x, y, x + INV_SLOT, y + INV_SLOT, 0xFF000000);
-                graphics.fill(x + 1, y + 1, x + INV_SLOT - 1, y + INV_SLOT - 1, bg);
+                int x = startX + col * INV_SLOT_SIZE;
+                int y = startY + row * INV_SLOT_SIZE;
+                start = new Vector2i(x, y);
+                end =   new Vector2i(x+INV_SLOT_SIZE, y+INV_SLOT_SIZE);
+
+                boolean hovered = isInBounds(start, end, position);
+                //boolean hovered = (x <= mouseX && mouseX < x+INV_SLOT_SIZE) && (y <= mouseY && mouseY <= y+INV_SLOT_SIZE);
+                filler.setHoverColor(hovered ? HOVER_BACKGROUND_COLOR : BACKGROUND_COLOR);
+                filler.fill( graphics, new Vector2i(x, y), new Vector2i(x+INV_SLOT_SIZE, y+INV_SLOT_SIZE) );
+
                 ItemStack stack = inv.getItem(slotIdx);
                 if (!stack.isEmpty()) {
                     graphics.renderItem(stack, x + 1, y + 1);
@@ -132,13 +158,17 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
             }
         }
 
-        int hotbarY = startY + 3 * INV_SLOT + INV_GAP;
+        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
         for (int col = 0; col < 9; col++) {
-            int x = startX + col * INV_SLOT;
-            boolean hovered = mouseX >= x && mouseX < x + INV_SLOT && mouseY >= hotbarY && mouseY < hotbarY + INV_SLOT;
-            int bg = hovered ? 0xFF555555 : 0xFF333333;
-            graphics.fill(x, hotbarY, x + INV_SLOT, hotbarY + INV_SLOT, 0xFF000000);
-            graphics.fill(x + 1, hotbarY + 1, x + INV_SLOT - 1, hotbarY + INV_SLOT - 1, bg);
+            int x = startX + col * INV_SLOT_SIZE;
+            start = new Vector2i(x, hotbarY);
+            end   = new Vector2i(x+INV_SLOT_SIZE, hotbarY+INV_SLOT_SIZE);
+
+            boolean hovered = isInBounds(start, end, position);
+            //boolean hovered = (x <= mouseX && mouseX <= x+INV_SLOT_SIZE) && (hotbarY <= mouseY && mouseY <= hotbarY+INV_SLOT_SIZE);
+            filler.setHoverColor(hovered ? HOVER_BACKGROUND_COLOR : BACKGROUND_COLOR);
+            filler.fill( graphics, new Vector2i(x, hotbarY), new Vector2i(x+ INV_SLOT_SIZE, hotbarY+ INV_SLOT_SIZE) );
+
             ItemStack stack = inv.getItem(col);
             if (!stack.isEmpty()) {
                 graphics.renderItem(stack, x + 1, hotbarY + 1);
@@ -147,15 +177,17 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
         }
     }
 
-    private void renderSlot(GuiGraphics graphics, int x, int y, ItemStack stack, int mx, int my) {
-        boolean hovered = mx >= x && mx <= x + SLOT_SIZE && my >= y && my <= y + SLOT_SIZE;
-        int bg = hovered ? 0xFF555555 : 0xFF333333;
-        graphics.fill(x, y, x + SLOT_SIZE, y + SLOT_SIZE, 0xFF000000);
-        graphics.fill(x + 1, y + 1, x + SLOT_SIZE - 1, y + SLOT_SIZE - 1, bg);
+    private void renderSlot(GuiGraphics graphics, Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition, ItemStack stack) {
+        GraphicsFiller filler = DEFAULT_GRAPHICS_FILLER.clone();
+        if ( isInBounds(startPosition, endPosition, mousePosition) ) {
+            filler.setHoverColor(HOVER_BACKGROUND_COLOR);
+        }
+        filler.fill(graphics, startPosition, endPosition);
 
+        Vector2i size = new Vector2i(endPosition.x - startPosition.x, endPosition.y - startPosition.y);
         if (!stack.isEmpty()) {
-            int ix = x + (SLOT_SIZE - 16) / 2;
-            int iy = y + (SLOT_SIZE - 16) / 2;
+            int ix = startPosition.x + (size.x - 16) / 2;
+            int iy = startPosition.y + (size.y - 16) / 2;
             graphics.renderItem(stack, ix, iy);
             graphics.renderItemDecorations(font, stack, ix, iy);
         }
@@ -167,15 +199,21 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
 
         int cx = freqSlotsCenterX();
         int slotY = freqSlotsY();
-        int totalW = SLOT_SIZE * 2 + SLOT_GAP;
+        int totalW = LINK_SLOT_SIZE * 2 + LINK_SLOT_GAP;
         int slotX1 = cx - totalW / 2;
-        int slotX2 = slotX1 + SLOT_SIZE + SLOT_GAP;
+        int slotX2 = slotX1 + LINK_SLOT_SIZE + LINK_SLOT_GAP;
 
-        if (isInSlot(mouseX, mouseY, slotX1, slotY, SLOT_SIZE)) {
+        Vector2i start1 = new Vector2i(slotX1, slotY);
+        Vector2i start2 = new Vector2i(slotX2, slotY);
+        Vector2i end1   = new Vector2i(slotX1+LINK_SLOT_SIZE, slotY+LINK_SLOT_SIZE);
+        Vector2i end2   = new Vector2i(slotX2+LINK_SLOT_SIZE, slotY+LINK_SLOT_SIZE);
+        Vector2i mousePosition = new Vector2i((int)mouseX, (int)mouseY);
+
+        if ( isInBounds(start1, end1, mousePosition) ) {
             handleFreqSlotClick(0);
             return true;
         }
-        if (isInSlot(mouseX, mouseY, slotX2, slotY, SLOT_SIZE)) {
+        if ( isInBounds(start2, end2, mousePosition) ) {
             handleFreqSlotClick(1);
             return true;
         }
@@ -200,9 +238,9 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * INV_SLOT;
-                int y = startY + row * INV_SLOT;
-                if (mx >= x && mx < x + INV_SLOT && my >= y && my < y + INV_SLOT) {
+                int x = startX + col * INV_SLOT_SIZE;
+                int y = startY + row * INV_SLOT_SIZE;
+                if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
                     ItemStack stack = inv.getItem(slotIdx);
                     if (!stack.isEmpty()) {
                         cursorItem = stack.copyWithCount(1);
@@ -212,10 +250,10 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
             }
         }
 
-        int hotbarY = startY + 3 * INV_SLOT + INV_GAP;
+        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
         for (int col = 0; col < 9; col++) {
-            int x = startX + col * INV_SLOT;
-            if (mx >= x && mx < x + INV_SLOT && my >= hotbarY && my < hotbarY + INV_SLOT) {
+            int x = startX + col * INV_SLOT_SIZE;
+            if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
                 ItemStack stack = inv.getItem(col);
                 if (!stack.isEmpty()) {
                     cursorItem = stack.copyWithCount(1);
@@ -246,8 +284,10 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
         }
     }
 
-    private boolean isInSlot(double mx, double my, int sx, int sy, int size) {
-        return mx >= sx && mx <= sx + size && my >= sy && my <= sy + size;
+    private boolean isInBounds(Vector2i startPosition, Vector2i endPosition, Vector2i position) {
+        return     (startPosition.x <= position.x && position.x <= endPosition.x)
+                && (startPosition.y <= position.y && position.y <= endPosition.y)
+        ;
     }
 
     private void save() {
@@ -273,9 +313,9 @@ public class PortableThrottleScreen extends AbstractContainerScreen<FreqScreenMe
     public @org.jetbrains.annotations.Nullable Rect2i getFreqSlotArea(int slotIndex) {
         if (slotIndex < 0 || slotIndex > 1) return null;
         int cx = freqSlotsCenterX();
-        int totalW = SLOT_SIZE * 2 + SLOT_GAP;
-        int x = cx - totalW / 2 + slotIndex * (SLOT_SIZE + SLOT_GAP);
-        return new Rect2i(x, freqSlotsY(), SLOT_SIZE, SLOT_SIZE);
+        int totalW = LINK_SLOT_SIZE * 2 + LINK_SLOT_GAP;
+        int x = cx - totalW / 2 + slotIndex * (LINK_SLOT_SIZE + LINK_SLOT_GAP);
+        return new Rect2i(x, freqSlotsY(), LINK_SLOT_SIZE, LINK_SLOT_SIZE);
     }
 
     public void acceptFreqSlotIngredient(int slotIndex, ItemStack stack) {
