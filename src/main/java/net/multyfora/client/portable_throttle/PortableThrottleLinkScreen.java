@@ -39,7 +39,6 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
 
     private static final int FOREGROUND_COLOR = 0xFF333333;
     private static final int BACKGROUND_COLOR = 0xFF000000;
-    private static final int HOVER_BACKGROUND_COLOR = 0xFF555555;
     private static final GraphicsFiller DEFAULT_GRAPHICS_FILLER = new SimpleGraphicsFiller(BACKGROUND_COLOR, FOREGROUND_COLOR);
 
     private ItemStack firstItem = ItemStack.EMPTY;
