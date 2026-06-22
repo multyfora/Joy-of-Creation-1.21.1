@@ -257,8 +257,8 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     }
 
     private boolean isInBounds(Vector2i startPosition, Vector2i endPosition, Vector2i position) {
-        return     (startPosition.x <= position.x && position.x <= endPosition.x)
-                && (startPosition.y <= position.y && position.y <= endPosition.y)
+        return     (startPosition.x <= position.x && position.x < endPosition.x)
+                && (startPosition.y <= position.y && position.y < endPosition.y)
         ;
     }
 
