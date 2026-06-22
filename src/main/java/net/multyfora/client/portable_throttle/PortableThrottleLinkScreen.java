@@ -14,6 +14,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.client.FreqScreenMenu;
+import net.multyfora.client.graphics.CheckerboardGraphicsFiller;
 import net.multyfora.client.graphics.GraphicsFiller;
 import net.multyfora.client.graphics.SimpleGraphicsFiller;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
@@ -36,8 +37,8 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     private static final int CONTENT_W = 160;
     private static final int CONTENT_H = 150;
 
-    private static final int BACKGROUND_COLOR = 0xFF333333;
-    private static final int FOREGROUND_COLOR = 0xFF000000;
+    private static final int FOREGROUND_COLOR = 0xFF333333;
+    private static final int BACKGROUND_COLOR = 0xFF000000;
     private static final int HOVER_BACKGROUND_COLOR = 0xFF555555;
     private static final GraphicsFiller DEFAULT_GRAPHICS_FILLER = new SimpleGraphicsFiller(BACKGROUND_COLOR, FOREGROUND_COLOR);
 
@@ -117,8 +118,11 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
         Vector2i secondEnd     = new Vector2i(slotX2+LINK_SLOT_SIZE, cy+LINK_SLOT_SIZE);
         Vector2i mousePosition = new Vector2i(mouseX, mouseY);
 
-        renderSlot(graphics, firstStart, firstEnd, mousePosition, firstItem);
-        renderSlot(graphics, secondStart, secondEnd, mousePosition, secondItem);
+        GraphicsFiller redFiller  = new CheckerboardGraphicsFiller(BACKGROUND_COLOR, 0xFF7c2c3a, 0xFF95323a);
+        GraphicsFiller blueFiller = new CheckerboardGraphicsFiller(BACKGROUND_COLOR, 0xFF4f58a9, 0xFF5270c4);
+
+        renderSlot(graphics, redFiller, firstStart, firstEnd,  mousePosition,   firstItem );
+        renderSlot(graphics, blueFiller, secondStart, secondEnd, mousePosition, secondItem);
 
         renderInventory(graphics, mouseX, mouseY);
     }
@@ -161,7 +165,10 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     }
 
     private void renderSlot(GuiGraphics graphics, Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition, ItemStack stack) {
-        GraphicsFiller filler = DEFAULT_GRAPHICS_FILLER.clone();
+        renderSlot(graphics, DEFAULT_GRAPHICS_FILLER.clone(), startPosition, endPosition, mousePosition, stack);
+    }
+
+    private void renderSlot(GuiGraphics graphics, GraphicsFiller filler, Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition, ItemStack stack) {
         filler.setHovering( isInBounds(startPosition, endPosition, mousePosition) );
         filler.fill(graphics, startPosition, endPosition);
 
