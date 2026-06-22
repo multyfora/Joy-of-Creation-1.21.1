@@ -38,12 +38,12 @@ public class CreativeStaffCaptureHandler {
         if (isGrabbed(target.getId())) return;
 
         double distance = player.distanceTo(target);
-        if (distance > JocConfig.STAFF_GRAB_RANGE.get()) return;
+        if (distance > 64.0) return;
 
         releaseSession(player);
 
         ServerLevel level = (ServerLevel) target.level();
-        double holdDist = Math.min(distance, JocConfig.STAFF_HOLD_DISTANCE.get());
+        double holdDist = distance;
         EntityGrabSession session = new EntityGrabSession(target.getId(), holdDist, level, target.position());
         GRAB_SESSIONS.put(player.getUUID(), session);
         event.setCanceled(true);
@@ -79,11 +79,11 @@ public class CreativeStaffCaptureHandler {
         if (isGrabbed(target.getId())) return;
 
         double distance = player.distanceTo(target);
-        if (distance > JocConfig.STAFF_GRAB_RANGE.get()) return;
+        if (distance > 64.0) return;
 
         releaseSession(player);
 
-        double holdDist = Math.min(distance, JocConfig.STAFF_HOLD_DISTANCE.get());
+        double holdDist = distance;
         EntityGrabSession session = new EntityGrabSession(target.getId(), holdDist, level, target.position());
         GRAB_SESSIONS.put(player.getUUID(), session);
 
@@ -109,7 +109,7 @@ public class CreativeStaffCaptureHandler {
     public static void onSetHoldDistance(EntityGrabPayloads.SetHoldDistance payload, ServerPlayer player) {
         EntityGrabSession session = GRAB_SESSIONS.get(player.getUUID());
         if (session != null && session.grabbedEntityId == payload.entityId()) {
-            session.holdDistance = Math.clamp(payload.distance(), 0.5, JocConfig.STAFF_GRAB_RANGE.get());
+            session.holdDistance = Math.clamp(payload.distance(), 0.5, 64.0);
         }
     }
 
@@ -167,7 +167,11 @@ public class CreativeStaffCaptureHandler {
             session.lastDelta = newPos.subtract(session.lastTickPos);
             session.lastTickPos = newPos;
 
-            target.setPos(newPos.x, newPos.y, newPos.z);
+            if (target instanceof ServerPlayer sp) {
+                sp.connection.teleport(newPos.x, newPos.y, newPos.z, sp.getYRot(), sp.getXRot());
+            } else {
+                target.setPos(newPos.x, newPos.y, newPos.z);
+            }
             target.setDeltaMovement(Vec3.ZERO);
             target.fallDistance = 0;
             target.hurtMarked = true;

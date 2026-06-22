@@ -67,6 +67,18 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        client2 {
+            client()
+            gameDirectory = project.file('run2')
+
+            jvmArgument '-XX:-UseSuperWord'
+            jvmArgument '-Djava.net.preferIPv4Stack=true'
+
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+
+            programArgument '--username=DevPlayer2'
+        }
+
         server {
             server()
             programArgument '--nogui'

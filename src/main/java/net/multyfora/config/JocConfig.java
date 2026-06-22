@@ -7,8 +7,6 @@ public class JocConfig {
 
     public static final ModConfigSpec.BooleanValue ENABLE_CREATIVE_STAFF;
     public static final ModConfigSpec.BooleanValue CAN_PICKUP_PLAYERS;
-    public static final ModConfigSpec.DoubleValue STAFF_GRAB_RANGE;
-    public static final ModConfigSpec.DoubleValue STAFF_HOLD_DISTANCE;
 
     public static final ModConfigSpec SPEC;
 
@@ -22,14 +20,6 @@ public class JocConfig {
         CAN_PICKUP_PLAYERS = BUILDER
                 .comment("Allow the creative staff to grab other players")
                 .define("canPickupPlayers", false);
-
-        STAFF_GRAB_RANGE = BUILDER
-                .comment("Maximum range in blocks for grabbing entities")
-                .defineInRange("staffGrabRange", 32.0, 1.0, 128.0);
-
-        STAFF_HOLD_DISTANCE = BUILDER
-                .comment("Default distance in blocks to hold grabbed entities from the player")
-                .defineInRange("staffHoldDistance", 5.0, 1.0, 32.0);
 
         BUILDER.pop();
         SPEC = BUILDER.build();
