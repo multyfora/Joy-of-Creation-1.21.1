@@ -162,9 +162,7 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
 
     private void renderSlot(GuiGraphics graphics, Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition, ItemStack stack) {
         GraphicsFiller filler = DEFAULT_GRAPHICS_FILLER.clone();
-        if ( isInBounds(startPosition, endPosition, mousePosition) ) {
-            filler.setHoverColor(HOVER_BACKGROUND_COLOR);
-        }
+        filler.setHovering( isInBounds(startPosition, endPosition, mousePosition) );
         filler.fill(graphics, startPosition, endPosition);
 
         Vector2i size = new Vector2i(endPosition.x - startPosition.x, endPosition.y - startPosition.y);
