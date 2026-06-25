@@ -6,12 +6,11 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 
+import dev.simulated_team.simulated.content.blocks.nav_table.NavTableBlock;
+import dev.simulated_team.simulated.content.blocks.nav_table.navigation_target.NavigationTarget;
 import net.createmod.catnip.animation.LerpedFloat;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Vec3i;
+import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -57,12 +56,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
     // Reference to the sublevel containing this block, if any
     private SubLevel subLevel;
 
-    // Maximum range: targets beyond this distance return 0 signal
-    private static final double MAX_RANGE = 200.0;
-    // Deadzone radius: targets within this distance return 0 signal
-    private static final float DEADZONE = 2.0f;
-    private static final double EPSILON = 1.0e-4;
-
     public CoordNavBlockEntity(BlockPos pos, BlockState state) {
         super(JocBlockEntityTypes.COORD_NAV.get(), pos, state);
         targetX = 0;
@@ -98,7 +91,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
 
         if (!level.isClientSide) {
             updateTarget();
-            updateCurrentAngle();
 
             // Recalculate distance to target every tick
             Vec3 targetLocal = getTargetPosition(false);
@@ -181,100 +173,28 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
      * Uses arcsin to map the angle to a 0-15 signal range.
      **/
     public int getRedstoneStrength(Direction direction) {
-        if (level == null) return 0;
+        if( this.level != null && this.level.isClientSide && this.isVirtual() ) {
+            Direction facing = (Direction)this.getBlockState().getValue(NavTableBlock.FACING);
+            Vec3i normal = facing.getNormal();
+            double angleRad = Math.toRadians((double)this.lerpedAngleDegrees.getValue());
+            Vec3 targetPos = new Vec3(Math.cos(angleRad), (double)0.0F, Math.sin(angleRad));
+            targetPos = NavigationTarget.getPlaneProjectedPos(targetPos, normal);
+            double dot = -targetPos.dot(Vec3.atLowerCornerOf(direction.getNormal()));
+            return (int)(Math.asin(dot) / Math.PI * (double)30.0F + (double)0.5F);
+        } else {
+            int power = 0;
+            net.multyfora.content.coordnav.NavigationTarget nti = new net.multyfora.content.coordnav.NavigationTarget(
+                new GlobalPos(
+                    this.level.dimension(),
+                    this.getBlockPos()
+                )
+            );
+            if( nti != null && this.getTargetPosition(false) != null ) {
+                power = nti.getRedstoneStrength(this, direction);
+            }
 
-        // Client-side virtual render path: uses the lerped angle for display purposes
-        if (level.isClientSide && isVirtual()) {
-            Direction facing = getBlockState().getValue(CoordNavBlock.FACING);
-            Vec3i facingNormal = facing.getNormal();
-            double angleRad = Math.toRadians(lerpedAngleDegrees.getValue());
-            Vec3 dirVec = new Vec3(Math.cos(angleRad), 0, Math.sin(angleRad));
-            Vec3 projected = getPlaneProjectedPos(dirVec, facingNormal);
-            double dot = projected.dot(Vec3.atLowerCornerOf(direction.getNormal()));
-            return (int) (Math.asin(dot) / Math.PI * 30.0 + 0.5);
+            return power;
         }
-
-        Vec3 targetLocal = getTargetPosition(false);
-        if (targetLocal == null) return 0;
-
-        Vec3 targetWorld = getTargetPosition(true);
-        Vec3 selfPos = getProjectedSelfPos();
-        Vec3 toTarget = targetWorld.subtract(selfPos);
-
-        Direction facing = getBlockState().getValue(CoordNavBlock.FACING);
-        Vec3i facingNormal = facing.getNormal();
-
-        /**
-         * Rotate the target vector by the sublevel's orientation so the computation
-         * works correctly on ships/rotated sublevels
-         **/
-        Quaterniond rot = getSublevelRot();
-        toTarget = rotateQuat(toTarget, rot);
-
-        // Project the target vector onto the plane perpendicular to the facing direction
-        Vec3 projected = getPlaneProjectedPos(toTarget, facingNormal);
-        double planeDist = projected.length();
-
-        // Range and deadzone checks
-        if (MAX_RANGE > 0 && planeDist > MAX_RANGE - EPSILON) return 0;
-        if (planeDist <= DEADZONE - EPSILON) return 0;
-
-        // Compute dot product with the queried direction, normalise, and map via arcsin to 0-15
-        double dot = projected.dot(Vec3.atLowerCornerOf(direction.getNormal()));
-        double normalized = dot / planeDist;
-        return (int) (Math.asin(normalized) / Math.PI * 30.0 + 0.5);
-    }
-
-    // Returns the current target angle for client-side rendering, or 0 if no target
-    public float getClientTargetAngle(float partialTick) {
-        if (level != null && level.isClientSide) {
-            float val = lerpedAngleDegrees.getValue(partialTick);
-            return (float) -Math.toRadians(val);
-        }
-        return 0;
-    }
-
-    // Sets the target angle chase value with exponential smoothing
-    public void forceCurrentAngle(float angle) {
-        lerpedAngleDegrees.chase(angle, 0.8, LerpedFloat.Chaser.EXP);
-    }
-
-    /**
-     * Recalculates the angle from this block toward the target, accounting for sublevel rotation
-     * and block facing direction. Only runs on the server side.
-     **/
-    private void updateCurrentAngle() {
-        if (level.isClientSide) {
-            relativeAngle = 0;
-            return;
-        }
-
-        Vec3 target = getTargetPosition(false);
-        if (target == null) {
-            relativeAngle = 0;
-            return;
-        }
-
-        Vec3 self = getProjectedSelfPos();
-        Vec3 toTarget = getTargetPosition(true).subtract(self);
-        Vec3 normalized = toTarget.normalize();
-
-        // Remove sublevel rotation so the angle is relative to the sublevel's orientation
-        Quaterniond rot = getSublevelRot();
-        normalized = rotateQuat(normalized, rot);
-
-        // Rotate by the block's facing direction so the pointer aligns with the block's face
-        Direction facing = getBlockState().getValue(CoordNavBlock.FACING);
-        Quaternionf facingRot = facing.getRotation();
-        normalized = rotateQuat(normalized, facingRot);
-
-        // Flatten to the horizontal plane for angle computation
-        normalized = new Vec3(normalized.x, 0, normalized.z);
-
-        // Compute angle in degrees relative to the positive X axis, normalised to 0-360
-        float angle = (float) Math.toDegrees(Math.atan2(normalized.z, normalized.x));
-        relativeAngle = (360.0f + angle) % 360.0f;
-        forceCurrentAngle(relativeAngle);
     }
 
     // Returns the block's position transformed by the sublevel's logical pose (for sublevel-aware positioning)
@@ -308,14 +228,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
             } catch (Exception ignored) {}
         }
         return q;
-    }
-
-    public double distanceToTarget() {
-        return distanceToTarget;
-    }
-
-    public double lastDistanceToTarget() {
-        return lastDistanceToTarget;
     }
 
     /**
