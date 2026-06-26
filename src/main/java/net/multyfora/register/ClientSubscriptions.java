@@ -63,40 +63,45 @@ public class ClientSubscriptions {
     // Longer Implementations
 
     private static void handleMouseButtonPress(InputEvent.MouseButton.Pre event) {
-        if (event.getAction() != 1) return;
-        if (event.getButton() != 1) return;
-
-        if (!JocConfig.ENABLE_CREATIVE_STAFF.get()) {
+        if(
+               event.getAction() != 1
+            || event.getButton() != 1
+            || !JocConfig.ENABLE_CREATIVE_STAFF.get()
+        ) {
             return;
         }
 
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-
-        if (!CreativeStaffCaptureHandler.isHoldingStaff(mc.player)) {
+        Minecraft client = Minecraft.getInstance();
+        if(
+            client.player == null || client.level == null
+            || !CreativeStaffCaptureHandler.isHoldingStaff(client.player)
+        ) {
             return;
         }
 
         Entity target = null;
-
-        if (mc.crosshairPickEntity != null) {
-            target = mc.crosshairPickEntity;
+        if(client.crosshairPickEntity != null) {
+            target = client.crosshairPickEntity;
         } else {
-            Entity viewer = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
-            if (viewer == null) return;
+            Entity viewer = client.getCameraEntity() != null ? client.getCameraEntity() : client.player;
+            if (viewer == null) {
+                return;
+            }
 
             float range = 64.0f;
             Vec3 start = viewer.getEyePosition();
             Vec3 look = viewer.getLookAngle();
-            Vec3 end = start.add(look.scale(range));
-            AABB aabb = viewer.getBoundingBox()
-                    .expandTowards(look.scale(range))
-                    .inflate(1.0, 1.0, 1.0);
+            Vec3 end = start.add( look.scale(range) );
+            AABB aabb = viewer
+                .getBoundingBox()
+                .expandTowards( look.scale(range) )
+                .inflate(1.0, 1.0, 1.0)
+            ;
 
             EntityHitResult result = ProjectileUtil.getEntityHitResult(
-                    viewer, start, end, aabb,
-                    e -> !e.isSpectator() && e.isPickable(),
-                    range * range
+                viewer, start, end, aabb,
+                (entity) -> { return !entity.isSpectator() && entity.isPickable(); },
+                range * range
             );
 
             if (result != null) {
@@ -110,27 +115,38 @@ public class ClientSubscriptions {
         }
     }
 
-    static void handleMouseScroll(InputEvent.MouseScrollingEvent event) {        if (!JocConfig.ENABLE_CREATIVE_STAFF.get()) return;
+    static void handleMouseScroll(InputEvent.MouseScrollingEvent event) {
+        if( !JocConfig.ENABLE_CREATIVE_STAFF.get() ) {
+            return;
+        }
 
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-
-        if (EntityGrabClientState.grabbedEntityId == 0) return;
-        if (!CreativeStaffCaptureHandler.isHoldingStaff(mc.player)) return;
+        Minecraft client = Minecraft.getInstance();
+        if(
+               client.player == null || client.level == null
+            || EntityGrabClientState.grabbedEntityId == 0
+            || !CreativeStaffCaptureHandler.isHoldingStaff(client.player)
+        ) {
+            return;
+        }
 
         double delta = event.getScrollDeltaY();
-        if (delta == 0) return;
+        if (delta == 0) {
+            return;
+        }
 
         double sensitivity = 0.5;
-        double newDist = EntityGrabClientState.holdDistance + delta * sensitivity;
-        double maxDist = 64.0;
-        newDist = Math.clamp(newDist, 0.5, maxDist);
+        double new_distance = EntityGrabClientState.holdDistance + delta * sensitivity;
+        double maximum_distance = 64.0;
+        new_distance = Math.clamp(new_distance, 0.5, maximum_distance);
 
-        if (newDist != EntityGrabClientState.holdDistance) {
-            EntityGrabClientState.holdDistance = newDist;
-            PacketDistributor.sendToServer(new EntityGrabPayloads.SetHoldDistance(
-                    EntityGrabClientState.grabbedEntityId, newDist
-            ));
+        if(new_distance != EntityGrabClientState.holdDistance) {
+            EntityGrabClientState.holdDistance = new_distance;
+            PacketDistributor.sendToServer(
+                new EntityGrabPayloads.SetHoldDistance(
+                    EntityGrabClientState.grabbedEntityId,
+                    new_distance
+                )
+            );
         }
 
         event.setCanceled(true);
