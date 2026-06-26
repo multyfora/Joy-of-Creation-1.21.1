@@ -1,0 +1,107 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"1": "joc:item/phone",
+		"redstone_antenna": "create:block/redstone_antenna"
+	},
+	"elements": [
+		{
+			"name": "screen",
+			"from": [6.5, 8.5, 5.225],
+			"to": [9.5, 11.35, 5.725],
+			"rotation": {"angle": -45, "axis": "x", "origin": [8, 9.5, 5.475]},
+			"faces": {
+				"north": {"uv": [10.66667, 6.85715, 13.86667, 13.71429], "texture": "#1"},
+				"east": {"uv": [10.66667, 14.85715, 13.86667, 16], "rotation": 90, "texture": "#1"},
+				"south": {"uv": [13.86667, 6.85715, 10.66667, 13.71429], "texture": "#1"},
+				"west": {"uv": [13.86667, 14.85715, 10.66667, 16], "rotation": 90, "texture": "#1"},
+				"up": {"uv": [13.86667, 14.85715, 10.66667, 13.71429], "texture": "#1"},
+				"down": {"uv": [10.66667, 13.71429, 13.86667, 14.85715], "texture": "#1"}
+			}
+		},
+		{
+			"name": "base",
+			"from": [6.5, 8, 6],
+			"to": [9.5, 9, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6.5, 8, 5]},
+			"faces": {
+				"north": {"uv": [1.06667, 0, 4.26666, 2.28572], "rotation": 180, "texture": "#1"},
+				"east": {"uv": [7.46667, 2.28572, 8.53333, 13.71429], "rotation": 270, "texture": "#1"},
+				"south": {"uv": [1.06667, 13.71429, 4.26666, 16], "texture": "#1"},
+				"west": {"uv": [0, 2.28572, 1.06667, 13.71429], "rotation": 270, "texture": "#1"},
+				"up": {"uv": [4.26666, 13.71429, 1.06667, 2.28572], "texture": "#1"},
+				"down": {"uv": [7.46667, 2.28572, 4.26666, 13.71429], "rotation": 180, "texture": "#1"}
+			}
+		},
+		{
+			"name": "strip",
+			"from": [9.5, 8.5, 6],
+			"to": [11, 9, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6.5, 8, 5]},
+			"faces": {
+				"north": {"uv": [15.46667, 0, 16, 3.42857], "rotation": 90, "texture": "#1"},
+				"east": {"uv": [10.66667, 5.71429, 16, 6.85715], "texture": "#1"},
+				"south": {"uv": [10.66667, 0, 11.2, 3.42857], "rotation": 270, "texture": "#1"},
+				"up": {"uv": [16, 3.42857, 10.66667, 0], "rotation": 90, "texture": "#1"},
+				"down": {"uv": [10.66667, 6.85715, 16, 3.42857], "rotation": 90, "texture": "#1"}
+			}
+		},
+		{
+			"name": "knob",
+			"from": [9.75, 9, 9.75],
+			"to": [10.75, 9.5, 10.75],
+			"rotation": {"angle": 0, "axis": "y", "origin": [9.75, 8.5, 9.75]},
+			"faces": {
+				"north": {"uv": [10.13334, 0, 9.06667, 1.14286], "texture": "#1"},
+				"east": {"uv": [10.13334, 1.14286, 9.06667, 2.28572], "texture": "#1"},
+				"south": {"uv": [10.13334, 1.14286, 9.06667, 2.28572], "texture": "#1"},
+				"west": {"uv": [9.06667, 0, 10.13334, 1.14286], "texture": "#1"},
+				"up": {"uv": [10.13334, 2.28572, 9.06667, 0], "texture": "#1"}
+			}
+		},
+		{
+			"name": "AntennaX",
+			"from": [5.5, 6.825, 2.75],
+			"to": [7, 12.825, 3.25],
+			"rotation": {"angle": -45, "axis": "x", "origin": [6, 12.075, 3.25]},
+			"faces": {
+				"north": {"uv": [0, 0, 3, 9], "texture": "#redstone_antenna"},
+				"south": {"uv": [0, 0, 3, 9], "texture": "#redstone_antenna"},
+				"down": {"uv": [0, 9, 3, 10], "texture": "#redstone_antenna"}
+			}
+		},
+		{
+			"name": "AntennaTop",
+			"from": [6, 12.325, 3.25],
+			"to": [6.5, 12.325, 3.75],
+			"rotation": {"angle": -45, "axis": "x", "origin": [6, 11.575, 3.75]},
+			"faces": {
+				"up": {"uv": [1.25, 1.25, 1.75, 1.75], "texture": "#redstone_antenna"}
+			}
+		},
+		{
+			"name": "AntennaZ",
+			"from": [6, 6.825, 2.25],
+			"to": [6.5, 12.825, 3.75],
+			"rotation": {"angle": -45, "axis": "x", "origin": [6, 12.075, 3.25]},
+			"faces": {
+				"east": {"uv": [0, 0, 3, 9], "texture": "#redstone_antenna"},
+				"west": {"uv": [0, 0, 3, 9], "texture": "#redstone_antenna"}
+			}
+		},
+		{
+			"name": "wires",
+			"from": [9.5, 8, 6.5],
+			"to": [10.5, 8.5, 10.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [9.5, 7, 8]},
+			"faces": {
+				"north": {"uv": [8.53333, 12.57143, 9.6, 13.71429], "texture": "#1"},
+				"east": {"uv": [9.6, 3.42857, 10.13334, 12.57143], "rotation": 90, "texture": "#1"},
+				"south": {"uv": [8.53333, 12.57143, 9.6, 13.71429], "texture": "#1"},
+				"down": {"uv": [8.53333, 12.57143, 9.6, 3.42857], "texture": "#1"}
+			}
+		}
+	]
+}

@@ -1,5 +1,6 @@
 package net.multyfora;
 
+import net.multyfora.content.portable_throttle.PortableThrottleRenderHandler;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -11,6 +12,7 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import net.minecraft.client.Minecraft;
@@ -36,8 +38,12 @@ import net.multyfora.network.EntityGrabPayloads;
 @Mod(value = AeronauticsJoyofcreation.MODID, dist = Dist.CLIENT)
 @EventBusSubscriber(modid = AeronauticsJoyofcreation.MODID, value = Dist.CLIENT)
 public class AeronauticsJoyofcreationClient {
+
+    public static final PortableThrottleRenderHandler PORTABLE_THROTTLE_RENDER_HANDLER = new PortableThrottleRenderHandler();
+
     public AeronauticsJoyofcreationClient(ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        PORTABLE_THROTTLE_RENDER_HANDLER.registerListeners(NeoForge.EVENT_BUS);
     }
 
     @SubscribeEvent
