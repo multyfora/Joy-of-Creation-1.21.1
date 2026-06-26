@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "joc:block/coord_navigator_bottom",
+    "side": "joc:block/coord_navigator_side",
+    "top": "joc:block/coord_navigator_top"
+  }
+}
