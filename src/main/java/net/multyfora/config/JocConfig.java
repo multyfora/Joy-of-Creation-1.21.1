@@ -14,12 +14,14 @@ public class JocConfig {
         BUILDER.push("creative_staff");
 
         ENABLE_CREATIVE_STAFF = BUILDER
-                .comment("Enable creative staff entity grab/release functionality")
-                .define("enableCreativeStaff", true);
+            .comment("Enable creative staff entity grab/release functionality")
+            .define("enableCreativeStaff", true)
+        ;
 
         CAN_PICKUP_PLAYERS = BUILDER
-                .comment("Allow the creative staff to grab other players")
-                .define("canPickupPlayers", false);
+            .comment("Allow the creative staff to grab other players")
+            .define("canPickupPlayers", false)
+        ;
 
         BUILDER.pop();
         SPEC = BUILDER.build();

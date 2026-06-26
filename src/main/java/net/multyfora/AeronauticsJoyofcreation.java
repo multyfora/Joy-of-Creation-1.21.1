@@ -1,42 +1,20 @@
 package net.multyfora;
 
 import net.multyfora.register.CreativeRegister;
-import net.multyfora.register.EventsRegister;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocItems;
 import net.multyfora.index.JocMenuTypes;
-import net.multyfora.network.CoordNavPayloads;
-import net.multyfora.network.PortableTypewriterInputPacket;
-import net.multyfora.network.PortableTypewriterBindPacket;
-import net.multyfora.network.PortableThrottleBindPacket;
-import net.multyfora.network.PortableThrottleConfigPacket;
-import net.multyfora.network.PortableThrottleSignalPacket;
-import net.multyfora.network.PortableTypewriterSetFreqPacket;
 import net.multyfora.config.JocConfig;
-import net.multyfora.content.coordnav.CoordNavBlockEntity;
-import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
-import net.multyfora.content.physics_staff.EntityGrabClientState;
-import net.multyfora.network.EntityGrabPayloads;
-import net.multyfora.content.portable_typewriter.PortableTypewriterServerHandler;
-import net.multyfora.content.portable_throttle.PortableThrottleServerHandler;
 
 import static net.multyfora.register.CreativeRegister.registerCreativeModeTab;
 import static net.multyfora.register.EventsRegister.registerEvents;

@@ -14,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import dev.simulated_team.simulated.util.click_interactions.InteractCallback.Result;
-import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.network.EntityGrabPayloads;
 import net.neoforged.neoforge.network.PacketDistributor;
