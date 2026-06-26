@@ -27,6 +27,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.network.CoordNavPayloads;
+import org.spongepowered.asm.mixin.Unique;
 
 /**
  * Coordinate Navigator block: a directional redstone source that points toward a configurable
@@ -37,12 +38,6 @@ import net.multyfora.network.CoordNavPayloads;
 public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlockEntity>, IWrenchable {
 
     public static final DirectionProperty FACING = DirectionalBlock.FACING;
-
-    // Voxel shape: a small base plate, a thin pole, and a wider top cap
-    private static final VoxelShape BASE = Block.box(0, 0, 0, 16, 2, 16);
-    private static final VoxelShape POLE = Block.box(6, 2, 6, 10, 14, 10);
-    private static final VoxelShape TOP = Block.box(1, 14, 1, 15, 16, 15);
-    private static final VoxelShape SHAPE = Shapes.join(Shapes.join(BASE, POLE, BooleanOp.OR), TOP, BooleanOp.OR);
 
     public CoordNavBlock(Properties properties) {
         super(properties);
@@ -67,7 +62,7 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return SHAPE;
+        return getShape();
     }
 
     // Opens the coordinate configuration GUI when right-clicked with an empty hand
@@ -133,5 +128,61 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
     @Override
     public BlockEntityType<? extends CoordNavBlockEntity> getBlockEntityType() {
         return JocBlockEntityTypes.COORD_NAV.get();
+    }
+
+    @Unique
+    private static VoxelShape getShape() {
+        final VoxelShape MAGNETS; {
+            final VoxelShape BOTTOM_MAGNET = Block.box(3, 0,    3, 16-3, 3,  16-3);
+            final VoxelShape    TOP_MAGNET = Block.box(3, 16-3, 3, 16-3, 16, 16-3);
+
+            MAGNETS = Shapes.join(BOTTOM_MAGNET, TOP_MAGNET, BooleanOp.OR);
+        }
+
+        final VoxelShape POLES; {
+            final VoxelShape NORTHEAST = Block.box(0,    0, 0,    2,    16, 2 );
+            final VoxelShape NORTHWEST = Block.box(16-2, 0, 0,    16,   16, 2 );
+            final VoxelShape SOUTHEAST = Block.box(0,    0, 16-2, 2,    16, 16);
+            final VoxelShape SOUTHWEST = Block.box(16-2, 0, 16-2, 16,   16, 16);
+
+            POLES = Shapes.join(
+                Shapes.join(NORTHEAST, NORTHWEST, BooleanOp.OR),
+                Shapes.join(SOUTHEAST, SOUTHWEST, BooleanOp.OR),
+                BooleanOp.OR
+            );
+        }
+
+        final VoxelShape CENTER = Block.box(8-1, 8-1, 8-1, 8+1, 8+1 ,8+1);
+
+        final VoxelShape PADS; {
+            final VoxelShape NORTHEAST_FIRST  = Block.box(0, 8-2, 0, 4-2, 8+2, 4-1);
+            final VoxelShape NORTHEAST_SECOND = Block.box(0, 8-2, 0, 4-1, 8+2, 4-2);
+            final VoxelShape NORTHWEST_FIRST  = Block.box(0, 8-2, 16-2, 3, 8+2, 16);
+            final VoxelShape NORTHWEST_SECOND = Block.box(0, 8-2, 16-3, 2, 8+2, 16);
+            final VoxelShape SOUTHEAST_FIRST  = Block.box(16-2, 8-2, 0, 16, 8+2, 3);
+            final VoxelShape SOUTHEAST_SECOND = Block.box(16-3, 8-2, 0, 16, 8+2, 2);
+            final VoxelShape SOUTHWEST_FIRST  = Block.box(16-2, 8-2, 16-3, 16, 8+2, 16);
+            final VoxelShape SOUTHWEST_SECOND = Block.box(16-3, 8-2, 16-2, 16, 8+2, 16);
+
+            PADS = Shapes.join(
+                Shapes.join(
+                    Shapes.join(NORTHEAST_FIRST, NORTHEAST_SECOND, BooleanOp.OR),
+                    Shapes.join(NORTHWEST_FIRST, NORTHWEST_SECOND, BooleanOp.OR),
+                    BooleanOp.OR
+                ),
+                Shapes.join(
+                    Shapes.join(SOUTHEAST_FIRST, SOUTHEAST_SECOND, BooleanOp.OR),
+                    Shapes.join(SOUTHWEST_FIRST, SOUTHWEST_SECOND, BooleanOp.OR),
+                    BooleanOp.OR
+                ),
+                BooleanOp.OR
+            );
+        }
+
+        return Shapes.join(
+            Shapes.join(MAGNETS, POLES, BooleanOp.OR),
+            Shapes.join(CENTER, PADS, BooleanOp.OR),
+            BooleanOp.OR
+        );
     }
 }
