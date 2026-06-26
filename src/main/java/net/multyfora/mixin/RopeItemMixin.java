@@ -27,13 +27,23 @@ public class RopeItemMixin {
      * At the return of isValidRopeAttachment, if it returned false, check if the target
      * is a multi-rope holder that can accept another rope and override the return value
      **/
-    @Inject(method = "isValidRopeAttachment", at = @At("RETURN"), cancellable = true, remap = false)
+    @Inject(
+        method = "isValidRopeAttachment",
+        at = @At("RETURN"),
+        cancellable = true,
+        remap = false
+    )
     private static void joc$acceptMultiRope(Level level, BlockPos blockPos, CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValue()) return;
+        if( cir.getReturnValue() ) {
+            return;
+        }
 
-        if (level.getBlockEntity(blockPos) instanceof SmartBlockEntity smartBlockEntity) {
+        if(level.getBlockEntity(blockPos) instanceof SmartBlockEntity smartBlockEntity) {
             RopeStrandHolderBehavior behavior = smartBlockEntity.getBehaviour(RopeStrandHolderBehavior.TYPE);
-            if (behavior instanceof IMultiRopeBehavior multi && multi.joc$canAcceptAnotherRope()) {
+            if(
+                behavior instanceof IMultiRopeBehavior multi
+                && multi.joc$canAcceptAnotherRope()
+            ) {
                 cir.setReturnValue(true);
             }
         }

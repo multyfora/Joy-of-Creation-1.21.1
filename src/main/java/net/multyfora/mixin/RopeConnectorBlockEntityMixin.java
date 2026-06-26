@@ -27,8 +27,11 @@ public class RopeConnectorBlockEntityMixin {
      **/
     @Inject(method = "addBehaviours", at = @At("TAIL"))
     private void joc$setConnectorMultiRope(List<BlockEntityBehaviour> behaviours, CallbackInfo ci) {
-        for (BlockEntityBehaviour behaviour : behaviours) {
-            if (behaviour instanceof RopeStrandHolderBehavior && behaviour instanceof IMultiRopeBehavior multi) {
+        for(BlockEntityBehaviour behaviour : behaviours) {
+            if(
+                behaviour instanceof RopeStrandHolderBehavior
+                && behaviour instanceof IMultiRopeBehavior multi
+            ) {
                 multi.joc$setMaxRopeAttachments(Integer.MAX_VALUE);
             }
         }
