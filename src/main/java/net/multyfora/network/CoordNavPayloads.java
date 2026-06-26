@@ -23,7 +23,7 @@ public final class CoordNavPayloads {
         public static final Type<OpenCoordNavPayload> TYPE = new Type<>(ID);
         // Stream codec: just a BlockPos (compact long encoding)
         public static final StreamCodec<ByteBuf, OpenCoordNavPayload> CODEC =
-                BlockPos.STREAM_CODEC.map(OpenCoordNavPayload::new, OpenCoordNavPayload::pos);
+            BlockPos.STREAM_CODEC.map(OpenCoordNavPayload::new, OpenCoordNavPayload::pos);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -37,11 +37,11 @@ public final class CoordNavPayloads {
         public static final Type<UpdateCoordPayload> TYPE = new Type<>(ID);
         // Stream codec: BlockPos + 3 doubles
         public static final StreamCodec<ByteBuf, UpdateCoordPayload> CODEC = StreamCodec.composite(
-                BlockPos.STREAM_CODEC, UpdateCoordPayload::pos,
-                ByteBufCodecs.DOUBLE, UpdateCoordPayload::x,
-                ByteBufCodecs.DOUBLE, UpdateCoordPayload::y,
-                ByteBufCodecs.DOUBLE, UpdateCoordPayload::z,
-                UpdateCoordPayload::new
+            BlockPos.STREAM_CODEC, UpdateCoordPayload::pos,
+            ByteBufCodecs.DOUBLE, UpdateCoordPayload::x,
+            ByteBufCodecs.DOUBLE, UpdateCoordPayload::y,
+            ByteBufCodecs.DOUBLE, UpdateCoordPayload::z,
+            UpdateCoordPayload::new
         );
 
         @Override

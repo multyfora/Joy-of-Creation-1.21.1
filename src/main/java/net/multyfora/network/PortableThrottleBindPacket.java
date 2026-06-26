@@ -9,12 +9,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import net.multyfora.index.JocItems;
+
+import static net.multyfora.network.NetworkUtils.getItemIfValid;
 
 /**
  * Client-to-server packet: binds the Portable Throttle to a Redstone Link block's frequency.
@@ -25,8 +27,8 @@ public class PortableThrottleBindPacket implements CustomPacketPayload {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "throttle_bind");
     public static final Type<PortableThrottleBindPacket> TYPE = new Type<>(ID);
     public static final StreamCodec<ByteBuf, PortableThrottleBindPacket> CODEC = StreamCodec.composite(
-            BlockPos.STREAM_CODEC, p -> p.linkPos,
-            PortableThrottleBindPacket::new
+        BlockPos.STREAM_CODEC, p -> p.linkPos,
+        PortableThrottleBindPacket::new
     );
 
     // Position of the Redstone Link block being bound to
@@ -46,25 +48,23 @@ public class PortableThrottleBindPacket implements CustomPacketPayload {
      * Redstone Link's frequency from its LinkBehaviour, and writes it to the throttle item
      **/
     public void handle(net.minecraft.world.entity.player.Player player) {
-
-        if (!(player instanceof ServerPlayer sp) || sp.isSpectator() || !player.mayBuild()) {
+        ItemStack item = getItemIfValid(
+            player,
+            JocItems.PORTABLE_THROTTLE.asItem()
+        );
+        if(item == null) {
             return;
         }
 
-        ItemStack heldItem = player.getMainHandItem();
-        if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
-            heldItem = player.getOffhandItem();
-            if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
-                return;
-            }
-        }
-
         LinkBehaviour linkBehaviour = BlockEntityBehaviour.get(player.level(), linkPos, LinkBehaviour.TYPE);
-        if (linkBehaviour == null) {
+        if(linkBehaviour == null) {
             return;
         }
 
         Couple<Frequency> frequency = linkBehaviour.getNetworkKey();
-        PortableThrottleItem.setFrequency(heldItem, frequency, player.level().registryAccess());
+        PortableThrottleItem.setFrequency(
+            item, frequency,
+            player.level().registryAccess()
+        );
     }
 }

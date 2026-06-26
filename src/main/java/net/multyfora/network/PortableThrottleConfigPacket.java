@@ -9,11 +9,13 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
+import net.multyfora.index.JocItems;
+
+import static net.multyfora.network.NetworkUtils.getItemIfValid;
 
 /**
  * Client-to-server packet: sends updated frequency configuration for the Portable Throttle.
@@ -24,9 +26,9 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "throttle_config");
     public static final Type<PortableThrottleConfigPacket> TYPE = new Type<>(ID);
     public static final StreamCodec<ByteBuf, PortableThrottleConfigPacket> CODEC = StreamCodec.composite(
-            ByteBufCodecs.COMPOUND_TAG, p -> p.firstItem,
-            ByteBufCodecs.COMPOUND_TAG, p -> p.secondItem,
-            PortableThrottleConfigPacket::new
+        ByteBufCodecs.COMPOUND_TAG, p -> p.firstItem,
+        ByteBufCodecs.COMPOUND_TAG, p -> p.secondItem,
+        PortableThrottleConfigPacket::new
     );
 
     // NBT serialization of the two frequency-defining item stacks
@@ -48,27 +50,25 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
      * builds a frequency pair, and writes it to the item's NBT
      **/
     public void handle(net.minecraft.world.entity.player.Player player) {
-
-        if (!(player instanceof ServerPlayer sp) || sp.isSpectator()) {
+        ItemStack item = getItemIfValid(
+            player,
+            JocItems.PORTABLE_THROTTLE.asItem()
+        );
+        if(item == null) {
             return;
-        }
-
-        ItemStack heldItem = player.getMainHandItem();
-        if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
-            heldItem = player.getOffhandItem();
-            if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
-                return;
-            }
         }
 
         var registries = player.level().registryAccess();
         ItemStack first = ItemStack.parseOptional(registries, firstItem);
         ItemStack second = ItemStack.parseOptional(registries, secondItem);
-        if (first.isEmpty() || second.isEmpty()) {
+        if( first.isEmpty() || second.isEmpty() ) {
             return;
         }
 
-        Couple<Frequency> freq = Couple.create(Frequency.of(first), Frequency.of(second));
-        PortableThrottleItem.setFrequency(heldItem, freq, registries);
+        Couple<Frequency> freq = Couple.create(
+            Frequency.of(first),
+            Frequency.of(second)
+        );
+        PortableThrottleItem.setFrequency(item, freq, registries);
     }
 }
