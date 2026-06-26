@@ -17,9 +17,9 @@ public class EntityGrabPayloads {
     public record Start(int entityId, double holdDistance) implements CustomPacketPayload {
         public static final Type<Start> TYPE = new Type<>(START_ID);
         public static final StreamCodec<ByteBuf, Start> CODEC = StreamCodec.composite(
-                ByteBufCodecs.INT, Start::entityId,
-                ByteBufCodecs.DOUBLE, Start::holdDistance,
-                Start::new
+            ByteBufCodecs.INT, Start::entityId,
+            ByteBufCodecs.DOUBLE, Start::holdDistance,
+            Start::new
         );
 
         @Override
@@ -41,8 +41,8 @@ public class EntityGrabPayloads {
     public record GrabRequest(int entityId) implements CustomPacketPayload {
         public static final Type<GrabRequest> TYPE = new Type<>(GRAB_REQUEST_ID);
         public static final StreamCodec<ByteBuf, GrabRequest> CODEC = StreamCodec.composite(
-                ByteBufCodecs.INT, GrabRequest::entityId,
-                GrabRequest::new
+            ByteBufCodecs.INT, GrabRequest::entityId,
+            GrabRequest::new
         );
 
         @Override
@@ -54,9 +54,9 @@ public class EntityGrabPayloads {
     public record SetHoldDistance(int entityId, double distance) implements CustomPacketPayload {
         public static final Type<SetHoldDistance> TYPE = new Type<>(SET_HOLD_DISTANCE_ID);
         public static final StreamCodec<ByteBuf, SetHoldDistance> CODEC = StreamCodec.composite(
-                ByteBufCodecs.INT, SetHoldDistance::entityId,
-                ByteBufCodecs.DOUBLE, SetHoldDistance::distance,
-                SetHoldDistance::new
+            ByteBufCodecs.INT, SetHoldDistance::entityId,
+            ByteBufCodecs.DOUBLE, SetHoldDistance::distance,
+            SetHoldDistance::new
         );
 
         @Override

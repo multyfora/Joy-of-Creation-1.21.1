@@ -9,21 +9,24 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
+import net.multyfora.index.JocItems;
+
+import static net.multyfora.network.NetworkUtils.getItemIfValid;
 
 public class PortableTypewriterSetFreqPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "pt_set_freq");
     public static final Type<PortableTypewriterSetFreqPacket> TYPE = new Type<>(ID);
     public static final StreamCodec<ByteBuf, PortableTypewriterSetFreqPacket> CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT, p -> p.glfwKeyCode,
-            ByteBufCodecs.COMPOUND_TAG, p -> p.firstItem,
-            ByteBufCodecs.COMPOUND_TAG, p -> p.secondItem,
-            PortableTypewriterSetFreqPacket::new
+        ByteBufCodecs.VAR_INT, p -> p.glfwKeyCode,
+        ByteBufCodecs.COMPOUND_TAG, p -> p.firstItem,
+        ByteBufCodecs.COMPOUND_TAG, p -> p.secondItem,
+        PortableTypewriterSetFreqPacket::new
     );
 
     private final int glfwKeyCode;
@@ -41,24 +44,27 @@ public class PortableTypewriterSetFreqPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    public void handle(net.minecraft.world.entity.player.Player player) {
-        if (!(player instanceof ServerPlayer sp) || sp.isSpectator()) return;
-
-        ItemStack heldItem = player.getMainHandItem();
-        if (!(heldItem.getItem() instanceof PortableTypewriterItem)) {
-            heldItem = player.getOffhandItem();
-            if (!(heldItem.getItem() instanceof PortableTypewriterItem)) return;
+    public void handle(Player player) {
+        ItemStack item = getItemIfValid(
+            player,
+            JocItems.PORTABLE_TYPEWRITER.asItem()
+        );
+        if(item == null) {
+            return;
         }
 
         var registries = player.level().registryAccess();
         ItemStack first = ItemStack.parseOptional(registries, firstItem);
         ItemStack second = ItemStack.parseOptional(registries, secondItem);
-        if (first.isEmpty() || second.isEmpty()) {
-            PortableTypewriterItem.clearKeyBinding(heldItem, glfwKeyCode);
+        if( first.isEmpty() || second.isEmpty() ) {
+            PortableTypewriterItem.clearKeyBinding(item, glfwKeyCode);
             return;
         }
 
-        Couple<Frequency> freq = Couple.create(Frequency.of(first), Frequency.of(second));
-        PortableTypewriterItem.setKeyBinding(heldItem, glfwKeyCode, freq, registries);
+        Couple<Frequency> freq = Couple.create(
+            Frequency.of(first),
+            Frequency.of(second)
+        );
+        PortableTypewriterItem.setKeyBinding(item, glfwKeyCode, freq, registries);
     }
 }

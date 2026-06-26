@@ -2,6 +2,7 @@ package net.multyfora.mixin.physics_staff;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import dev.simulated_team.simulated.index.SimItems;
 import net.createmod.catnip.animation.AnimationTickHolder;
 import net.createmod.catnip.outliner.LineOutline;
 import net.createmod.catnip.render.DefaultSuperRenderTypeBuffer;
@@ -9,10 +10,11 @@ import net.createmod.catnip.render.SuperRenderTypeBuffer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -39,10 +41,12 @@ public class PhysicsStaffClientHandlerMixin {
     private static final LineOutline beamRenderLine = new LineOutline();
 
     static {
-        beamRenderLine.getParams()
-                .colored(0xFFFFFF)
-                .disableLineNormals()
-                .lineWidth(0.0375f);
+        beamRenderLine
+            .getParams()
+            .colored(0xFFFFFF)
+            .disableLineNormals()
+            .lineWidth(0.0375f)
+        ;
     }
 
     static {
@@ -64,38 +68,34 @@ public class PhysicsStaffClientHandlerMixin {
             handlerBeamsField.setAccessible(true);
 
             AeronauticsJoyofcreation.LOGGER.info("PhysicsBeam reflection initialized");
-        } catch (Exception e) {
-            AeronauticsJoyofcreation.LOGGER.error("Failed to init PhysicsBeam reflection", e);
+        } catch(Exception exception) {
+            AeronauticsJoyofcreation.LOGGER.error("Failed to init PhysicsBeam reflection", exception);
         }
     }
 
-    @Inject(method = "tick", at = @At("TAIL"))
+    @Inject(
+        method = "tick",
+        at = @At("TAIL")
+    )
     private void joc$tickTail(CallbackInfo ci) {
         PhysicsStaffClientHandler handler = SimulatedClient.PHYSICS_STAFF_CLIENT_HANDLER;
-        int grabbedId = EntityGrabClientState.grabbedEntityId;
 
-        if (grabbedId == 0) return;
-
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) {
-            EntityGrabClientState.grabbedEntityId = 0;
+        boolean isValid = joc$isValidAndHoldingStaff(1.0F);
+        if(!isValid) {
             return;
         }
+        @NotNull Minecraft client = Minecraft.getInstance();
+        assert client.level != null;
+        Entity target = client.level.getEntity(EntityGrabClientState.grabbedEntityId);
 
-        Entity target = mc.level.getEntity(grabbedId);
-        if (target == null || !target.isAlive()) {
-            EntityGrabClientState.grabbedEntityId = 0;
-            return;
-        }
-
-        boolean mainHand = mc.player.getMainHandItem().getItem() instanceof PhysicsStaffItem;
-        Vec3 focusPos = PhysicsStaffClientHandler.getStaffFocusPos(mc.player, mainHand, 1.0F);
-        if (focusPos.equals(Vec3.ZERO)) return;
-
+        assert target != null;
         Vec3 center = target.position().add(0, target.getBbHeight() / 2, 0);
 
+        assert client.player != null;
+        Vec3 focusPos = PhysicsStaffClientHandler.getStaffFocusPos(client.player, true, 1.0F);
+
         // Delegate to the handler's beam lifecycle
-        handler.updateBeam(mc.level, mc.player.getUUID(), focusPos, center);
+        handler.updateBeam(client.level, client.player.getUUID(), focusPos, center);
 
         // Animate the staff model in hand
         handler.extension = 1.0f;
@@ -104,78 +104,118 @@ public class PhysicsStaffClientHandlerMixin {
         handler.tilt = 1.0f;
     }
 
-    @Inject(method = "onRender", at = @At(value = "INVOKE", target = "Lnet/createmod/catnip/render/SuperRenderTypeBuffer;draw()V", shift = At.Shift.BEFORE))
+    @Inject(
+        method = "onRender",
+        at = @At(value = "INVOKE", target = "Lnet/createmod/catnip/render/SuperRenderTypeBuffer;draw()V", shift = At.Shift.BEFORE)
+    )
     private void joc$onRenderBeforeDraw(PoseStack poseStack, CallbackInfo ci) {
         int grabbedId = EntityGrabClientState.grabbedEntityId;
-        if (grabbedId == 0) return;
 
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        float partial_ticks = AnimationTickHolder.getPartialTicks();
+        boolean isValid = joc$isValidAndHoldingStaff(partial_ticks);
+        if(!isValid) {
+            return;
+        }
+        @NotNull Minecraft client = Minecraft.getInstance();
+        assert client.level != null;
+        Entity target = client.level.getEntity(EntityGrabClientState.grabbedEntityId);
 
-        Entity target = mc.level.getEntity(grabbedId);
-        if (target == null || !target.isAlive()) return;
-
-        boolean mainHand = mc.player.getMainHandItem().getItem() instanceof PhysicsStaffItem;
-        if (!mainHand && !(mc.player.getOffhandItem().getItem() instanceof PhysicsStaffItem)) return;
-
-        float partialTicks = AnimationTickHolder.getPartialTicks();
-        Vec3 focusPos = PhysicsStaffClientHandler.getStaffFocusPos(mc.player, mainHand, partialTicks);
-        if (focusPos.equals(Vec3.ZERO)) return;
+        assert client.player != null;
+        Vec3 focusPos = PhysicsStaffClientHandler.getStaffFocusPos(client.player, true, partial_ticks);
 
         // Ensure beam exists in the handler's map (first-frame fallback)
         PhysicsStaffClientHandler handler = SimulatedClient.PHYSICS_STAFF_CLIENT_HANDLER;
-        Vec3 renderEnd = target.getPosition(partialTicks).add(0, target.getBbHeight() / 2, 0);
+        assert target != null;
+        Vec3 renderEnd = target.getPosition(partial_ticks).add(0, target.getBbHeight() / 2, 0);
 
         // Check if beam exists in handler's map
         Object beam;
         try {
             Object beamsMap = handlerBeamsField.get(handler);
-            beam = beamsMap.getClass().getMethod("get", Object.class).invoke(beamsMap, mc.player.getUUID());
-        } catch (Exception e) {
+            beam = beamsMap.getClass()
+                .getMethod("get", Object.class)
+                .invoke( beamsMap, client.player.getUUID() )
+            ;
+        } catch(Exception exception) {
             beam = null;
         }
-        if (beam == null) {
+
+        if(beam == null) {
             // First frame before tick ran — create it directly
-            handler.updateBeam(mc.level, mc.player.getUUID(), focusPos, renderEnd);
+            handler.updateBeam(client.level, client.player.getUUID(), focusPos, renderEnd);
             try {
                 Object beamsMap = handlerBeamsField.get(handler);
-                beam = beamsMap.getClass().getMethod("get", Object.class).invoke(beamsMap, mc.player.getUUID());
-            } catch (Exception e) {
+                beam = beamsMap.getClass()
+                    .getMethod("get", Object.class)
+                    .invoke( beamsMap, client.player.getUUID() )
+                ;
+            } catch(Exception exception) {
                 return;
             }
-            if (beam == null) return;
+            if (beam == null) {
+                return;
+            }
         }
 
         try {
             List<?> nodes = (List<?>) beamNodesField.get(beam);
             double radius = beamNodeRadiusField.getDouble(beam);
+            if(nodes.size() < 2) {
+                return;
+            }
 
-            if (nodes.size() < 2) return;
-
-            Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
+            Vec3 cameraPos = client.gameRenderer.getMainCamera().getPosition();
             SuperRenderTypeBuffer buffer = DefaultSuperRenderTypeBuffer.getInstance();
 
             Vec3 diff = renderEnd.subtract(focusPos);
             int count = nodes.size();
             Vec3 prev = focusPos;
 
-            for (int i = 1; i < count; i++) {
+            for(int i = 1; i < count; i++) {
                 Object node = nodes.get(i);
                 Vec3 prevPos = (Vec3) nodePrevPosField.get(node);
                 Vec3 currPos = (Vec3) nodePosField.get(node);
-                Vec3 nodePos = prevPos.lerp(currPos, partialTicks);
+                Vec3 nodePos = prevPos.lerp(currPos, partial_ticks);
 
                 Vec3 currentPos = focusPos.add(
-                        diff.scale((double) i / (double) count)
-                ).add(nodePos.scale(radius));
+                    diff.scale( (double)i / (double)count )
+                ).add( nodePos.scale(radius) );
 
                 beamRenderLine.set(prev, currentPos);
-                beamRenderLine.render(poseStack, buffer, cameraPos, partialTicks);
+                beamRenderLine.render(poseStack, buffer, cameraPos, partial_ticks);
 
                 prev = currentPos;
             }
-        } catch (Exception e) {
-            AeronauticsJoyofcreation.LOGGER.error("[Beam] Failed to render", e);
+        } catch(Exception exception) {
+            AeronauticsJoyofcreation.LOGGER.error("[Beam] Failed to render", exception);
         }
+    }
+
+    @Unique
+    private static boolean joc$isValidAndHoldingStaff(float partialTicks) {
+        int grabbedId = EntityGrabClientState.grabbedEntityId;
+
+        if (grabbedId == 0) {
+            return false;
+        }
+
+        Minecraft client = Minecraft.getInstance();
+        if(client.player == null || client.level == null) {
+            EntityGrabClientState.grabbedEntityId = 0;
+            return false;
+        }
+
+        Entity target = client.level.getEntity(grabbedId);
+        if( target == null || !target.isAlive() ) {
+            EntityGrabClientState.grabbedEntityId = 0;
+            return false;
+        }
+
+        Vec3 focusPos = PhysicsStaffClientHandler.getStaffFocusPos(client.player, true, partialTicks);
+        if( focusPos.equals(Vec3.ZERO) ) {
+            return false;
+        }
+
+        return client.player.getMainHandItem().getItem().asItem() == SimItems.PHYSICS_STAFF.asItem();
     }
 }

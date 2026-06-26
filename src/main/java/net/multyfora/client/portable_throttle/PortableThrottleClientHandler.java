@@ -10,14 +10,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.lwjgl.glfw.GLFW;
 
-import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.FreqScreenMenu;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.PortableThrottleBindPacket;
 import net.multyfora.network.PortableThrottleSignalPacket;
-
-import org.slf4j.Logger;
 
 /**
  * Client-side handler for the Portable Throttle item.
@@ -25,8 +22,6 @@ import org.slf4j.Logger;
  * keepalive signal sending, and cleanup when the item is deselected.
  **/
 public class PortableThrottleClientHandler {
-
-    private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
 
     // Tracks left mouse button edge (was-down state)
     private static boolean wasLeftDown;
@@ -41,13 +36,11 @@ public class PortableThrottleClientHandler {
 
     // Records a bind target; the actual packet is sent on the next tick
     public static void startBind(BlockPos pos) {
-        LOGGER.info("[THROTTLE_CLIENT] startBind: pos={}", pos);
         bindTarget = pos;
     }
 
     // Opens the throttle configuration (frequency) screen
     public static void openScreen() {
-        LOGGER.info("[THROTTLE_CLIENT] openScreen: opening PortableThrottleScreen (config)");
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         FreqScreenMenu menu = new FreqScreenMenu(
@@ -64,7 +57,6 @@ public class PortableThrottleClientHandler {
 
     // Updates the current strength and resets the keepalive cooldown
     public static void setStrength(int strength) {
-        LOGGER.info("[THROTTLE_CLIENT] setStrength: lastStrength={} -> {}", lastStrength, strength);
         lastStrength = strength;
         keepAliveCooldown = 0;
     }
@@ -77,7 +69,6 @@ public class PortableThrottleClientHandler {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || player.isSpectator()) {
-            LOGGER.info("[THROTTLE_CLIENT] tick: player null or spectator, resetting");
             reset();
             return;
         }
@@ -96,7 +87,6 @@ public class PortableThrottleClientHandler {
 
         // Send pending bind packet if we have a target
         if (bindTarget != null) {
-            LOGGER.info("[THROTTLE_CLIENT] tick: sending bind packet for {}", bindTarget);
             PacketDistributor.sendToServer(new PortableThrottleBindPacket(bindTarget));
             bindTarget = null;
         }
@@ -105,16 +95,12 @@ public class PortableThrottleClientHandler {
         boolean leftDown = GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_1) == GLFW.GLFW_PRESS;
 
         if (leftDown) {
-            if (!wasLeftDown) {
-                LOGGER.info("[THROTTLE_CLIENT] tick: left click DETECTED (edge), screen={}", mc.screen);
-            }
             // Consume the attack action so the player doesn't swing
             mc.options.keyAttack.consumeClick();
             mc.options.keyAttack.setDown(false);
 
             // Open the strength slider screen on the rising edge if no screen is open
             if (!wasLeftDown && mc.screen == null) {
-                LOGGER.info("[THROTTLE_CLIENT] tick: left click edge + no screen -> opening PortableThrottleStrengthScreen");
                 mc.setScreen(new PortableThrottleStrengthScreen());
             }
         }
@@ -126,7 +112,6 @@ public class PortableThrottleClientHandler {
             if (keepAliveCooldown > 0) {
                 keepAliveCooldown--;
             } else {
-                LOGGER.info("[THROTTLE_CLIENT] tick: sending KEEPALIVE signal strength={}", lastStrength);
                 PacketDistributor.sendToServer(new PortableThrottleSignalPacket(lastStrength));
                 keepAliveCooldown = KEEP_ALIVE_RATE;
             }
@@ -138,25 +123,20 @@ public class PortableThrottleClientHandler {
      * and clears tracking variables
      **/
     private static void reset() {
-        LOGGER.info("[THROTTLE_CLIENT] reset: called, lastStrength={} bindTarget={}", lastStrength, bindTarget);
         Screen current = Minecraft.getInstance().screen;
         boolean hadScreen = current instanceof PortableThrottleStrengthScreen || current instanceof PortableThrottleLinkScreen;
 
-        if (hadScreen) {
-            LOGGER.info("[THROTTLE_CLIENT] reset: screen open, sending strength 0 before close");
+        if(hadScreen) {
             PacketDistributor.sendToServer(new PortableThrottleSignalPacket(0));
-        } else if (lastStrength > 0) {
-            LOGGER.info("[THROTTLE_CLIENT] reset: sending strength 0 (shutdown)");
+        } else if(0 < lastStrength) {
             PacketDistributor.sendToServer(new PortableThrottleSignalPacket(0));
         }
 
-        if (hadScreen) {
-            LOGGER.info("[THROTTLE_CLIENT] reset: closing open screen");
+        if(hadScreen) {
             Minecraft.getInstance().setScreen(null);
         }
         lastStrength = 0;
         keepAliveCooldown = 0;
         bindTarget = null;
-        LOGGER.info("[THROTTLE_CLIENT] reset: complete");
     }
 }
