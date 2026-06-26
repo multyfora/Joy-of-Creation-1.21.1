@@ -15,7 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 
-import org.slf4j.Logger;
+import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
 
 /**
  * Client-to-server packet: sends updated frequency configuration for the Portable Throttle.
@@ -45,17 +45,15 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
-
     /**
      * Server-side: finds the throttle item in the player's hand, deserialises the two item stacks,
      * builds a frequency pair, and writes it to the item's NBT
      **/
     public void handle(net.minecraft.world.entity.player.Player player) {
-        LOGGER.info("[THROTTLE_PACKET] ConfigPacket.handle ENTER: player={}", player.getName().getString());
+        //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle ENTER: player={}", player.getName().getString());
 
         if (!(player instanceof ServerPlayer sp) || sp.isSpectator()) {
-            LOGGER.info("[THROTTLE_PACKET] ConfigPacket.handle: player is spectator or not ServerPlayer, skipping");
+            //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle: player is spectator or not ServerPlayer, skipping");
             return;
         }
 
@@ -63,7 +61,7 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
         if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
             heldItem = player.getOffhandItem();
             if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
-                LOGGER.info("[THROTTLE_PACKET] ConfigPacket.handle: throttle not found, skipping");
+                //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle: throttle not found, skipping");
                 return;
             }
         }
@@ -72,14 +70,16 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
         ItemStack first = ItemStack.parseOptional(registries, firstItem);
         ItemStack second = ItemStack.parseOptional(registries, secondItem);
         if (first.isEmpty() || second.isEmpty()) {
-            LOGGER.info("[THROTTLE_PACKET] ConfigPacket.handle: first or second item empty, skipping");
+            //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle: first or second item empty, skipping");
             return;
         }
-        LOGGER.info("[THROTTLE_PACKET] ConfigPacket.handle: setting freq to ({}|{})",
-            first.getHoverName().getString(), second.getHoverName().getString());
+        /*LOGGER.debug(
+            "[THROTTLE_PACKET] ConfigPacket.handle: setting freq to ({}|{})",
+            first.getHoverName().getString(), second.getHoverName().getString()
+        );*/
 
         Couple<Frequency> freq = Couple.create(Frequency.of(first), Frequency.of(second));
         PortableThrottleItem.setFrequency(heldItem, freq, registries);
-        LOGGER.info("[THROTTLE_PACKET] ConfigPacket.handle EXIT");
+        //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle EXIT");
     }
 }

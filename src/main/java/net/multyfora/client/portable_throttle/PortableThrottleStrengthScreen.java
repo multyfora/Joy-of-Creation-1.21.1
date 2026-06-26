@@ -10,11 +10,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.network.PortableThrottleSignalPacket;
 
-import org.slf4j.Logger;
+import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
 
 /**
  * Vertical slider screen for adjusting the Portable Throttle's output signal strength (0-15).
@@ -22,9 +21,6 @@ import org.slf4j.Logger;
  * sent to the server immediately. The screen has no background overlay for a minimal UI.
  **/
 public class PortableThrottleStrengthScreen extends Screen {
-
-    private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
-
     // Layout constants
     private static final int BAR_W = 16;
     private static final int BAR_H = 100;
@@ -42,17 +38,17 @@ public class PortableThrottleStrengthScreen extends Screen {
 
     protected PortableThrottleStrengthScreen() {
         super(Component.translatable("item.joc.portable_throttle"));
-        LOGGER.info("[THROTTLE_SCREEN] Constructor called");
+        //LOGGER.debug("[THROTTLE_SCREEN] Constructor called");
     }
 
     @Override
     protected void init() {
-        LOGGER.info("[THROTTLE_SCREEN] init: screen size={}x{}", width, height);
+        //LOGGER.debug("[THROTTLE_SCREEN] init: screen size={}x{}", width, height);
         strength = PortableThrottleClientHandler.getLastStrength();
         value = strength / 15.0f;
         animatedValue = value;
         lastAnimatedValue = value;
-        LOGGER.info("[THROTTLE_SCREEN] init: loaded lastStrength={} value={}", strength, value);
+        //LOGGER.debug("[THROTTLE_SCREEN] init: loaded lastStrength={} value={}", strength, value);
 
         // Display the currently bound frequency
         Minecraft mc = Minecraft.getInstance();
@@ -63,13 +59,13 @@ public class PortableThrottleStrengthScreen extends Screen {
                 String first = freq.getFirst().getStack().getHoverName().getString();
                 String second = freq.getSecond().getStack().getHoverName().getString();
                 freqInfo = Component.literal(first + " + " + second);
-                LOGGER.info("[THROTTLE_SCREEN] init: freq=({}|{})", first, second);
-            } else {
-                LOGGER.info("[THROTTLE_SCREEN] init: freq is null");
-            }
-        } else {
-            LOGGER.info("[THROTTLE_SCREEN] init: held={} level={}", held, mc.level);
-        }
+                //LOGGER.debug("[THROTTLE_SCREEN] init: freq=({}|{})", first, second);
+            }/* else {
+                LOGGER.debug("[THROTTLE_SCREEN] init: freq is null");
+            }*/
+        }/* else {
+            LOGGER.debug("[THROTTLE_SCREEN] init: held={} level={}", held, mc.level);
+        }*/
     }
 
     private int barY() {
@@ -83,17 +79,17 @@ public class PortableThrottleStrengthScreen extends Screen {
         pixelFromBottom = Math.max(0, Math.min(BAR_H, pixelFromBottom));
         value = (float) (pixelFromBottom / BAR_H);
         int newStrength = (int) Math.round(pixelFromBottom * 15.0 / BAR_H);
-        LOGGER.info("[THROTTLE_SCREEN] setFromMouseY: mouseY={} by={} pixelFromBottom={} value={} newStrength={} oldStrength={}", mouseY, by, pixelFromBottom, value, newStrength, strength);
+        //LOGGER.debug("[THROTTLE_SCREEN] setFromMouseY: mouseY={} by={} pixelFromBottom={} value={} newStrength={} oldStrength={}", mouseY, by, pixelFromBottom, value, newStrength, strength);
         if (newStrength != strength) {
             strength = newStrength;
-            LOGGER.info("[THROTTLE_SCREEN] setFromMouseY: STRENGTH CHANGED -> {}, sending packet", strength);
+            //LOGGER.debug("[THROTTLE_SCREEN] setFromMouseY: STRENGTH CHANGED -> {}, sending packet", strength);
             forceSignal(strength);
         }
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        LOGGER.info("[THROTTLE_SCREEN] mouseClicked: mouseX={} mouseY={} button={}", mouseX, mouseY, button);
+        //LOGGER.debug("[THROTTLE_SCREEN] mouseClicked: mouseX={} mouseY={} button={}", mouseX, mouseY, button);
         if (button == 0) {
             setFromMouseY(mouseY);
             return true;
@@ -104,7 +100,7 @@ public class PortableThrottleStrengthScreen extends Screen {
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (button == 0) {
-            LOGGER.info("[THROTTLE_SCREEN] mouseDragged: mouseX={} mouseY={} button={} dragX={} dragY={}", mouseX, mouseY, button, dragX, dragY);
+            //LOGGER.debug("[THROTTLE_SCREEN] mouseDragged: mouseX={} mouseY={} button={} dragX={} dragY={}", mouseX, mouseY, button, dragX, dragY);
             setFromMouseY(mouseY);
             return true;
         }
@@ -173,7 +169,7 @@ public class PortableThrottleStrengthScreen extends Screen {
 
     @Override
     public void onClose() {
-        LOGGER.info("[THROTTLE_SCREEN] onClose: strength={} calling setStrength", strength);
+        //LOGGER.debug("[THROTTLE_SCREEN] onClose: strength={} calling setStrength", strength);
         PortableThrottleClientHandler.setStrength(strength);
         super.onClose();
     }
@@ -184,7 +180,7 @@ public class PortableThrottleStrengthScreen extends Screen {
 
     // Sends a signal strength packet directly to the server
     private static void forceSignal(int s) {
-        LOGGER.info("[THROTTLE_SCREEN] forceSignal: sending strength={}", s);
+        //LOGGER.debug("[THROTTLE_SCREEN] forceSignal: sending strength={}", s);
         PacketDistributor.sendToServer(new PortableThrottleSignalPacket(s));
     }
 

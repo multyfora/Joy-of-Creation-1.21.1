@@ -35,6 +35,8 @@ import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.EntityGrabPayloads;
 
+import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
+
 @Mod(value = AeronauticsJoyofcreation.MODID, dist = Dist.CLIENT)
 @EventBusSubscriber(modid = AeronauticsJoyofcreation.MODID, value = Dist.CLIENT)
 public class AeronauticsJoyofcreationClient {
@@ -68,10 +70,10 @@ public class AeronauticsJoyofcreationClient {
     static void onMouseButtonPre(InputEvent.MouseButton.Pre event) {
         if (event.getAction() != 1) return;
         if (event.getButton() != 1) return;
-        AeronauticsJoyofcreation.LOGGER.info("MouseButton.Pre: right-click press");
+        //LOGGER.debug("MouseButton.Pre: right-click press");
 
         if (!JocConfig.ENABLE_CREATIVE_STAFF.get()) {
-            AeronauticsJoyofcreation.LOGGER.info("Staff disabled in config");
+            //LOGGER.debug("Staff disabled in config");
             return;
         }
 
@@ -79,7 +81,7 @@ public class AeronauticsJoyofcreationClient {
         if (mc.player == null || mc.level == null) return;
 
         if (!CreativeStaffCaptureHandler.isHoldingStaff(mc.player)) {
-            AeronauticsJoyofcreation.LOGGER.info("Not holding staff");
+            //LOGGER.debug("Not holding staff");
             return;
         }
 
@@ -87,7 +89,7 @@ public class AeronauticsJoyofcreationClient {
 
         if (mc.crosshairPickEntity != null) {
             target = mc.crosshairPickEntity;
-            AeronauticsJoyofcreation.LOGGER.info("MouseButton: found via crosshairPickEntity: {}", target);
+            //LOGGER.debug("MouseButton: found via crosshairPickEntity: {}", target);
         } else {
             Entity viewer = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
             if (viewer == null) return;
@@ -108,14 +110,14 @@ public class AeronauticsJoyofcreationClient {
 
             if (result != null) {
                 target = result.getEntity();
-                AeronauticsJoyofcreation.LOGGER.info("MouseButton: found via raycast: {}", target);
-            } else {
-                AeronauticsJoyofcreation.LOGGER.info("MouseButton: raycast found no target");
-            }
+                //LOGGER.debug("MouseButton: found via raycast: {}", target);
+            }/* else {
+                LOGGER.debug("MouseButton: raycast found no target");
+            }*/
         }
 
         if (target != null) {
-            AeronauticsJoyofcreation.LOGGER.info("MouseButton: sending GrabRequest for entity {} (id={})", target, target.getId());
+            //LOGGER.debug("MouseButton: sending GrabRequest for entity {} (id={})", target, target.getId());
             PacketDistributor.sendToServer(new EntityGrabPayloads.GrabRequest(target.getId()));
             event.setCanceled(true);
         }

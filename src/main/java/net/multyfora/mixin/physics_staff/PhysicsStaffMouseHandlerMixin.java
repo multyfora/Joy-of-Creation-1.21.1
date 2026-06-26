@@ -19,11 +19,13 @@ import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.network.EntityGrabPayloads;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
+
 @Mixin(targets = "dev.simulated_team.simulated.content.physics_staff.PhysicsStaffClientHandler$PhysicsStaffMouseHandler")
 public class PhysicsStaffMouseHandlerMixin {
     @Inject(method = "onUse", at = @At("HEAD"), cancellable = true)
     private void joc$onUse(int action, int modifiers, KeyMapping mapping, CallbackInfoReturnable<Result> cir) {
-        AeronauticsJoyofcreation.LOGGER.info("joc$onUse called: action={}, modifiers={}", action, modifiers);
+        //LOGGER.debug("joc$onUse called: action={}, modifiers={}", action, modifiers);
 
         if (action == 1) {
             Minecraft mc = Minecraft.getInstance();
@@ -33,7 +35,7 @@ public class PhysicsStaffMouseHandlerMixin {
 
             if (mc.crosshairPickEntity != null) {
                 target = mc.crosshairPickEntity;
-                AeronauticsJoyofcreation.LOGGER.info("Found target via crosshairPickEntity: {}", target);
+                //LOGGER.debug("Found target via crosshairPickEntity: {}", target);
             } else {
                 Entity viewer = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
                 if (viewer == null) return;
@@ -54,19 +56,19 @@ public class PhysicsStaffMouseHandlerMixin {
 
                 if (result != null) {
                     target = result.getEntity();
-                    AeronauticsJoyofcreation.LOGGER.info("Found target via raycast: {}", target);
-                } else {
-                    AeronauticsJoyofcreation.LOGGER.info("Raycast found no target");
-                }
+                    //LOGGER.debug("Found target via raycast: {}", target);
+                }/* else {
+                    LOGGER.debug("Raycast found no target");
+                }*/
             }
 
             if (target != null) {
-                AeronauticsJoyofcreation.LOGGER.info("Sending GrabRequest for entity: {} (id={})", target, target.getId());
+                //LOGGER.debug("Sending GrabRequest for entity: {} (id={})", target, target.getId());
                 PacketDistributor.sendToServer(new EntityGrabPayloads.GrabRequest(target.getId()));
                 cir.setReturnValue(new Result(true));
             }
         } else if (action == 0 && EntityGrabClientState.grabbedEntityId != 0) {
-            AeronauticsJoyofcreation.LOGGER.info("Sending Stop for grabbed entity: {}", EntityGrabClientState.grabbedEntityId);
+            //LOGGER.debug("Sending Stop for grabbed entity: {}", EntityGrabClientState.grabbedEntityId);
             EntityGrabClientState.grabbedEntityId = 0;
             PacketDistributor.sendToServer(new EntityGrabPayloads.Stop());
             cir.setReturnValue(Result.empty());

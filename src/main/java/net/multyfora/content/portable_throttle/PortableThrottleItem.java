@@ -19,10 +19,9 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
 
-import org.slf4j.Logger;
+import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
 
 /**
  * Portable Throttle item: a handheld wireless redstone transmitter.
@@ -32,8 +31,6 @@ import org.slf4j.Logger;
  * The throttle sends keepalive signals to the server for persistent output while active.
  **/
 public class PortableThrottleItem extends Item {
-
-    private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
 
     // NBT keys for storing the two frequency-defining items
     private static final String TAG_FREQ_FIRST = "frequency_first";
@@ -56,17 +53,17 @@ public class PortableThrottleItem extends Item {
         BlockState hitState = world.getBlockState(pos);
 
         if (player.mayBuild() && AllBlocks.REDSTONE_LINK.has(hitState)) {
-            LOGGER.info("[THROTTLE_ITEM] onItemUseFirst: right-clicked redstone link at {}, side={}", pos, ctx.getClickedFace());
+            //LOGGER.debug("[THROTTLE_ITEM] onItemUseFirst: right-clicked redstone link at {}, side={}", pos, ctx.getClickedFace());
             if (world.isClientSide) {
                 // Start bind on the client side; the actual bind packet is sent during the next client tick
                 PortableThrottleClientHandler.startBind(pos);
-                LOGGER.info("[THROTTLE_ITEM] onItemUseFirst: called startBind on client");
+                //LOGGER.debug("[THROTTLE_ITEM] onItemUseFirst: called startBind on client");
             }
             player.getCooldowns().addCooldown(this, 2);
             return InteractionResult.SUCCESS;
         }
 
-        LOGGER.info("[THROTTLE_ITEM] onItemUseFirst: not a redstone link, PASS (state={})", hitState.getBlock().getDescriptionId());
+        //LOGGER.debug("[THROTTLE_ITEM] onItemUseFirst: not a redstone link, PASS (state={})", hitState.getBlock().getDescriptionId());
         return InteractionResult.PASS;
     }
 
@@ -80,7 +77,7 @@ public class PortableThrottleItem extends Item {
         if (hand != InteractionHand.MAIN_HAND)
             return InteractionResultHolder.pass(heldItem);
 
-        LOGGER.info("[THROTTLE_ITEM] use: opening config screen, side={}", world.isClientSide() ? "CLIENT" : "SERVER");
+        //LOGGER.debug("[THROTTLE_ITEM] use: opening config screen, side={}", world.isClientSide() ? "CLIENT" : "SERVER");
         if (world.isClientSide) {
             PortableThrottleClientHandler.openScreen();
         }
@@ -94,32 +91,38 @@ public class PortableThrottleItem extends Item {
     public static Couple<Frequency> getFrequency(ItemStack stack, HolderLookup.Provider registries) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) {
-            LOGGER.info("[THROTTLE_ITEM] getFrequency: no CUSTOM_DATA on stack");
+            //LOGGER.debug("[THROTTLE_ITEM] getFrequency: no CUSTOM_DATA on stack");
             return null;
         }
         CompoundTag tag = data.copyTag();
         if (!tag.contains(TAG_FREQ_FIRST) || !tag.contains(TAG_FREQ_SECOND)) {
-            LOGGER.info("[THROTTLE_ITEM] getFrequency: missing frequency tags (first={}, second={})",
-                tag.contains(TAG_FREQ_FIRST), tag.contains(TAG_FREQ_SECOND));
+            /*LOGGER.debug(
+                "[THROTTLE_ITEM] getFrequency: missing frequency tags (first={}, second={})",
+                tag.contains(TAG_FREQ_FIRST), tag.contains(TAG_FREQ_SECOND)
+            );*/
             return null;
         }
         ItemStack first = ItemStack.parseOptional(registries, tag.getCompound(TAG_FREQ_FIRST));
         ItemStack second = ItemStack.parseOptional(registries, tag.getCompound(TAG_FREQ_SECOND));
         if (first.isEmpty() || second.isEmpty()) {
-            LOGGER.info("[THROTTLE_ITEM] getFrequency: first or second parsed empty");
+            //LOGGER.debug("[THROTTLE_ITEM] getFrequency: first or second parsed empty");
             return null;
         }
         Couple<Frequency> freq = Couple.create(Frequency.of(first), Frequency.of(second));
-        LOGGER.info("[THROTTLE_ITEM] getFrequency: returning freq=({}|{})",
-            first.getHoverName().getString(), second.getHoverName().getString());
+        /*LOGGER.debug(
+            "[THROTTLE_ITEM] getFrequency: returning freq=({}|{})",
+            first.getHoverName().getString(), second.getHoverName().getString()
+        );*/
         return freq;
     }
 
     // Writes the frequency pair to the item's CUSTOM_DATA component for persistence
     public static void setFrequency(ItemStack stack, Couple<Frequency> freq, HolderLookup.Provider registries) {
-        LOGGER.info("[THROTTLE_ITEM] setFrequency: setting freq=({}|{})",
+        /*LOGGER.debug(
+            "[THROTTLE_ITEM] setFrequency: setting freq=({}|{})",
             freq.getFirst().getStack().getHoverName().getString(),
-            freq.getSecond().getStack().getHoverName().getString());
+            freq.getSecond().getStack().getHoverName().getString()
+        );*/
         CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         tag.put(TAG_FREQ_FIRST, freq.getFirst().getStack().save(registries, new CompoundTag()));
         tag.put(TAG_FREQ_SECOND, freq.getSecond().getStack().save(registries, new CompoundTag()));
@@ -132,8 +135,10 @@ public class PortableThrottleItem extends Item {
         if (data == null) return false;
         CompoundTag tag = data.copyTag();
         boolean result = tag.contains(TAG_FREQ_FIRST) && tag.contains(TAG_FREQ_SECOND);
-        LOGGER.info("[THROTTLE_ITEM] hasFrequency: {} (first={}, second={})",
-            result, tag.contains(TAG_FREQ_FIRST), tag.contains(TAG_FREQ_SECOND));
+        /*LOGGER.debug(
+            "[THROTTLE_ITEM] hasFrequency: {} (first={}, second={})",
+            result, tag.contains(TAG_FREQ_FIRST), tag.contains(TAG_FREQ_SECOND)
+        );*/
         return result;
     }
 }

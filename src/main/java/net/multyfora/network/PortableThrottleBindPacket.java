@@ -14,10 +14,9 @@ import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
-import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
-import org.slf4j.Logger;
+import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
 
 /**
  * Client-to-server packet: binds the Portable Throttle to a Redstone Link block's frequency.
@@ -44,17 +43,15 @@ public class PortableThrottleBindPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    private static final Logger LOGGER = AeronauticsJoyofcreation.LOGGER;
-
     /**
      * Server-side: verifies the player can build, finds the throttle item, reads the
      * Redstone Link's frequency from its LinkBehaviour, and writes it to the throttle item
      **/
     public void handle(net.minecraft.world.entity.player.Player player) {
-        LOGGER.info("[THROTTLE_PACKET] BindPacket.handle ENTER: player={} linkPos={}", player.getName().getString(), linkPos);
+        //LOGGER.debug("[THROTTLE_PACKET] BindPacket.handle ENTER: player={} linkPos={}", player.getName().getString(), linkPos);
 
         if (!(player instanceof ServerPlayer sp) || sp.isSpectator() || !player.mayBuild()) {
-            LOGGER.info("[THROTTLE_PACKET] BindPacket.handle: cannot build or spectator, skipping");
+            //LOGGER.debug("[THROTTLE_PACKET] BindPacket.handle: cannot build or spectator, skipping");
             return;
         }
 
@@ -62,22 +59,24 @@ public class PortableThrottleBindPacket implements CustomPacketPayload {
         if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
             heldItem = player.getOffhandItem();
             if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
-                LOGGER.info("[THROTTLE_PACKET] BindPacket.handle: throttle not found, skipping");
+                //LOGGER.debug("[THROTTLE_PACKET] BindPacket.handle: throttle not found, skipping");
                 return;
             }
         }
 
         LinkBehaviour linkBehaviour = BlockEntityBehaviour.get(player.level(), linkPos, LinkBehaviour.TYPE);
         if (linkBehaviour == null) {
-            LOGGER.info("[THROTTLE_PACKET] BindPacket.handle: no LinkBehaviour at {}", linkPos);
+            //LOGGER.debug("[THROTTLE_PACKET] BindPacket.handle: no LinkBehaviour at {}", linkPos);
             return;
         }
 
         Couple<Frequency> frequency = linkBehaviour.getNetworkKey();
-        LOGGER.info("[THROTTLE_PACKET] BindPacket.handle: binding freq=({}|{})",
+        /*LOGGER.debug(
+            "[THROTTLE_PACKET] BindPacket.handle: binding freq=({}|{})",
             frequency.getFirst().getStack().getHoverName().getString(),
-            frequency.getSecond().getStack().getHoverName().getString());
+            frequency.getSecond().getStack().getHoverName().getString()
+        );*/
         PortableThrottleItem.setFrequency(heldItem, frequency, player.level().registryAccess());
-        LOGGER.info("[THROTTLE_PACKET] BindPacket.handle EXIT");
+        //LOGGER.debug("[THROTTLE_PACKET] BindPacket.handle EXIT");
     }
 }
