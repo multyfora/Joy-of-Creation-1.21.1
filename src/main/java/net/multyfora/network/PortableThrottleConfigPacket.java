@@ -15,8 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 
-import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
-
 /**
  * Client-to-server packet: sends updated frequency configuration for the Portable Throttle.
  * Carries two ItemStack NBT compounds representing the two items that define the frequency pair.
@@ -50,10 +48,8 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
      * builds a frequency pair, and writes it to the item's NBT
      **/
     public void handle(net.minecraft.world.entity.player.Player player) {
-        //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle ENTER: player={}", player.getName().getString());
 
         if (!(player instanceof ServerPlayer sp) || sp.isSpectator()) {
-            //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle: player is spectator or not ServerPlayer, skipping");
             return;
         }
 
@@ -61,7 +57,6 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
         if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
             heldItem = player.getOffhandItem();
             if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
-                //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle: throttle not found, skipping");
                 return;
             }
         }
@@ -70,16 +65,10 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
         ItemStack first = ItemStack.parseOptional(registries, firstItem);
         ItemStack second = ItemStack.parseOptional(registries, secondItem);
         if (first.isEmpty() || second.isEmpty()) {
-            //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle: first or second item empty, skipping");
             return;
         }
-        /*LOGGER.debug(
-            "[THROTTLE_PACKET] ConfigPacket.handle: setting freq to ({}|{})",
-            first.getHoverName().getString(), second.getHoverName().getString()
-        );*/
 
         Couple<Frequency> freq = Couple.create(Frequency.of(first), Frequency.of(second));
         PortableThrottleItem.setFrequency(heldItem, freq, registries);
-        //LOGGER.debug("[THROTTLE_PACKET] ConfigPacket.handle EXIT");
     }
 }

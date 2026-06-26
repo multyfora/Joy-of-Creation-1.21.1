@@ -19,8 +19,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import net.multyfora.AeronauticsJoyofcreation;
-
 import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
 
 /**
@@ -55,13 +53,6 @@ public class PortableThrottleServerHandler {
                 throttleEntry.decrement();
                 int timeout = throttleEntry.getFirst();
                 if (!throttleEntry.isAlive()) {
-                    /*LOGGER.debug(
-                        "[THROTTLE_SERVER] tick: EXPIRING entry uuid={} freq=({}|{}) strength={} timeout={}",
-                        uid,
-                        throttleEntry.getSecond().getFirst().getStack().getHoverName().getString(),
-                        throttleEntry.getSecond().getSecond().getStack().getHoverName().getString(),
-                        throttleEntry.strength, timeout
-                    );*/
                     Couple<Frequency> freq = throttleEntry.getSecond();
                     // Set power to 0 and remove from the network
                     forceUpdateListeners(world, freq, 0);
@@ -74,9 +65,6 @@ public class PortableThrottleServerHandler {
             if (list.isEmpty())
                 iterator.remove();
         }
-        /*if (0 < totalRemoved) {
-            LOGGER.debug("[THROTTLE_SERVER] tick: removed {} expired entries", totalRemoved);
-        }*/
     }
 
     /**
@@ -85,12 +73,6 @@ public class PortableThrottleServerHandler {
      **/
     private static void forceUpdateListeners(LevelAccessor world, Couple<Frequency> freq, int power) {
         Set<IRedstoneLinkable> network = Create.REDSTONE_LINK_NETWORK_HANDLER.getNetworkOf(world, new ThrottleEntry(BlockPos.ZERO, freq, power));
-        /*LOGGER.debug(
-            "[THROTTLE_SERVER] forceUpdateListeners: freq=({}|{}) power={} network size={}",
-            freq.getFirst().getStack().getHoverName().getString(),
-            freq.getSecond().getStack().getHoverName().getString(),
-            power, network.size()
-        );*/
 
         int total = 0;
         int dead = 0;
@@ -101,26 +83,15 @@ public class PortableThrottleServerHandler {
             IRedstoneLinkable other = it.next();
             total++;
             if (!other.isAlive()) {
-                //LOGGER.debug("[THROTTLE_SERVER] forceUpdateListeners: removing DEAD entry class={}", other.getClass().getSimpleName());
                 it.remove();
                 dead++;
                 continue;
             }
             if (other.isListening()) {
-                /*LOGGER.debug(
-                    "[THROTTLE_SERVER] forceUpdateListeners: UPDATING listener class={} old_str={} new_power={} loc={}",
-                    other.getClass().getSimpleName(), other.getTransmittedStrength(), power, other.getLocation()
-                );*/
                 other.setReceivedStrength(power);
                 updated++;
-            }/* else {
-                LOGGER.debug(
-                    "[THROTTLE_SERVER] forceUpdateListeners: SKIPPING non-listener class={} strength={} loc={}",
-                    other.getClass().getSimpleName(), other.getTransmittedStrength(), other.getLocation()
-                );
-            }*/
+            }
         }
-        //LOGGER.debug("[THROTTLE_SERVER] forceUpdateListeners: total={} dead={} updated={}", total, dead, updated);
         if (updated == 0) {
             LOGGER.warn("[THROTTLE_SERVER] forceUpdateListeners: ZERO listeners updated! Network may be out of sync with link blocks for this frequency!");
         }
@@ -135,16 +106,9 @@ public class PortableThrottleServerHandler {
      * and propagates the signal to all listeners on that frequency.
      **/
     public static void receiveSignal(LevelAccessor world, BlockPos pos, UUID uniqueID, Couple<Frequency> freq, int strength) {
-        /*LOGGER.debug(
-            "[THROTTLE_SERVER] receiveSignal ENTER: uuid={} freq=({}|{}) strength={} pos={}", uniqueID,
-            freq.getFirst().getStack().getHoverName().getString(),
-            freq.getSecond().getStack().getHoverName().getString(),
-            strength, pos
-        );*/
 
         Map<UUID, Collection<ThrottleEntry>> map = receivedInputs.get(world);
         Collection<ThrottleEntry> list = map.computeIfAbsent(uniqueID, $ -> {
-            //LOGGER.debug("[THROTTLE_SERVER] receiveSignal: created new list for uuid={}", uniqueID);
             return new ArrayList<>();
         });
 
@@ -153,21 +117,17 @@ public class PortableThrottleServerHandler {
         for (ThrottleEntry entry : list) {
             if (entry.getSecond().equals(freq)) {
                 existing = entry;
-                //LOGGER.debug("[THROTTLE_SERVER] receiveSignal: found existing entry, oldStrength={} oldTimeout={}", entry.strength, entry.getFirst());
                 break;
             }
         }
 
         // If strength is 0 or less, remove the entry and set power to 0
         if (strength <= 0) {
-            //LOGGER.debug("[THROTTLE_SERVER] receiveSignal: strength<=0, removing entry. hasExisting={}", existing != null);
             if (existing != null) {
                 forceUpdateListeners(world, freq, 0);
                 Create.REDSTONE_LINK_NETWORK_HANDLER.removeFromNetwork(world, existing);
                 list.remove(existing);
-                //LOGGER.debug("[THROTTLE_SERVER] receiveSignal: removed entry from network and list");
             }
-            //LOGGER.debug("[THROTTLE_SERVER] receiveSignal EXIT (strength<=0)");
             return;
         }
 
@@ -175,16 +135,13 @@ public class PortableThrottleServerHandler {
         if (existing != null) {
             existing.setStrength(strength);
             existing.setFirst(TIMEOUT);
-            //LOGGER.debug("[THROTTLE_SERVER] receiveSignal: UPDATED existing entry -> strength={} timeout={}", strength, TIMEOUT);
         } else {
             existing = new ThrottleEntry(pos, freq, strength);
             Create.REDSTONE_LINK_NETWORK_HANDLER.addToNetwork(world, existing);
             list.add(existing);
-            //LOGGER.debug("[THROTTLE_SERVER] receiveSignal: CREATED new entry at pos={} strength={} timeout={}", pos, strength, TIMEOUT);
         }
 
         forceUpdateListeners(world, freq, strength);
-        //LOGGER.debug("[THROTTLE_SERVER] receiveSignal EXIT (normal)");
     }
 
     /**

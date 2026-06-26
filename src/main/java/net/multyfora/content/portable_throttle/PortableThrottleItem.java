@@ -21,8 +21,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
 
-import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
-
 /**
  * Portable Throttle item: a handheld wireless redstone transmitter.
  * Right-clicking a Redstone Link block binds the throttle to that link's frequency.
@@ -53,17 +51,14 @@ public class PortableThrottleItem extends Item {
         BlockState hitState = world.getBlockState(pos);
 
         if (player.mayBuild() && AllBlocks.REDSTONE_LINK.has(hitState)) {
-            //LOGGER.debug("[THROTTLE_ITEM] onItemUseFirst: right-clicked redstone link at {}, side={}", pos, ctx.getClickedFace());
             if (world.isClientSide) {
                 // Start bind on the client side; the actual bind packet is sent during the next client tick
                 PortableThrottleClientHandler.startBind(pos);
-                //LOGGER.debug("[THROTTLE_ITEM] onItemUseFirst: called startBind on client");
             }
             player.getCooldowns().addCooldown(this, 2);
             return InteractionResult.SUCCESS;
         }
 
-        //LOGGER.debug("[THROTTLE_ITEM] onItemUseFirst: not a redstone link, PASS (state={})", hitState.getBlock().getDescriptionId());
         return InteractionResult.PASS;
     }
 
@@ -77,7 +72,6 @@ public class PortableThrottleItem extends Item {
         if (hand != InteractionHand.MAIN_HAND)
             return InteractionResultHolder.pass(heldItem);
 
-        //LOGGER.debug("[THROTTLE_ITEM] use: opening config screen, side={}", world.isClientSide() ? "CLIENT" : "SERVER");
         if (world.isClientSide) {
             PortableThrottleClientHandler.openScreen();
         }
@@ -91,38 +85,23 @@ public class PortableThrottleItem extends Item {
     public static Couple<Frequency> getFrequency(ItemStack stack, HolderLookup.Provider registries) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) {
-            //LOGGER.debug("[THROTTLE_ITEM] getFrequency: no CUSTOM_DATA on stack");
             return null;
         }
         CompoundTag tag = data.copyTag();
         if (!tag.contains(TAG_FREQ_FIRST) || !tag.contains(TAG_FREQ_SECOND)) {
-            /*LOGGER.debug(
-                "[THROTTLE_ITEM] getFrequency: missing frequency tags (first={}, second={})",
-                tag.contains(TAG_FREQ_FIRST), tag.contains(TAG_FREQ_SECOND)
-            );*/
             return null;
         }
         ItemStack first = ItemStack.parseOptional(registries, tag.getCompound(TAG_FREQ_FIRST));
         ItemStack second = ItemStack.parseOptional(registries, tag.getCompound(TAG_FREQ_SECOND));
         if (first.isEmpty() || second.isEmpty()) {
-            //LOGGER.debug("[THROTTLE_ITEM] getFrequency: first or second parsed empty");
             return null;
         }
         Couple<Frequency> freq = Couple.create(Frequency.of(first), Frequency.of(second));
-        /*LOGGER.debug(
-            "[THROTTLE_ITEM] getFrequency: returning freq=({}|{})",
-            first.getHoverName().getString(), second.getHoverName().getString()
-        );*/
         return freq;
     }
 
     // Writes the frequency pair to the item's CUSTOM_DATA component for persistence
     public static void setFrequency(ItemStack stack, Couple<Frequency> freq, HolderLookup.Provider registries) {
-        /*LOGGER.debug(
-            "[THROTTLE_ITEM] setFrequency: setting freq=({}|{})",
-            freq.getFirst().getStack().getHoverName().getString(),
-            freq.getSecond().getStack().getHoverName().getString()
-        );*/
         CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         tag.put(TAG_FREQ_FIRST, freq.getFirst().getStack().save(registries, new CompoundTag()));
         tag.put(TAG_FREQ_SECOND, freq.getSecond().getStack().save(registries, new CompoundTag()));
@@ -135,10 +114,6 @@ public class PortableThrottleItem extends Item {
         if (data == null) return false;
         CompoundTag tag = data.copyTag();
         boolean result = tag.contains(TAG_FREQ_FIRST) && tag.contains(TAG_FREQ_SECOND);
-        /*LOGGER.debug(
-            "[THROTTLE_ITEM] hasFrequency: {} (first={}, second={})",
-            result, tag.contains(TAG_FREQ_FIRST), tag.contains(TAG_FREQ_SECOND)
-        );*/
         return result;
     }
 }

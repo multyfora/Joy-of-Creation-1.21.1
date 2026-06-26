@@ -15,8 +15,6 @@ import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.content.portable_throttle.PortableThrottleServerHandler;
 
-import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
-
 /**
  * Client-to-server packet: sends the current throttle signal strength to the server.
  * The server then updates the redstone link network with the new power level.
@@ -46,10 +44,8 @@ public class PortableThrottleSignalPacket implements CustomPacketPayload {
      * and forwards the signal to the server handler
      **/
     public void handle(net.minecraft.world.entity.player.Player player) {
-        //LOGGER.debug("[THROTTLE_PACKET] SignalPacket.handle ENTER: player={} uuid={} strength={}", player.getName().getString(), player.getUUID(), strength);
 
         if (!(player instanceof ServerPlayer sp) || sp.isSpectator()) {
-            //LOGGER.debug("[THROTTLE_PACKET] SignalPacket.handle: player is spectator or not ServerPlayer, skipping");
             return;
         }
 
@@ -58,29 +54,17 @@ public class PortableThrottleSignalPacket implements CustomPacketPayload {
         if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
             heldItem = player.getOffhandItem();
             if (!(heldItem.getItem() instanceof PortableThrottleItem)) {
-                //LOGGER.debug("[THROTTLE_PACKET] SignalPacket.handle: throttle not found in main or offhand, skipping");
                 return;
             }
-            //LOGGER.debug("[THROTTLE_PACKET] SignalPacket.handle: throttle found in offhand");
-        } else {
-            //LOGGER.debug("[THROTTLE_PACKET] SignalPacket.handle: throttle found in main hand");
         }
 
         Couple<Frequency> freq = PortableThrottleItem.getFrequency(heldItem, player.level().registryAccess());
         if (freq == null) {
-            //LOGGER.debug("[THROTTLE_PACKET] SignalPacket.handle: frequency is null, cannot send signal");
             return;
         }
-        /*LOGGER.debug(
-            "[THROTTLE_PACKET] SignalPacket.handle: freq=({}|{}) transmitting strength={}",
-            freq.getFirst().getStack().getHoverName().getString(),
-            freq.getSecond().getStack().getHoverName().getString(),
-            strength
-        );*/
 
         PortableThrottleServerHandler.receiveSignal(
             player.level(), player.blockPosition(), player.getUUID(), freq, strength
         );
-        //LOGGER.debug("[THROTTLE_PACKET] SignalPacket.handle EXIT");
     }
 }
