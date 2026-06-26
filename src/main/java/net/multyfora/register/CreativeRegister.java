@@ -28,10 +28,11 @@ public class CreativeRegister {
                     .icon( () -> new ItemStack( JocItems.BALLOON.get() ) )
                     .displayItems(
                         (parameters, output) -> {
-                            output.accept( JocItems.BALLOON.get() );
-                            output.accept( JocItems.COORD_NAV.get() );
                             output.accept( JocItems.PORTABLE_TYPEWRITER.get() );
                             output.accept( JocItems.PORTABLE_THROTTLE.get() );
+                            output.accept( JocItems.BALLOON.get() );
+                            output.accept( JocItems.COORD_NAV.get() );
+                            output.accept( JocItems.PLAYER_DIRECTION.get() );
                         }
                     )
                     .build();
