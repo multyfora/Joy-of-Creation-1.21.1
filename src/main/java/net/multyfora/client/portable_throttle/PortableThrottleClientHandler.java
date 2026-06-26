@@ -47,7 +47,7 @@ public class PortableThrottleClientHandler {
                 JocMenuTypes.THROTTLE_SCREEN.get(),
                 0,
                 mc.player.getInventory());
-        mc.setScreen(new PortableThrottleScreen(menu, mc.player.getInventory(),
+        mc.setScreen(new PortableThrottleLinkScreen(menu, mc.player.getInventory(),
                 Component.translatable("item.joc.portable_throttle")));
     }
 
@@ -124,7 +124,7 @@ public class PortableThrottleClientHandler {
      **/
     private static void reset() {
         Screen current = Minecraft.getInstance().screen;
-        boolean hadScreen = current instanceof PortableThrottleStrengthScreen || current instanceof PortableThrottleScreen;
+        boolean hadScreen = current instanceof PortableThrottleStrengthScreen || current instanceof PortableThrottleLinkScreen;
 
         if(hadScreen) {
             PacketDistributor.sendToServer(new PortableThrottleSignalPacket(0));

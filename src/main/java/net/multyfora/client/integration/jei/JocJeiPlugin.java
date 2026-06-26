@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.resources.ResourceLocation;
 
 import net.multyfora.AeronauticsJoyofcreation;
-import net.multyfora.client.portable_throttle.PortableThrottleScreen;
+import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 import net.multyfora.client.portable_typewriter.PortableTypewriterScreen;
 
 @JeiPlugin
@@ -24,7 +24,7 @@ public class JocJeiPlugin implements IModPlugin {
     @Override
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
         registration.addGhostIngredientHandler(PortableTypewriterScreen.class, new TypewriterGhostHandler<>());
-        registration.addGhostIngredientHandler(PortableThrottleScreen.class, new ThrottleGhostHandler<>());
+        registration.addGhostIngredientHandler(PortableThrottleLinkScreen.class, new ThrottleGhostHandler<>());
 
         registration.addGuiContainerHandler(PortableTypewriterScreen.class, new IGuiContainerHandler<>() {
             @Override
@@ -32,9 +32,9 @@ public class JocJeiPlugin implements IModPlugin {
                 return screen.getExclusionAreas();
             }
         });
-        registration.addGuiContainerHandler(PortableThrottleScreen.class, new IGuiContainerHandler<>() {
+        registration.addGuiContainerHandler(PortableThrottleLinkScreen.class, new IGuiContainerHandler<>() {
             @Override
-            public List<Rect2i> getGuiExtraAreas(PortableThrottleScreen screen) {
+            public List<Rect2i> getGuiExtraAreas(PortableThrottleLinkScreen screen) {
                 return screen.getExclusionAreas();
             }
         });
