@@ -34,11 +34,16 @@ public class JocBlocks {
                         .isSuffocating((state, level, pos) -> false)));
         // Coordinate Navigator: metal block with no occlusion
         COORD_NAV = AeronauticsJoyofcreation.BLOCKS.register("coord_navigator",
-                () -> new CoordNavBlock(BlockBehaviour.Properties.of()
+            () -> {
+                return new CoordNavBlock(
+                    BlockBehaviour.Properties.of()
                         .mapColor(MapColor.METAL)
                         .strength(3.0f)
                         .sound(SoundType.METAL)
-                        .noOcclusion()));
+                        .noOcclusion()
+                );
+            }
+        );
         // Player Direction block: metal block with no occlusion
         PLAYER_DIRECTION = AeronauticsJoyofcreation.BLOCKS.register("player_direction",
                 () -> new PlayerDirectionBlock(BlockBehaviour.Properties.of()

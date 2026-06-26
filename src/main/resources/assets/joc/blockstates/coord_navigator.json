@@ -2,26 +2,26 @@
   "variants": {
     "facing=down": {
       "model": "joc:block/coord_navigator",
-      "x": 90
+      "x": 180
     },
     "facing=up": {
-      "model": "joc:block/coord_navigator",
-      "x": -90
+      "model": "joc:block/coord_navigator"
     },
     "facing=north": {
-      "model": "joc:block/coord_navigator"
+      "model": "joc:block/coord_navigator",
+      "x": 90
     },
     "facing=south": {
       "model": "joc:block/coord_navigator",
-      "y": 180
+      "x": -90
     },
     "facing=west": {
       "model": "joc:block/coord_navigator",
-      "y": 270
+      "y": 90
     },
     "facing=east": {
       "model": "joc:block/coord_navigator",
-      "y": 90
+      "y": -90
     }
   }
 }
