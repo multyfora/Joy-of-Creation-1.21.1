@@ -139,11 +139,10 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
         this.currentTarget = new Vec3(x, y, z);
         setChanged();
         sendData();
+
         if (level != null && !level.isClientSide) {
-            for (Direction dir : Direction.values()) {
-                signalStrengthCache.put(dir, getRedstoneStrength(dir));
-            }
             selectivelyUpdateNeighbors();
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
     }
 
@@ -156,8 +155,12 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
         this.targetZ = 0;
         setChanged();
         sendData();
+
         if (level != null && !level.isClientSide) {
             selectivelyUpdateNeighbors();
+
+            // Force an update when clearing, too
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
     }
 
