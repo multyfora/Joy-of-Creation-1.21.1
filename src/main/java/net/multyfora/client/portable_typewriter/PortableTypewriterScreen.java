@@ -13,10 +13,13 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.client.FreqScreenMenu;
+import net.multyfora.client.graphics.GraphicsUtils;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
 import net.multyfora.network.PortableTypewriterSetFreqPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -33,6 +36,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     static final int TOTAL_W = TOTAL_UNITS * UNIT - GAP;
 
     private static final int FREQ_SLOT_SIZE = 22;
+    private static final int FREQ_SLOT_GAP = 8;
     private static final int INV_SLOT = 18;
 
     private static final int CONTENT_H = 235;
@@ -138,7 +142,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
 
         if (!cursorItem.isEmpty()) {
@@ -149,83 +153,45 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.drawCenteredString(font,
-                Component.translatable("item.joc.portable_typewriter"),
-                width / 2, height / 2 - 130, 0xFFFFFF);
+        graphics.drawCenteredString(
+            font,
+            Component.translatable("item.joc.portable_typewriter"),
+            width/2, height/2 - 120,
+            0xFFFFFF
+        );
 
-        for (KeyWidget kw : keyWidgets)
+        for(KeyWidget kw : keyWidgets) {
             kw.render(graphics, mouseX, mouseY);
-
-        if (selectedKeyCode >= 0) {
-            int cx = freqSlotsCenterX();
-            int fy = freqSlotsTop();
-            int totalW = FREQ_SLOT_SIZE * 2 + 8;
-            int slotX1 = cx - totalW / 2;
-            int slotX2 = slotX1 + FREQ_SLOT_SIZE + 8;
-
-            renderFreqSlot(graphics, slotX1, fy, firstFreqItem, mouseX, mouseY);
-            renderFreqSlot(graphics, slotX2, fy, secondFreqItem, mouseX, mouseY);
         }
 
-        renderInventory(graphics, mouseX, mouseY);
+        Vector2i mousePosition = new Vector2i(mouseX, mouseY);
+        if(0 <= selectedKeyCode) {
+            Vector2i center = new Vector2i(
+                freqSlotsCenterX(),
+                freqSlotsTop() - 6
+            );
+            GraphicsUtils.renderFrequencySlots(
+                graphics, font,
+                center, FREQ_SLOT_SIZE, FREQ_SLOT_GAP,
+                mousePosition,
+                firstFreqItem, secondFreqItem
+            );
+        }
+
+        Vector2i origin = new Vector2i(
+            invLeft() - FREQ_SLOT_SIZE,
+            invTopY() - FREQ_SLOT_SIZE
+        );
+        GraphicsUtils.renderInventory(
+            graphics, font,
+            origin,
+            FREQ_SLOT_SIZE, FREQ_SLOT_GAP,
+            mousePosition
+        );
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-    }
-
-    private void renderFreqSlot(GuiGraphics graphics, int x, int y, ItemStack stack, int mx, int my) {
-        boolean hovered = mx >= x && mx <= x + FREQ_SLOT_SIZE && my >= y && my <= y + FREQ_SLOT_SIZE;
-        int bg = hovered ? 0xFF555555 : 0xFF333333;
-        graphics.fill(x, y, x + FREQ_SLOT_SIZE, y + FREQ_SLOT_SIZE, 0xFF000000);
-        graphics.fill(x + 1, y + 1, x + FREQ_SLOT_SIZE - 1, y + FREQ_SLOT_SIZE - 1, bg);
-
-        if (!stack.isEmpty()) {
-            int ix = x + (FREQ_SLOT_SIZE - 16) / 2;
-            int iy = y + (FREQ_SLOT_SIZE - 16) / 2;
-            graphics.renderItem(stack, ix, iy);
-            graphics.renderItemDecorations(font, stack, ix, iy);
-        }
-    }
-
-    private void renderInventory(GuiGraphics graphics, int mouseX, int mouseY) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
-        Inventory inv = mc.player.getInventory();
-        int startX = invLeft();
-        int startY = invTopY();
-
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * INV_SLOT;
-                int y = startY + row * INV_SLOT;
-                boolean hovered = mouseX >= x && mouseX < x + INV_SLOT && mouseY >= y && mouseY < y + INV_SLOT;
-                int bg = hovered ? 0xFF555555 : 0xFF333333;
-                graphics.fill(x, y, x + INV_SLOT, y + INV_SLOT, 0xFF000000);
-                graphics.fill(x + 1, y + 1, x + INV_SLOT - 1, y + INV_SLOT - 1, bg);
-                ItemStack stack = inv.getItem(slotIdx);
-                if (!stack.isEmpty()) {
-                    graphics.renderItem(stack, x + 1, y + 1);
-                    graphics.renderItemDecorations(font, stack, x + 1, y + 1);
-                }
-            }
-        }
-
-        int hotbarY = startY + 3 * INV_SLOT + 2;
-        for (int col = 0; col < 9; col++) {
-            int x = startX + col * INV_SLOT;
-            boolean hovered = mouseX >= x && mouseX < x + INV_SLOT && mouseY >= hotbarY && mouseY < hotbarY + INV_SLOT;
-            int bg = hovered ? 0xFF555555 : 0xFF333333;
-            graphics.fill(x, hotbarY, x + INV_SLOT, hotbarY + INV_SLOT, 0xFF000000);
-            graphics.fill(x + 1, hotbarY + 1, x + INV_SLOT - 1, hotbarY + INV_SLOT - 1, bg);
-            ItemStack stack = inv.getItem(col);
-            if (!stack.isEmpty()) {
-                graphics.renderItem(stack, x + 1, hotbarY + 1);
-                graphics.renderItemDecorations(font, stack, x + 1, hotbarY + 1);
-            }
-        }
-    }
+    protected void renderLabels(@NotNull GuiGraphics graphics, int mouseX, int mouseY) {}
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {

@@ -16,6 +16,8 @@ import net.minecraft.world.item.ItemStack;
 import net.multyfora.client.FreqScreenMenu;
 import net.multyfora.client.graphics.GraphicsFiller;
 import net.multyfora.client.graphics.GraphicsFillers;
+import net.multyfora.client.graphics.GraphicsUtils;
+import net.multyfora.client.graphics.GraphicsUtils.*;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.network.PortableThrottleConfigPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -24,6 +26,8 @@ import org.joml.Vector2i;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.multyfora.client.graphics.GraphicsUtils.isInBounds;
 
 public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScreenMenu> {
 
@@ -101,78 +105,27 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
             width / 2, height / 2 - 80, 0xFFFFFF
         );
 
-        //Redstone Link Slots
-        int cy = getFreqSlotsY();
-        int cx = getFreqSlotsCenterX();
-        int totalW = LINK_SLOT_SIZE * 2 + LINK_SLOT_GAP;
-        int slotX1 = cx - totalW / 2;
-        int slotX2 = slotX1 + LINK_SLOT_SIZE + LINK_SLOT_GAP;
-
-        Vector2i firstStart    = new Vector2i(slotX1, cy);
-        Vector2i secondStart   = new Vector2i(slotX2, cy);
-        Vector2i firstEnd      = new Vector2i(slotX1+LINK_SLOT_SIZE, cy+LINK_SLOT_SIZE);
-        Vector2i secondEnd     = new Vector2i(slotX2+LINK_SLOT_SIZE, cy+LINK_SLOT_SIZE);
         Vector2i mousePosition = new Vector2i(mouseX, mouseY);
 
-        renderSlot(graphics, GraphicsFillers.RED_FILLER,  firstStart, firstEnd,  mousePosition,   firstItem );
-        renderSlot(graphics, GraphicsFillers.BLUE_FILLER, secondStart, secondEnd, mousePosition, secondItem);
+        Vector2i center = new Vector2i( getFreqSlotsCenterX(), getFreqSlotsY() );
+        GraphicsUtils.renderFrequencySlots(
+            graphics, font,
+            center, LINK_SLOT_SIZE, LINK_SLOT_GAP,
+            mousePosition,
+            firstItem, secondItem
+        );
 
-        renderInventory(graphics, mouseX, mouseY);
+        Vector2i origin = new Vector2i( getInvLeft(), getInvTopY() );
+        GraphicsUtils.renderInventory(
+            graphics, font,
+            origin,
+            INV_SLOT_SIZE, INV_SLOT_GAP,
+            mousePosition
+        );
     }
 
     @Override
     protected void renderLabels(@NotNull GuiGraphics graphics, int mouseX, int mouseY) {}
-
-    private void renderInventory(GuiGraphics graphics, int mouseX, int mouseY) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
-
-        Inventory inventory = mc.player.getInventory();
-        int startX = getInvLeft();
-        int startY = getInvTopY();
-
-        Vector2i start, end;
-        Vector2i position = new Vector2i(mouseX, mouseY);
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * INV_SLOT_SIZE;
-                int y = startY + row * INV_SLOT_SIZE;
-                start = new Vector2i(x, y);
-                end =   new Vector2i(x+INV_SLOT_SIZE, y+INV_SLOT_SIZE);
-
-                ItemStack stack = inventory.getItem(slotIdx);
-                renderSlot(graphics, start, end, position, stack);
-            }
-        }
-
-        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
-        for (int col = 0; col < 9; col++) {
-            int x = startX + col * INV_SLOT_SIZE;
-            start = new Vector2i(x, hotbarY);
-            end   = new Vector2i(x+INV_SLOT_SIZE, hotbarY+INV_SLOT_SIZE);
-
-            ItemStack stack = inventory.getItem(col);
-            renderSlot(graphics, start, end, position, stack);
-        }
-    }
-
-    private void renderSlot(GuiGraphics graphics, Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition, ItemStack stack) {
-        renderSlot(graphics, DEFAULT_GRAPHICS_FILLER.clone(), startPosition, endPosition, mousePosition, stack);
-    }
-
-    private void renderSlot(GuiGraphics graphics, GraphicsFiller filler, Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition, ItemStack stack) {
-        filler.setHovering( isInBounds(startPosition, endPosition, mousePosition) );
-        filler.fill(graphics, startPosition, endPosition);
-
-        Vector2i size = new Vector2i(endPosition.x - startPosition.x, endPosition.y - startPosition.y);
-        if (!stack.isEmpty()) {
-            int ix = startPosition.x + (size.x - 16) / 2;
-            int iy = startPosition.y + (size.y - 16) / 2;
-            graphics.renderItem(stack, ix, iy);
-            graphics.renderItemDecorations(font, stack, ix, iy);
-        }
-    }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -254,12 +207,6 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
         }
         cursorItem = ItemStack.EMPTY;
         save();
-    }
-
-    private boolean isInBounds(Vector2i startPosition, Vector2i endPosition, Vector2i position) {
-        return     (startPosition.x <= position.x && position.x < endPosition.x)
-                && (startPosition.y <= position.y && position.y < endPosition.y)
-        ;
     }
 
     private void save() {
