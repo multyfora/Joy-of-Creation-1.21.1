@@ -2,6 +2,7 @@
   "variants": {
     "facing=down": {
       "model": "joc:block/coord_navigator",
+      "y": 180,
       "x": 180
     },
     "facing=up": {
@@ -9,7 +10,8 @@
     },
     "facing=north": {
       "model": "joc:block/coord_navigator",
-      "x": 90
+      "x": -90,
+      "y": 180
     },
     "facing=south": {
       "model": "joc:block/coord_navigator",
@@ -17,11 +19,13 @@
     },
     "facing=west": {
       "model": "joc:block/coord_navigator",
-      "y": 90
+      "y": 90,
+      "x": -90
     },
     "facing=east": {
       "model": "joc:block/coord_navigator",
-      "y": -90
+      "y": -90,
+      "x": -90
     }
   }
 }
