@@ -62,7 +62,7 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return getShape();
+        return getShape( state.getValue(FACING).getAxis() );
     }
 
     // Opens the coordinate configuration GUI when right-clicked with an empty hand
@@ -131,7 +131,7 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
     }
 
     @Unique
-    private static VoxelShape getShape() {
+    private static VoxelShape getShape(Direction.Axis axis) {
         final VoxelShape MAGNETS; {
             final VoxelShape BOTTOM_MAGNET = Block.box(3, 0,    3, 16-3, 3,  16-3);
             final VoxelShape    TOP_MAGNET = Block.box(3, 16-3, 3, 16-3, 16, 16-3);
@@ -179,10 +179,40 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
             );
         }
 
-        return Shapes.join(
+        final VoxelShape result = Shapes.join(
             Shapes.join(MAGNETS, POLES, BooleanOp.OR),
             Shapes.join(CENTER, PADS, BooleanOp.OR),
             BooleanOp.OR
         );
+
+        return rotateShape(axis, result);
+    }
+
+    @Unique
+    public static VoxelShape rotateShape(Direction.Axis axis, VoxelShape shape) {
+        if( axis.equals(Direction.Axis.Y) ) {
+            return shape;
+        }
+
+
+        VoxelShape[] rotated = new VoxelShape[]{ Shapes.empty() };
+        boolean isAxisX = axis.equals(Direction.Axis.X);
+        shape.forAllBoxes(
+            (minX, minY, minZ, maxX, maxY, maxZ) -> {
+                rotated[0] = Shapes.or(
+                    rotated[0],
+                    Shapes.create(
+                        isAxisX ? minY : minX,
+                        isAxisX ? minX : minZ,
+                        isAxisX ? minZ : minY,
+                        isAxisX ? maxY : maxX,
+                        isAxisX ? maxX : maxZ,
+                        isAxisX ? maxZ : maxY
+                    )
+                );
+            }
+        );
+
+        return rotated[0];
     }
 }
