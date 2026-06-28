@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
 import net.multyfora.index.JocMenuTypes;
+import org.jetbrains.annotations.NotNull;
 
 public class CoordNavMenu extends AbstractContainerMenu {
     public final CoordNavBlockEntity blockEntity;
@@ -23,12 +24,16 @@ public class CoordNavMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public ItemStack quickMoveStack(Player player, int i) {
-        return null;
+    public @NotNull ItemStack quickMoveStack(@NotNull Player player, int i) {
+        return ItemStack.EMPTY;
     }
 
     @Override
-    public boolean stillValid(Player player) {
+    public boolean stillValid(@NotNull Player player) {
         return false;
+    }
+
+    public Level getLevel() {
+        return level;
     }
 }

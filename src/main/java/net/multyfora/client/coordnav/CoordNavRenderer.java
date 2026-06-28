@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Client-side renderer for the Coordinate Navigator: draws a green pointer line
@@ -20,17 +21,26 @@ public class CoordNavRenderer implements BlockEntityRenderer<CoordNavBlockEntity
     public CoordNavRenderer(BlockEntityRendererProvider.Context ctx) {}
 
     @Override
-    public void render(CoordNavBlockEntity be, float partialTick, PoseStack poseStack,
-                       MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        if (be.getTargetPosition(false) == null) return;
+    public void render(
+        CoordNavBlockEntity blockEntity, float partialTick,
+        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource,
+        int packedLight, int packedOverlay
+    ) {
+        if( blockEntity.getTargetPosition(false) == null ) {
+            return;
+        }
 
-        Vec3 from = be.getProjectedSelfPos();
-        Vec3 target = be.getTargetPosition(true);
-        if (target == null) return;
+        Vec3 from = blockEntity.getProjectedSelfPos();
+        Vec3 target = blockEntity.getTargetPosition(true);
+        if(target == null) {
+            return;
+        }
 
         Vec3 diff = target.subtract(from);
         double dist = diff.length();
-        if (dist < 0.5) return;
+        if(dist < 0.5) {
+            return;
+        }
 
         Vec3 dir = diff.normalize();
         // Cap the pointer length at 1.5 blocks so it's visible even at long range
@@ -44,23 +54,27 @@ public class CoordNavRenderer implements BlockEntityRenderer<CoordNavBlockEntity
         poseStack.translate(-from.x, -from.y, -from.z);
 
         Vec3 p0 = from;
-        Vec3 p1 = from.add(dir.scale(pointerLen));
+        Vec3 p1 = from.add( dir.scale(pointerLen) );
 
-        consumer.addVertex(poseStack.last(), (float) p0.x, (float) p0.y, (float) p0.z)
-                .setColor((float) color.x, (float) color.y, (float) color.z, alpha)
-                .setNormal(0.0f, 1.0f, 0.0f)
-                .setLight(packedLight);
-        consumer.addVertex(poseStack.last(), (float) p1.x, (float) p1.y, (float) p1.z)
-                .setColor((float) color.x, (float) color.y, (float) color.z, alpha)
-                .setNormal(0.0f, 1.0f, 0.0f)
-                .setLight(packedLight);
+        consumer
+            .addVertex(poseStack.last(), (float)p0.x, (float)p0.y, (float)p0.z)
+            .setColor( (float)color.x, (float)color.y, (float)color.z, alpha )
+            .setNormal(0.0f, 1.0f, 0.0f)
+            .setLight(packedLight)
+        ;
+        consumer
+            .addVertex(poseStack.last(), (float)p1.x, (float)p1.y, (float)p1.z)
+            .setColor( (float)color.x, (float)color.y, (float)color.z, alpha )
+            .setNormal(0.0f, 1.0f, 0.0f)
+            .setLight(packedLight)
+        ;
 
         poseStack.popPose();
     }
 
     // Render even when the block entity is off-screen so the pointer is always visible
     @Override
-    public boolean shouldRenderOffScreen(CoordNavBlockEntity be) {
+    public boolean shouldRenderOffScreen(@NotNull CoordNavBlockEntity blockEntity) {
         return true;
     }
 }

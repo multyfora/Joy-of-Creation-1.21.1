@@ -13,8 +13,6 @@ import static net.multyfora.AeronauticsJoyofcreation.MODID;
 
 public class CreativeRegister {
     // NeoForge DeferredRegister for blocks, items, and creative mode tabs, all using the mod ID
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
     // Custom creative tab "JOC" placed before the Combat tab, showing all mod items
@@ -22,7 +20,8 @@ public class CreativeRegister {
     public static void registerCreativeModeTab() {
         JOC_TAB = CREATIVE_MODE_TABS.register(
             "joc_tab", () -> {
-                return CreativeModeTab.builder()
+                return CreativeModeTab
+                    .builder()
                     .title(Component.translatable("itemGroup.joc"))
                     .withTabsBefore(CreativeModeTabs.COMBAT)
                     .icon( () -> new ItemStack( JocItems.BALLOON.get() ) )
@@ -35,7 +34,8 @@ public class CreativeRegister {
                             output.accept( JocItems.PLAYER_DIRECTION.get() );
                         }
                     )
-                    .build();
+                    .build()
+                ;
             }
         );
     }

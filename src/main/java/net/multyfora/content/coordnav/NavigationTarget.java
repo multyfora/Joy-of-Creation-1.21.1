@@ -18,7 +18,7 @@ public class NavigationTarget {
     static final float MAX_RANGE = 200.0F;
     static final float MODULATING_RANGE = 200.0F;
 
-    GlobalPos location;
+    GlobalPos location; //TODO: use in CoordNavBlockEntity
 
     public NavigationTarget(GlobalPos location) {
         this.location = location;

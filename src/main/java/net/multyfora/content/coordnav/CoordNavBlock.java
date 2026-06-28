@@ -11,6 +11,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -20,14 +21,15 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+import net.multyfora.content.VoxelUtils;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.network.CoordNavPayloads;
-import org.spongepowered.asm.mixin.Unique;
+import org.jetbrains.annotations.NotNull;
+
+import static net.multyfora.content.VoxelUtils.rotateShape;
 
 /**
  * Coordinate Navigator block: a directional redstone source that points toward a configurable
@@ -50,26 +52,53 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
     }
 
     @Override
-    protected MapCodec<? extends DirectionalBlock> codec() {
+    protected @NotNull MapCodec<? extends DirectionalBlock> codec() {
         return simpleCodec(CoordNavBlock::new);
     }
 
     // Places the block facing the clicked face
     @Override
-    public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext ctx) {
-        return defaultBlockState().setValue(FACING, ctx.getClickedFace());
+    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+        return defaultBlockState().setValue( FACING, ctx.getClickedFace() );
     }
 
     @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return getShape( state.getValue(FACING).getAxis() );
+    protected @NotNull VoxelShape getShape(
+        BlockState state, @NotNull BlockGetter level,
+        @NotNull BlockPos pos, @NotNull CollisionContext ctx
+    ) {
+        final VoxelShape SHAPE = VoxelUtils.combineVoxelShapes(
+            //MAGNETS
+            Block.box(3, 0,    3, 16-3, 3,  16-3),
+            Block.box(3, 16-3, 3, 16-3, 16, 16-3),
+            //POLES
+            Block.box(0,    0, 0,    2,    16, 2 ),
+            Block.box(16-2, 0, 0,    16,   16, 2 ),
+            Block.box(0,    0, 16-2, 2,    16, 16),
+            Block.box(16-2, 0, 16-2, 16,   16, 16),
+            //CENTER
+            Block.box(8-1, 8-1, 8-1, 8+1, 8+1 ,8+1),
+            //PADS
+            Block.box(0,    8-2, 0,    4-2, 8+2, 4-1),
+            Block.box(0,    8-2, 16-2, 3,   8+2, 16 ),
+            Block.box(0,    8-2, 16-3, 2,   8+2, 16 ),
+            Block.box(0,    8-2, 0,    4-1, 8+2, 4-2),
+            Block.box(16-3, 8-2, 0,    16,  8+2, 2  ),
+            Block.box(16-2, 8-2, 0,    16,  8+2, 3  ),
+            Block.box(16-2, 8-2, 16-3, 16,  8+2, 16 ),
+            Block.box(16-3, 8-2, 16-2, 16,  8+2, 16 )
+        );
+
+        Direction.Axis axis = state.getValue(FACING).getAxis();
+        return rotateShape(axis, SHAPE);
     }
 
     // Opens the coordinate configuration GUI when right-clicked with an empty hand
     @Override
-    protected ItemInteractionResult useItemOn(
-        ItemStack stack, BlockState state, Level level, BlockPos pos,
-       Player player, InteractionHand hand, BlockHitResult hit
+    protected @NotNull ItemInteractionResult useItemOn(
+        @NotNull ItemStack stack,
+        @NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos,
+        Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit
     ) {
         if( !player.getItemInHand(hand).isEmpty() ) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -86,12 +115,15 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
      * The face the block is pointing toward always returns 0 (the "indicator" face has no output).
      **/
     @Override
-    public int getSignal(BlockState state, BlockGetter getter, BlockPos pos, Direction direction) {
-        if (getter.getBlockEntity(pos) instanceof CoordNavBlockEntity be) {
-            if (direction.getAxis() == state.getValue(FACING).getAxis()) {
+    public int getSignal(
+        @NotNull BlockState state, BlockGetter getter,
+        @NotNull BlockPos pos, @NotNull Direction direction
+    ) {
+        if( getter.getBlockEntity(pos) instanceof CoordNavBlockEntity blockEntity ) {
+            if( direction.getAxis() == state.getValue(FACING).getAxis() ) {
                 return 0;
             }
-            return be.getRedstoneStrength(direction);
+            return blockEntity.getRedstoneStrength(direction);
         }
         return 0;
     }
@@ -101,23 +133,33 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
      * when the block faces horizontally, and also on the bottom face
      **/
     @Override
-    public int getDirectSignal(BlockState state, BlockGetter getter, BlockPos pos, Direction direction) {
-        if (direction.getAxis() == state.getValue(FACING).getAxis()) {
+    public int getDirectSignal(
+        BlockState state, @NotNull BlockGetter getter,
+        @NotNull BlockPos pos, Direction direction
+    ) {
+        if( direction.getAxis() == state.getValue(FACING).getAxis() ) {
             return 0;
         }
-        if (state.getValue(FACING).getAxis().isHorizontal() && direction == Direction.DOWN) {
+        if(
+            state.getValue(FACING).getAxis().isHorizontal()
+            && direction == Direction.DOWN
+        ) {
             return getSignal(state, getter, pos, direction);
         }
         return 0;
     }
 
     @Override
-    public boolean isSignalSource(BlockState state) {
+    public boolean isSignalSource(@NotNull BlockState state) {
         return true;
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+    public void onRemove(
+        BlockState state, @NotNull Level level,
+        @NotNull BlockPos pos, BlockState newState,
+        boolean movedByPiston
+    ) {
         if (!state.is(newState.getBlock())) {
             IBE.onRemove(state, level, pos, newState);
         }
@@ -131,91 +173,5 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
     @Override
     public BlockEntityType<? extends CoordNavBlockEntity> getBlockEntityType() {
         return JocBlockEntityTypes.COORD_NAV.get();
-    }
-
-    @Unique
-    private static VoxelShape getShape(Direction.Axis axis) {
-        final VoxelShape MAGNETS; {
-            final VoxelShape BOTTOM_MAGNET = Block.box(3, 0,    3, 16-3, 3,  16-3);
-            final VoxelShape    TOP_MAGNET = Block.box(3, 16-3, 3, 16-3, 16, 16-3);
-
-            MAGNETS = Shapes.join(BOTTOM_MAGNET, TOP_MAGNET, BooleanOp.OR);
-        }
-
-        final VoxelShape POLES; {
-            final VoxelShape NORTHEAST = Block.box(0,    0, 0,    2,    16, 2 );
-            final VoxelShape NORTHWEST = Block.box(16-2, 0, 0,    16,   16, 2 );
-            final VoxelShape SOUTHEAST = Block.box(0,    0, 16-2, 2,    16, 16);
-            final VoxelShape SOUTHWEST = Block.box(16-2, 0, 16-2, 16,   16, 16);
-
-            POLES = Shapes.join(
-                Shapes.join(NORTHEAST, NORTHWEST, BooleanOp.OR),
-                Shapes.join(SOUTHEAST, SOUTHWEST, BooleanOp.OR),
-                BooleanOp.OR
-            );
-        }
-
-        final VoxelShape CENTER = Block.box(8-1, 8-1, 8-1, 8+1, 8+1 ,8+1);
-
-        final VoxelShape PADS; {
-            final VoxelShape NORTHEAST_FIRST  = Block.box(0, 8-2, 0, 4-2, 8+2, 4-1);
-            final VoxelShape NORTHEAST_SECOND = Block.box(0, 8-2, 0, 4-1, 8+2, 4-2);
-            final VoxelShape NORTHWEST_FIRST  = Block.box(0, 8-2, 16-2, 3, 8+2, 16);
-            final VoxelShape NORTHWEST_SECOND = Block.box(0, 8-2, 16-3, 2, 8+2, 16);
-            final VoxelShape SOUTHEAST_FIRST  = Block.box(16-2, 8-2, 0, 16, 8+2, 3);
-            final VoxelShape SOUTHEAST_SECOND = Block.box(16-3, 8-2, 0, 16, 8+2, 2);
-            final VoxelShape SOUTHWEST_FIRST  = Block.box(16-2, 8-2, 16-3, 16, 8+2, 16);
-            final VoxelShape SOUTHWEST_SECOND = Block.box(16-3, 8-2, 16-2, 16, 8+2, 16);
-
-            PADS = Shapes.join(
-                Shapes.join(
-                    Shapes.join(NORTHEAST_FIRST, NORTHEAST_SECOND, BooleanOp.OR),
-                    Shapes.join(NORTHWEST_FIRST, NORTHWEST_SECOND, BooleanOp.OR),
-                    BooleanOp.OR
-                ),
-                Shapes.join(
-                    Shapes.join(SOUTHEAST_FIRST, SOUTHEAST_SECOND, BooleanOp.OR),
-                    Shapes.join(SOUTHWEST_FIRST, SOUTHWEST_SECOND, BooleanOp.OR),
-                    BooleanOp.OR
-                ),
-                BooleanOp.OR
-            );
-        }
-
-        final VoxelShape result = Shapes.join(
-            Shapes.join(MAGNETS, POLES, BooleanOp.OR),
-            Shapes.join(CENTER, PADS, BooleanOp.OR),
-            BooleanOp.OR
-        );
-
-        return rotateShape(axis, result);
-    }
-
-    @Unique
-    public static VoxelShape rotateShape(Direction.Axis axis, VoxelShape shape) {
-        if( axis.equals(Direction.Axis.Y) ) {
-            return shape;
-        }
-
-
-        VoxelShape[] rotated = new VoxelShape[]{ Shapes.empty() };
-        boolean isAxisX = axis.equals(Direction.Axis.X);
-        shape.forAllBoxes(
-            (minX, minY, minZ, maxX, maxY, maxZ) -> {
-                rotated[0] = Shapes.or(
-                    rotated[0],
-                    Shapes.create(
-                        isAxisX ? minY : minX,
-                        isAxisX ? minX : minZ,
-                        isAxisX ? minZ : minY,
-                        isAxisX ? maxY : maxX,
-                        isAxisX ? maxX : maxZ,
-                        isAxisX ? maxZ : maxY
-                    )
-                );
-            }
-        );
-
-        return rotated[0];
     }
 }

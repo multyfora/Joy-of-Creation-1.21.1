@@ -20,6 +20,7 @@ import net.multyfora.content.coordnav.CoordNavBlockEntity;
 import net.multyfora.network.CoordNavPayloads;
 
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
 
 /**
@@ -51,18 +52,6 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         this.pos = menu.blockEntity.getBlockPos();
     }
 
-    // Helper to fetch the block entity from the client level
-    private CoordNavBlockEntity getBlockEntity() {
-        Level level = Minecraft.getInstance().level;
-        if(
-            level != null
-            && level.getBlockEntity(pos) instanceof CoordNavBlockEntity blockEntity
-        ) {
-            return blockEntity;
-        }
-        return null;
-    }
-
     @Override
     protected void init() {
         // Title position
@@ -74,6 +63,11 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         // remove "Inventory" label
         this.inventoryLabelX = -1000;
 
+        addFields();
+        addWidgets();
+    }
+
+    private void addFields() {
         CoordNavBlockEntity blockEntity = getBlockEntity();
         int center_x = width/2;
         int center_y = height/2;
@@ -96,6 +90,11 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
             Component.literal("Z"),
             ( blockEntity != null ? (int)blockEntity.getTargetZ() : pos.getZ() )
         );
+    }
+
+    private void addWidgets() {
+        int center_x = width/2;
+        int center_y = height/2;
 
         addRenderableWidget(
             Button
@@ -140,6 +139,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
                 )
                 .build()
         );
+        return;
     }
 
     private EditBox createIntegerField(
@@ -170,7 +170,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
     }
 
     @Override
-    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+    protected void renderLabels(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
         super.renderLabels(guiGraphics, mouseX, mouseY);
 
         //positions
@@ -204,13 +204,9 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         );
     }
 
-    // Sends the entered coordinates to the server via UpdateCoordPayload
-    private void sendUpdate(int x, int y, int z) {
-        try {
-            PacketDistributor.sendToServer(
-                new CoordNavPayloads.UpdateCoordPayload(pos, x, y, z)
-            );
-        } catch(NumberFormatException ignored) {}
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 
     // Fills the input fields with the block's own position
@@ -220,13 +216,29 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         zField.setValue(  String.valueOf( pos.getZ() )  );
     }
 
-    @Override
-    public boolean isPauseScreen() {
-        return false;
+    // Sends the entered coordinates to the server via UpdateCoordPayload
+    private void sendUpdate(int x, int y, int z) {
+        try {
+            PacketDistributor.sendToServer(
+                new CoordNavPayloads.UpdateCoordPayload(pos, x, y, z)
+            );
+        } catch(NumberFormatException ignored) {}
     }
 
     //TODO
     private void accessWayPointScreen() {
         AeronauticsJoyofcreation.LOGGER.info("Waypoints Menu not yet implemented.");
+    }
+
+    // Helper to fetch the block entity from the client level
+    private CoordNavBlockEntity getBlockEntity() {
+        Level level = Minecraft.getInstance().level;
+        if(
+            level != null
+            && level.getBlockEntity(pos) instanceof CoordNavBlockEntity blockEntity
+        ) {
+            return blockEntity;
+        }
+        return null;
     }
 }

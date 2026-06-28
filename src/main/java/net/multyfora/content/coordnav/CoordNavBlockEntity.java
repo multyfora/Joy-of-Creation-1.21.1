@@ -57,7 +57,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     // Tick counter for periodic distance recalculation
     private int ticks;
     private double distanceToTarget;
-    private double lastDistanceToTarget;
     // Cache of last-known signal strengths per direction to avoid unnecessary neighbor updates
     private final Map<Direction, Integer> signalStrengthCache = new EnumMap<>(Direction.class);
     // Reference to the sublevel containing this block, if any
@@ -96,6 +95,7 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
             subLevel = Sable.HELPER.getContaining(this);
         } catch (Exception ignored) {}
 
+        double lastDistanceToTarget;
         if (!level.isClientSide) {
             updateTarget();
 
@@ -283,7 +283,9 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     }
 
     @Override
-    public @Nullable AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
+    public @Nullable AbstractContainerMenu createMenu(
+        int i, @NotNull Inventory inventory, @NotNull Player player
+    ) {
         return new CoordNavMenu(i, inventory, this);
     }
 

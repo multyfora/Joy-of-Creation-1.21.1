@@ -23,19 +23,22 @@ public class PayloadRegister {
                         Player player = context.player();
                         Level level = player.level();
                         BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
-                        if(blockEntity instanceof CoordNavBlockEntity coordNavBlockEntity) {
-                            int x = payload.pos().getX();
-                            int y = payload.pos().getY();
-                            int z = payload.pos().getZ();
-                            coordNavBlockEntity.setTarget(x, y, z);
 
-                            CoordNavMenu coordNavMenu = new CoordNavMenu(
-                                0, player.getInventory(), coordNavBlockEntity
-                            );
-                            Minecraft.getInstance().setScreen(
-                                new CoordNavScreen( coordNavMenu, player.getInventory() )
-                            );
+                        if( !(blockEntity instanceof CoordNavBlockEntity coordNavBlockEntity) ) {
+                            return;
                         }
+
+                        int x = payload.pos().getX();
+                        int y = payload.pos().getY();
+                        int z = payload.pos().getZ();
+                        coordNavBlockEntity.setTarget(x, y, z);
+
+                        CoordNavMenu coordNavMenu = new CoordNavMenu(
+                            0, player.getInventory(), coordNavBlockEntity
+                        );
+                        Minecraft.getInstance().setScreen(
+                            new CoordNavScreen( coordNavMenu, player.getInventory() )
+                        );
                     }
                 );
             }
@@ -45,15 +48,23 @@ public class PayloadRegister {
                 context.enqueueWork(
                     () -> {
                         Level level = context.player().level();
-                        if( level.getBlockEntity( payload.pos() ) instanceof CoordNavBlockEntity blockEntity ) {
-                            blockEntity.setTarget(
-                                payload.x(),
-                                payload.y(),
-                                payload.z()
-                            );
-                            blockEntity.setChanged();
-                            level.sendBlockUpdated(payload.pos(), blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
+                        BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
+                        if( !(blockEntity instanceof CoordNavBlockEntity coordNavBlockEntity) ) {
+                            return;
                         }
+
+                        coordNavBlockEntity.setTarget(
+                            payload.x(),
+                            payload.y(),
+                            payload.z()
+                        );
+                        coordNavBlockEntity.setChanged();
+                        level.sendBlockUpdated(
+                            payload.pos(),
+                            coordNavBlockEntity.getBlockState(),
+                            coordNavBlockEntity.getBlockState(),
+                            3
+                        );
                     }
                 );
             }
