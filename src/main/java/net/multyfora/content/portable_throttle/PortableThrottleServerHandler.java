@@ -92,12 +92,6 @@ public class PortableThrottleServerHandler {
                 updated++;
             }
         }
-        if (updated == 0) {
-            LOGGER.warn("[THROTTLE_SERVER] forceUpdateListeners: ZERO listeners updated! Network may be out of sync with link blocks for this frequency!");
-        }
-        if (total - dead == 0) {
-            LOGGER.warn("[THROTTLE_SERVER] forceUpdateListeners: Network set EMPTY after dead cleanup! No link blocks in network for this frequency!");
-        }
     }
 
     /**
