@@ -3,7 +3,7 @@ package net.multyfora.client.graphics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Vector2i;
@@ -89,4 +89,18 @@ public class GraphicsUtils {
             GraphicsUtils.renderSlot(graphics, font, start, end, mousePosition, stack);
         }
     }
+
+    public static String getCoordinateString(BlockPos position) {
+        if(position == null) {
+            return "Not Set";
+        }
+        return
+            position.getX() +
+            ", " +
+            position.getY() +
+            ", " +
+            position.getZ()
+        ;
+    }
+
 }

@@ -67,13 +67,16 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
 
     // Opens the coordinate configuration GUI when right-clicked with an empty hand
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
-                                               Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!player.getItemInHand(hand).isEmpty()) {
+    protected ItemInteractionResult useItemOn(
+        ItemStack stack, BlockState state, Level level, BlockPos pos,
+       Player player, InteractionHand hand, BlockHitResult hit
+    ) {
+        if( !player.getItemInHand(hand).isEmpty() ) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        if (player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.connection.send(new CoordNavPayloads.OpenCoordNavPayload(pos));
+
+        if(player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send( new CoordNavPayloads.OpenCoordNavPayload(pos) );
         }
         return ItemInteractionResult.SUCCESS;
     }

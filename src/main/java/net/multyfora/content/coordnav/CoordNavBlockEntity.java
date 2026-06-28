@@ -12,14 +12,21 @@ import net.createmod.catnip.animation.LerpedFloat;
 
 import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import net.multyfora.client.coordnav.CoordNavMenu;
 import net.multyfora.index.JocBlockEntityTypes;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -31,7 +38,7 @@ import java.util.Map;
  * block to a configurable target coordinate. Includes sublevel-aware coordinate transforms
  * so it works correctly on moving ships.
  **/
-public class CoordNavBlockEntity extends SmartBlockEntity {
+public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvider {
 
     // Target coordinates (in logical sublevel space)
     private double targetX;
@@ -141,25 +148,8 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
         sendData();
 
         if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
             selectivelyUpdateNeighbors();
-            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
-        }
-    }
-
-    // Clears the target and resets redstone output
-    public void clearTarget() {
-        this.hasTarget = false;
-        this.currentTarget = null;
-        this.targetX = 0;
-        this.targetY = 0;
-        this.targetZ = 0;
-        setChanged();
-        sendData();
-
-        if (level != null && !level.isClientSide) {
-            selectivelyUpdateNeighbors();
-
-            // Force an update when clearing, too
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
     }
@@ -257,32 +247,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
         return updated;
     }
 
-    /**
-     * Projects a vector onto a plane defined by a normal vector.
-     * Used to flatten the target direction onto the plane perpendicular to the block's facing axis.
-     **/
-    public static Vec3 getPlaneProjectedPos(Vec3 vec, Vec3i normal) {
-        Vec3 normalVec = Vec3.atLowerCornerOf(normal);
-        double dot = vec.dot(normalVec);
-        return vec.subtract(normalVec.scale(dot));
-    }
-
-    // Rotates a Vec3 by a double-precision quaternion (for sublevel orientation)
-    public static Vec3 rotateQuat(Vec3 vec, Quaterniond quat) {
-        if (quat.equals(new Quaterniond())) return vec;
-        Vector3d v = new Vector3d(vec.x, vec.y, vec.z);
-        quat.transform(v);
-        return new Vec3(v.x, v.y, v.z);
-    }
-
-    // Rotates a Vec3 by a float-precision quaternion (for block facing rotation)
-    public static Vec3 rotateQuat(Vec3 vec, Quaternionf quat) {
-        if (quat.equals(new Quaternionf())) return vec;
-        org.joml.Vector3f v = new org.joml.Vector3f((float) vec.x, (float) vec.y, (float) vec.z);
-        quat.transform(v);
-        return new Vec3(v.x, v.y, v.z);
-    }
-
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
@@ -312,4 +276,38 @@ public class CoordNavBlockEntity extends SmartBlockEntity {
             lerpedAngleDegrees.chase(relativeAngle, 1.0, LerpedFloat.Chaser.EXP);
         }
     }
+
+    @Override
+    public @NotNull Component getDisplayName() {
+        return Component.translatable("screen.joc.coord_navigator");
+    }
+
+    @Override
+    public @Nullable AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
+        return new CoordNavMenu(i, inventory, this);
+    }
+
+    public BlockPos getTarget() {
+        if(!hasTarget) {
+            return null;
+        }
+        return new BlockPos(
+            (int)targetX,
+            (int)targetY,
+            (int)targetZ
+        );
+    }
+
+    @Override
+    public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registries) {
+        CompoundTag tag = new CompoundTag();
+        write(tag, registries, false);
+        return tag;
+    }
+
+    @Override
+    public @NotNull ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
 }

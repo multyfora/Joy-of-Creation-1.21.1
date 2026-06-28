@@ -2,7 +2,10 @@ package net.multyfora.register;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.multyfora.client.coordnav.CoordNavMenu;
 import net.multyfora.client.coordnav.CoordNavScreen;
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
@@ -17,9 +20,21 @@ public class PayloadRegister {
             (payload, context) -> {
                 context.enqueueWork(
                     () -> {
-                        Minecraft mc = Minecraft.getInstance();
-                        if(mc.level != null) {
-                            mc.setScreen(  new CoordNavScreen( payload.pos() )  );
+                        Player player = context.player();
+                        Level level = player.level();
+                        BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
+                        if(blockEntity instanceof CoordNavBlockEntity coordNavBlockEntity) {
+                            int x = payload.pos().getX();
+                            int y = payload.pos().getY();
+                            int z = payload.pos().getZ();
+                            coordNavBlockEntity.setTarget(x, y, z);
+
+                            CoordNavMenu coordNavMenu = new CoordNavMenu(
+                                0, player.getInventory(), coordNavBlockEntity
+                            );
+                            Minecraft.getInstance().setScreen(
+                                new CoordNavScreen( coordNavMenu, player.getInventory() )
+                            );
                         }
                     }
                 );
@@ -30,12 +45,14 @@ public class PayloadRegister {
                 context.enqueueWork(
                     () -> {
                         Level level = context.player().level();
-                        if( level.getBlockEntity( payload.pos() ) instanceof CoordNavBlockEntity be ) {
-                            be.setTarget(
+                        if( level.getBlockEntity( payload.pos() ) instanceof CoordNavBlockEntity blockEntity ) {
+                            blockEntity.setTarget(
                                 payload.x(),
                                 payload.y(),
                                 payload.z()
                             );
+                            blockEntity.setChanged();
+                            level.sendBlockUpdated(payload.pos(), blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
                         }
                     }
                 );
