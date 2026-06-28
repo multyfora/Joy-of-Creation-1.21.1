@@ -1,25 +1,43 @@
+# Joy of Creation, for Create: Aeronautics
 
-Installation information
-=======
+<p align="center">
+	<a href="https://modrinth.com/mod/no-link-yet"><img src="https://img.shields.io/modrinth/dt/jImqv1M5?logo=modrinth&label=Modrinth&color=00AF5C&style=for-the-badge" alt="Modrinth Downloads"></a>
+	<a href="https://www.curseforge.com/projects/1528764"><img src="https://img.shields.io/curseforge/dt/1528764?logo=curseforge&label=CurseForge&color=F16436&style=for-the-badge" alt="CurseForge Downloads"></a>
+</p>
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+<p align="center">
+	<a href="https://www.minecraft.net/"><img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft" alt="Minecraft"></a>
+	<a href="https://neoforged.net/"><img src="https://img.shields.io/badge/NeoForge-21.1.227%2B-DC2626" alt="NeoForge"></a>
+	<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+</p>
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+<p align="center">
+	TODO: main-image
+</p>
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+---
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+## Portable Typewriter
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+	TODO: portable-typewriter image
+
+	Remotely control complex machines!
+
+## Portable Throttle-Lever
+	TODO: portable-throttle-lever image
+	Set a frequency (nearby and while holding) to a chosen strength.
+	
+
+## Coordinate Navigator
+	TODO: coordinate-navigator image
+	No lodestone-compass needed, pick a location and go!
+
+## Balloon
+	TODO: balloon image
+	TODO: balloon description
+
+---
+
+## Examples
+	TODO: gif of (complex) remote control
+	TODO: gif of automatic navigation via Coordinate-Navigator
