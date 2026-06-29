@@ -3,9 +3,7 @@ package net.multyfora.client.graphics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Vector2i;
@@ -19,12 +17,30 @@ public class GraphicsUtils {
         ;
     }
 
-    public static void renderSlot(GuiGraphics graphics, Font font, Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition, ItemStack stack) {
-        renderSlot(graphics, INVENTORY_GRAPHICS_FILLER.clone(), font, startPosition, endPosition, mousePosition, stack);
+    public static void renderSlot(
+        GuiGraphics graphics, Font font, int thickness,
+        Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition,
+        ItemStack stack
+    ) {
+        GraphicsFiller filler = INVENTORY_GRAPHICS_FILLER.clone();
+        filler.setThickness(thickness);
+        renderSlot(graphics, filler, font, startPosition, endPosition, mousePosition, stack);
     }
 
-    public static void renderSlot(GuiGraphics graphics, GraphicsFiller filler, Font font, Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition, ItemStack stack) {
-        filler.setHovering( isInBounds(startPosition, endPosition, mousePosition) );
+    public static void renderSlot(
+        GuiGraphics graphics, GraphicsFiller filler, Font font,
+        Vector2i startPosition, Vector2i endPosition, Vector2i mousePosition,
+        ItemStack stack
+    ) {
+        Vector2i hoverStart = new Vector2i(
+            startPosition.x + filler.getThickness()/2 + 1,
+            startPosition.y + filler.getThickness()/2 + 1
+        );
+        Vector2i hoverEnd = new Vector2i(
+            endPosition.x + filler.getThickness()/2 - 1,
+            endPosition.y + filler.getThickness()/2 - 1
+        );
+        filler.setHovering( isInBounds(hoverStart, hoverEnd, mousePosition) );
         filler.fill(graphics, startPosition, endPosition);
 
         Vector2i size = new Vector2i(endPosition.x - startPosition.x, endPosition.y - startPosition.y);
@@ -58,7 +74,7 @@ public class GraphicsUtils {
     public static void renderInventory(
         GuiGraphics graphics, Font font,
         Vector2i origin,
-        int size, int gap,
+        int size, int gap, int thickness,
         Vector2i mousePosition
     ) {
         Minecraft mc = Minecraft.getInstance();
@@ -72,25 +88,31 @@ public class GraphicsUtils {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slotIdx = 9 + 9*row + col;
-                int x = origin.x + col * size;
-                int y = origin.y + row * size;
-                start = new Vector2i(x-1, y-1);
-                end =   new Vector2i(x+size+1, y+size+1);
+                int x = origin.x + col * (size-thickness/2);
+                int y = origin.y + row * (size-thickness/2);
+                start = new Vector2i(x, y);
+                end =   new Vector2i(
+                    x+size,
+                    y+size
+                );
 
                 ItemStack stack = inventory.getItem(slotIdx);
-                GraphicsUtils.renderSlot(graphics, font, start, end, mousePosition, stack);
+                GraphicsUtils.renderSlot(graphics, font, thickness, start, end, mousePosition, stack);
             }
         }
 
         // Hotbar
         int hotbarY = origin.y + 3*size + gap;
         for (int col = 0; col < 9; col++) {
-            int x = origin.x + col * size;
-            start = new Vector2i(x-1, hotbarY-1);
-            end   = new Vector2i(x+size+1, hotbarY+size+1);
+            int x = origin.x + col * (size-thickness/2);
+            start = new Vector2i(x, hotbarY);
+            end   = new Vector2i(
+                x + size,
+                hotbarY + size
+            );
 
             ItemStack stack = inventory.getItem(col);
-            GraphicsUtils.renderSlot(graphics, font, start, end, mousePosition, stack);
+            GraphicsUtils.renderSlot(graphics, font, thickness, start, end, mousePosition, stack);
         }
     }
 

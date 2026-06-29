@@ -6,16 +6,18 @@ import org.joml.Vector2i;
 public class CheckerboardGraphicsFiller implements GraphicsFiller {
     final int OUTLINE_COLOR;
     final int FIRST_COLOR, SECOND_COLOR;
+    int thickness;
 
     boolean isHovering = false;
     final int HOVERED_FIRST_COLOR, HOVERED_SECOND_COLOR;
 
-    public CheckerboardGraphicsFiller(int outline_color, int first_color, int second_color) {
+    public CheckerboardGraphicsFiller(int outline_color, int first_color, int second_color, int thickness) {
         this.OUTLINE_COLOR = outline_color;
         this.FIRST_COLOR   = first_color;
         this.SECOND_COLOR  = second_color;
         this.HOVERED_FIRST_COLOR  = GraphicsFiller.getHoveredColor(first_color);
         this.HOVERED_SECOND_COLOR = GraphicsFiller.getHoveredColor(second_color);
+        this.thickness = thickness;
     }
 
     @Override
@@ -42,7 +44,17 @@ public class CheckerboardGraphicsFiller implements GraphicsFiller {
     }
 
     @Override
+    public void setThickness(int thickness) {
+        this.thickness = thickness;
+    }
+
+    @Override
+    public int getThickness() {
+        return this.thickness;
+    }
+
+    @Override
     public GraphicsFiller clone() {
-        return new CheckerboardGraphicsFiller(OUTLINE_COLOR, FIRST_COLOR, SECOND_COLOR);
+        return new CheckerboardGraphicsFiller(OUTLINE_COLOR, FIRST_COLOR, SECOND_COLOR, thickness);
     }
 }

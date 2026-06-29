@@ -32,7 +32,8 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     private static final int
         FREQ_SLOT_SIZE = 22,
         FREQ_SLOT_GAP = 8,
-        INV_SLOT_SIZE = 22,
+        INV_SLOT_SIZE = 24,
+        INV_LINE_THICKNESS = 2,
         INV_SLOT_GAP = 8
     ;
 
@@ -81,7 +82,7 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     }
 
     private int getInvLeft() {
-        return width / 2 - 9 * INV_SLOT_SIZE / 2;
+        return width/2 - 9*INV_SLOT_SIZE/2 + 2*INV_LINE_THICKNESS;
     }
 
     @Override
@@ -112,11 +113,14 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
             firstItem, secondItem
         );
 
-        Vector2i origin = new Vector2i( getInvLeft(), getInvTopY() );
+        Vector2i origin = new Vector2i(
+            getInvLeft(),
+            getInvTopY()
+        );
         GraphicsUtils.renderInventory(
             graphics, font,
             origin,
-            INV_SLOT_SIZE, INV_SLOT_GAP,
+            INV_SLOT_SIZE, INV_SLOT_GAP, INV_LINE_THICKNESS,
             mousePosition
         );
     }
@@ -160,6 +164,7 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     }
 
     private boolean handleInvClick(double mx, double my) {
+        //TODO: this does not perfectly line-up with GraphicsUtils::renderInventory
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return false;
         Inventory inv = mc.player.getInventory();
@@ -169,8 +174,8 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * INV_SLOT_SIZE;
-                int y = startY + row * INV_SLOT_SIZE;
+                int x = startX + col * (INV_SLOT_SIZE-INV_LINE_THICKNESS);
+                int y = startY + row * (INV_SLOT_SIZE-INV_LINE_THICKNESS);
                 if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
                     ItemStack stack = inv.getItem(slotIdx);
                     if (!stack.isEmpty()) {
@@ -183,7 +188,7 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
 
         int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
         for (int col = 0; col < 9; col++) {
-            int x = startX + col * INV_SLOT_SIZE;
+            int x = startX + col * (INV_SLOT_SIZE-INV_LINE_THICKNESS);
             if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
                 ItemStack stack = inv.getItem(col);
                 if (!stack.isEmpty()) {

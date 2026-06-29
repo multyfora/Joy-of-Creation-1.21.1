@@ -41,7 +41,8 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         FREQ_SLOT_SIZE = 22,
         FREQ_SLOT_GAP = 8,
         INV_SLOT_SIZE = 22,
-        INV_SLOT_GAP = 8
+        INV_SLOT_GAP = 8,
+        INV_SLOT_THICKNESS = 2
     ;
 
     private static final int CONTENT_HEIGHT = 235;
@@ -111,11 +112,11 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     }
 
     private int invTopY() {
-        return freqSlotsTop() + FREQ_SLOT_SIZE + 25;
+        return freqSlotsTop() + FREQ_SLOT_SIZE + 2*INV_SLOT_THICKNESS + 20;
     }
 
     private int invLeft() {
-        return width / 2 - 9 * INV_SLOT_SIZE / 2;
+        return width/2-9 * INV_SLOT_SIZE/2 + 2*INV_SLOT_THICKNESS;
     }
 
     private void loadFreqForSelectedKey() {
@@ -184,12 +185,12 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
 
         Vector2i origin = new Vector2i(
             invLeft(),
-            invTopY() - 27
+            invTopY() - 28
         );
         GraphicsUtils.renderInventory(
             graphics, font,
             origin,
-            FREQ_SLOT_SIZE, FREQ_SLOT_GAP,
+            FREQ_SLOT_SIZE, FREQ_SLOT_GAP, INV_SLOT_THICKNESS,
             mousePosition
         );
     }
@@ -238,17 +239,18 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     }
 
     private boolean handleInvClick(double mx, double my) {
+        //TODO: this does not perfectly line-up with GraphicsUtils::renderInventory
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return false;
         Inventory inv = mc.player.getInventory();
         int startX = invLeft();
-        int startY = invTopY();
+        int startY = invTopY() - INV_SLOT_SIZE - 2*INV_SLOT_THICKNESS;
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * INV_SLOT_SIZE;
-                int y = startY + row * INV_SLOT_SIZE;
+                int x = startX + col * (INV_SLOT_SIZE-INV_SLOT_THICKNESS);
+                int y = startY + row * (INV_SLOT_SIZE-INV_SLOT_THICKNESS);
                 if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
                     ItemStack stack = inv.getItem(slotIdx);
                     if (!stack.isEmpty()) {
@@ -261,7 +263,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
 
         int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
         for (int col = 0; col < 9; col++) {
-            int x = startX + col * INV_SLOT_SIZE;
+            int x = startX + col * (INV_SLOT_SIZE-INV_SLOT_THICKNESS);
             if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
                 ItemStack stack = inv.getItem(col);
                 if (!stack.isEmpty()) {

@@ -8,6 +8,8 @@ public interface GraphicsFiller {
 
      void fill(GuiGraphics graphics, Vector2i start, Vector2i end);
      void setHovering(boolean hovering);
+     void setThickness(int thickness);
+     int getThickness();
      GraphicsFiller clone();
 
      static int getHoveredColor(int color) {
