@@ -67,25 +67,27 @@ public class GraphicsUtils {
         }
         Inventory inventory = mc.player.getInventory();
 
+        // Inventory
         Vector2i start, end;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slotIdx = 9 + 9*row + col;
                 int x = origin.x + col * size;
                 int y = origin.y + row * size;
-                start = new Vector2i(x, y);
-                end =   new Vector2i(x+size, y+size);
+                start = new Vector2i(x-1, y-1);
+                end =   new Vector2i(x+size+1, y+size+1);
 
                 ItemStack stack = inventory.getItem(slotIdx);
                 GraphicsUtils.renderSlot(graphics, font, start, end, mousePosition, stack);
             }
         }
 
+        // Hotbar
         int hotbarY = origin.y + 3*size + gap;
         for (int col = 0; col < 9; col++) {
             int x = origin.x + col * size;
-            start = new Vector2i(x, hotbarY);
-            end   = new Vector2i(x+size, hotbarY+size);
+            start = new Vector2i(x-1, hotbarY-1);
+            end   = new Vector2i(x+size+1, hotbarY+size+1);
 
             ItemStack stack = inventory.getItem(col);
             GraphicsUtils.renderSlot(graphics, font, start, end, mousePosition, stack);

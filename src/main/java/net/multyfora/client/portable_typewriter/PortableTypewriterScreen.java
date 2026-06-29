@@ -27,40 +27,44 @@ import java.util.List;
 
 public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreenMenu> {
 
-    static final int KEY_W = 18;
-    static final int KEY_H = 18;
-    static final int GAP = 2;
-    static final int ROW_GAP = 4;
-    static final int UNIT = KEY_W + GAP;
-    static final int TOTAL_UNITS = 15;
-    static final int TOTAL_W = TOTAL_UNITS * UNIT - GAP;
+    static final int
+        KEY_WIDTH = 18,
+        KEY_HEIGHT = 18,
+        KEY_GAP = 2,
+        ROW_GAP = 4,
+        KEY_UNIT = KEY_WIDTH + KEY_GAP,
+        TOTAL_UNITS = 15,
+        TOTAL_WIDTH = TOTAL_UNITS * KEY_UNIT - KEY_GAP
+    ;
 
-    private static final int FREQ_SLOT_SIZE = 22;
-    private static final int FREQ_SLOT_GAP = 8;
-    private static final int INV_SLOT = 18;
+    private static final int
+        FREQ_SLOT_SIZE = 22,
+        FREQ_SLOT_GAP = 8,
+        INV_SLOT_SIZE = 22,
+        INV_SLOT_GAP = 8
+    ;
 
-    private static final int CONTENT_H = 235;
+    private static final int CONTENT_HEIGHT = 235;
 
     private final List<KeyWidget> keyWidgets = new ArrayList<>();
     private int selectedKeyCode = -1;
 
     private ItemStack firstFreqItem = ItemStack.EMPTY;
     private ItemStack secondFreqItem = ItemStack.EMPTY;
-
     private ItemStack cursorItem = ItemStack.EMPTY;
 
     public PortableTypewriterScreen(FreqScreenMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
-        this.imageWidth = TOTAL_W;
-        this.imageHeight = CONTENT_H;
+        this.imageWidth = TOTAL_WIDTH;
+        this.imageHeight = CONTENT_HEIGHT;
     }
 
     @Override
     protected void init() {
-        this.imageWidth = TOTAL_W;
-        this.imageHeight = CONTENT_H;
+        this.imageWidth = TOTAL_WIDTH;
+        this.imageHeight = CONTENT_HEIGHT;
         super.init();
-        this.leftPos = (width - TOTAL_W) / 2;
+        this.leftPos = (width - TOTAL_WIDTH) / 2;
         this.topPos = keyboardTop();
 
         keyWidgets.clear();
@@ -71,19 +75,19 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
             selectedKeyCode = PortableTypewriterItem.getSelectedKey(held);
 
         int cx = width / 2;
-        int startX = cx - TOTAL_W / 2;
+        int startX = cx - TOTAL_WIDTH / 2;
         int startY = keyboardTop();
 
         KeyRow[] rows = getKeyboardLayout();
         int y = startY;
         for (KeyRow row : rows) {
-            float x = startX + row.offset * UNIT;
+            float x = startX + row.offset * KEY_UNIT;
             for (KeyDef key : row.keys) {
-                int w = (int) (key.widthUnits * UNIT - GAP);
-                keyWidgets.add(new KeyWidget((int) x, y, w, KEY_H, key));
-                x += key.widthUnits * UNIT;
+                int w = (int) (key.widthUnits * KEY_UNIT - KEY_GAP);
+                keyWidgets.add(new KeyWidget((int) x, y, w, KEY_HEIGHT, key));
+                x += key.widthUnits * KEY_UNIT;
             }
-            y += KEY_H + ROW_GAP;
+            y += KEY_HEIGHT + ROW_GAP;
         }
 
         loadFreqForSelectedKey();
@@ -95,7 +99,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     }
 
     private int keyboardBottom() {
-        return keyboardTop() + 5 * KEY_H + 4 * ROW_GAP;
+        return keyboardTop() + 5 * KEY_HEIGHT + 4 * ROW_GAP;
     }
 
     private int freqSlotsTop() {
@@ -107,11 +111,11 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     }
 
     private int invTopY() {
-        return freqSlotsTop() + FREQ_SLOT_SIZE + 18;
+        return freqSlotsTop() + FREQ_SLOT_SIZE + 25;
     }
 
     private int invLeft() {
-        return width / 2 - 9 * INV_SLOT / 2;
+        return width / 2 - 9 * INV_SLOT_SIZE / 2;
     }
 
     private void loadFreqForSelectedKey() {
@@ -179,8 +183,8 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         }
 
         Vector2i origin = new Vector2i(
-            invLeft() - FREQ_SLOT_SIZE,
-            invTopY() - FREQ_SLOT_SIZE
+            invLeft(),
+            invTopY() - 27
         );
         GraphicsUtils.renderInventory(
             graphics, font,
@@ -243,9 +247,9 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * INV_SLOT;
-                int y = startY + row * INV_SLOT;
-                if (mx >= x && mx < x + INV_SLOT && my >= y && my < y + INV_SLOT) {
+                int x = startX + col * INV_SLOT_SIZE;
+                int y = startY + row * INV_SLOT_SIZE;
+                if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
                     ItemStack stack = inv.getItem(slotIdx);
                     if (!stack.isEmpty()) {
                         cursorItem = stack.copyWithCount(1);
@@ -255,10 +259,10 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
             }
         }
 
-        int hotbarY = startY + 3 * INV_SLOT + 2;
+        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
         for (int col = 0; col < 9; col++) {
-            int x = startX + col * INV_SLOT;
-            if (mx >= x && mx < x + INV_SLOT && my >= hotbarY && my < hotbarY + INV_SLOT) {
+            int x = startX + col * INV_SLOT_SIZE;
+            if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
                 ItemStack stack = inv.getItem(col);
                 if (!stack.isEmpty()) {
                     cursorItem = stack.copyWithCount(1);

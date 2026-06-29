@@ -14,14 +14,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.client.FreqScreenMenu;
-import net.multyfora.client.graphics.GraphicsFiller;
-import net.multyfora.client.graphics.GraphicsFillers;
 import net.multyfora.client.graphics.GraphicsUtils;
-import net.multyfora.client.graphics.GraphicsUtils.*;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.network.PortableThrottleConfigPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import java.util.ArrayList;
@@ -31,16 +29,15 @@ import static net.multyfora.client.graphics.GraphicsUtils.isInBounds;
 
 public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScreenMenu> {
 
-    private static final int LINK_SLOT_SIZE = 22;
-    private static final int LINK_SLOT_GAP = 8;
+    private static final int
+        FREQ_SLOT_SIZE = 22,
+        FREQ_SLOT_GAP = 8,
+        INV_SLOT_SIZE = 22,
+        INV_SLOT_GAP = 8
+    ;
 
-    private static final int INV_SLOT_SIZE = 18;
-    private static final int INV_SLOT_GAP = 2;
-
-    private static final int CONTENT_W = 160;
-    private static final int CONTENT_H = 150;
-
-    private static final GraphicsFiller DEFAULT_GRAPHICS_FILLER = GraphicsFillers.INVENTORY_GRAPHICS_FILLER.clone();
+    private static final int CONTENT_WIDTH = 160;
+    private static final int CONTENT_HEIGHT = 150;
 
     private ItemStack firstItem = ItemStack.EMPTY;
     private ItemStack secondItem = ItemStack.EMPTY;
@@ -48,16 +45,16 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
 
     public PortableThrottleLinkScreen(FreqScreenMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
-        this.imageWidth = CONTENT_W;
-        this.imageHeight = CONTENT_H;
+        this.imageWidth = CONTENT_WIDTH;
+        this.imageHeight = CONTENT_HEIGHT;
     }
 
     @Override
     protected void init() {
-        this.imageWidth = CONTENT_W;
-        this.imageHeight = CONTENT_H;
+        this.imageWidth = CONTENT_WIDTH;
+        this.imageHeight = CONTENT_HEIGHT;
         super.init();
-        this.leftPos = (width - CONTENT_W) / 2;
+        this.leftPos = (width - CONTENT_WIDTH) / 2;
         this.topPos = getFreqSlotsY() - 10;
 
         Minecraft mc = Minecraft.getInstance();
@@ -72,15 +69,15 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     }
 
     private int getFreqSlotsCenterX() {
-        return width / 2;
+        return width/2;
     }
 
     private int getFreqSlotsY() {
-        return height / 2 - 40;
+        return height/2 - 40;
     }
 
     private int getInvTopY() {
-        return getFreqSlotsY() + LINK_SLOT_SIZE + 35;
+        return getFreqSlotsY() + FREQ_SLOT_SIZE + 15;
     }
 
     private int getInvLeft() {
@@ -110,7 +107,7 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
         Vector2i center = new Vector2i( getFreqSlotsCenterX(), getFreqSlotsY() );
         GraphicsUtils.renderFrequencySlots(
             graphics, font,
-            center, LINK_SLOT_SIZE, LINK_SLOT_GAP,
+            center, FREQ_SLOT_SIZE, FREQ_SLOT_GAP,
             mousePosition,
             firstItem, secondItem
         );
@@ -133,14 +130,14 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
 
         int cx = getFreqSlotsCenterX();
         int slotY = getFreqSlotsY();
-        int totalW = LINK_SLOT_SIZE * 2 + LINK_SLOT_GAP;
+        int totalW = FREQ_SLOT_SIZE * 2 + FREQ_SLOT_GAP;
         int slotX1 = cx - totalW / 2;
-        int slotX2 = slotX1 + LINK_SLOT_SIZE + LINK_SLOT_GAP;
+        int slotX2 = slotX1 + FREQ_SLOT_SIZE + FREQ_SLOT_GAP;
 
         Vector2i start1 = new Vector2i(slotX1, slotY);
         Vector2i start2 = new Vector2i(slotX2, slotY);
-        Vector2i end1   = new Vector2i(slotX1+LINK_SLOT_SIZE, slotY+LINK_SLOT_SIZE);
-        Vector2i end2   = new Vector2i(slotX2+LINK_SLOT_SIZE, slotY+LINK_SLOT_SIZE);
+        Vector2i end1   = new Vector2i(slotX1+ FREQ_SLOT_SIZE, slotY+ FREQ_SLOT_SIZE);
+        Vector2i end2   = new Vector2i(slotX2+ FREQ_SLOT_SIZE, slotY+ FREQ_SLOT_SIZE);
         Vector2i mousePosition = new Vector2i((int)mouseX, (int)mouseY);
 
         if ( isInBounds(start1, end1, mousePosition) ) {
@@ -229,12 +226,12 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
         return false;
     }
 
-    public @org.jetbrains.annotations.Nullable Rect2i getFreqSlotArea(int slotIndex) {
+    public @Nullable Rect2i getFreqSlotArea(int slotIndex) {
         if (slotIndex < 0 || slotIndex > 1) return null;
         int cx = getFreqSlotsCenterX();
-        int totalW = LINK_SLOT_SIZE * 2 + LINK_SLOT_GAP;
-        int x = cx - totalW / 2 + slotIndex * (LINK_SLOT_SIZE + LINK_SLOT_GAP);
-        return new Rect2i(x, getFreqSlotsY(), LINK_SLOT_SIZE, LINK_SLOT_SIZE);
+        int totalW = FREQ_SLOT_SIZE * 2 + FREQ_SLOT_GAP;
+        int x = cx - totalW / 2 + slotIndex * (FREQ_SLOT_SIZE + FREQ_SLOT_GAP);
+        return new Rect2i(x, getFreqSlotsY(), FREQ_SLOT_SIZE, FREQ_SLOT_SIZE);
     }
 
     public void acceptFreqSlotIngredient(int slotIndex, ItemStack stack) {
