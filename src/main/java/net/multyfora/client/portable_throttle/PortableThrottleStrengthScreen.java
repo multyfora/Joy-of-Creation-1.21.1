@@ -8,10 +8,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.multyfora.client.graphics.GraphicsFiller;
+import net.multyfora.client.graphics.GraphicsFillers;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.network.PortableThrottleSignalPacket;
+import org.joml.Vector2i;
 
 import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
 
@@ -37,7 +40,9 @@ public class PortableThrottleStrengthScreen extends Screen {
     private Component freqInfo = Component.empty();
 
     protected PortableThrottleStrengthScreen() {
-        super(Component.translatable("item.joc.portable_throttle"));
+        super(
+            Component.translatable("item.joc.portable_throttle")
+        );
     }
 
     @Override
@@ -116,8 +121,17 @@ public class PortableThrottleStrengthScreen extends Screen {
         graphics.drawCenteredString(font, freqInfo, cx, by + BAR_H + 18, 0x888888);
 
         // Draw bar background with border
-        graphics.fill(bx - 1, by - 1, bx + BAR_W + 1, by + BAR_H + 1, 0xFF888888);
-        graphics.fill(bx, by, bx + BAR_W, by + BAR_H, 0xFF111111);
+        GraphicsFiller filler = GraphicsFillers.INVENTORY_GRAPHICS_FILLER.clone();
+        filler.fill(
+            graphics,
+            new Vector2i(bx - 1, by - 1),
+            new Vector2i(bx + BAR_W + 1, by + BAR_H + 1)
+        );
+        filler.fill(
+            graphics,
+            new Vector2i(bx, by),
+            new Vector2i(bx + BAR_W, by + BAR_H)
+        );
 
         // Draw the filled portion of the bar with color interpolated for animation
         float renderValue = lastAnimatedValue * (1 - partialTick) + animatedValue * partialTick;
