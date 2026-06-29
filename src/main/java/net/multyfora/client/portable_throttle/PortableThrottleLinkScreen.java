@@ -34,7 +34,7 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
         FREQ_SLOT_GAP = 8,
         INV_SLOT_SIZE = 24,
         INV_LINE_THICKNESS = 2,
-        INV_SLOT_GAP = 8
+        INV_SLOT_GAP = 2
     ;
 
     private static final int CONTENT_WIDTH = 160;

@@ -41,7 +41,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         FREQ_SLOT_SIZE = 22,
         FREQ_SLOT_GAP = 8,
         INV_SLOT_SIZE = 22,
-        INV_SLOT_GAP = 8,
+        INV_SLOT_GAP = 2,
         INV_SLOT_THICKNESS = 2
     ;
 

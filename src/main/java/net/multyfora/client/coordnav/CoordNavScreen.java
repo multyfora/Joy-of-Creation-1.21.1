@@ -32,7 +32,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
     public static final ResourceLocation GUI_TEXTURE =
         ResourceLocation.fromNamespaceAndPath(
             AeronauticsJoyofcreation.MODID,
-            "textures/gui/coord_navigator/coord_navigator.png"
+            "textures/gui/coord_navigator.png"
         )
     ;
 

@@ -6,8 +6,11 @@ import net.createmod.catnip.data.Couple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.graphics.GraphicsFiller;
 import net.multyfora.client.graphics.GraphicsFillers;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -24,6 +27,14 @@ import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
  * sent to the server immediately. The screen has no background overlay for a minimal UI.
  **/
 public class PortableThrottleStrengthScreen extends Screen {
+    public static final ResourceLocation GUI_TEXTURE =
+        ResourceLocation.fromNamespaceAndPath(
+            AeronauticsJoyofcreation.MODID,
+            "textures/gui/portable_throttle_lever.png"
+        )
+    ;
+    //final TextureAtlasSprite SPRITE = new TextureAtlasSprite(GUI_TEXTURE);
+
     // Layout constants
     private static final int BAR_W = 16;
     private static final int BAR_H = 100;
@@ -53,6 +64,7 @@ public class PortableThrottleStrengthScreen extends Screen {
         lastAnimatedValue = value;
 
         // Display the currently bound frequency
+        // TODO: Replace with display
         Minecraft mc = Minecraft.getInstance();
         ItemStack held = getHeldItem();
         if (held != null && mc.level != null) {
@@ -116,47 +128,57 @@ public class PortableThrottleStrengthScreen extends Screen {
         int bx = barX();
         int by = barY();
 
-        graphics.drawCenteredString(font, title, cx, by - 20, 0xFFFFFF);
+        graphics.drawCenteredString(font, title, cx, by - 25, 0xFFFFFF);
         // Show the bound frequency info below the bar
         graphics.drawCenteredString(font, freqInfo, cx, by + BAR_H + 18, 0x888888);
 
         // Draw bar background with border
-        GraphicsFiller filler = GraphicsFillers.INVENTORY_GRAPHICS_FILLER.clone();
-        filler.fill(
-            graphics,
-            new Vector2i(bx - 1, by - 1),
-            new Vector2i(bx + BAR_W + 1, by + BAR_H + 1)
-        );
-        filler.fill(
-            graphics,
-            new Vector2i(bx, by),
-            new Vector2i(bx + BAR_W, by + BAR_H)
+        final float SCALE = 0.5f;
+        final int SLIDER_WIDTH = 36;
+        final int SLIDER_HEIGHT = 232;
+
+        graphics.pose().pushPose();
+        graphics.pose().scale(SCALE, SCALE, 1.0f);
+
+        graphics.blit(
+            GUI_TEXTURE,
+            width - SLIDER_WIDTH/2, height - SLIDER_HEIGHT/2,
+            0, 0,
+            SLIDER_WIDTH, SLIDER_HEIGHT
         );
 
         // Draw the filled portion of the bar with color interpolated for animation
-        float renderValue = lastAnimatedValue * (1 - partialTick) + animatedValue * partialTick;
-        int fillH = Math.max(1, (int) (BAR_H * renderValue));
-        if (strength > 0) {
-            // Green for high strength, blue for low
-            int fillColor = strength >= 13 ? 0xFF44FF44 : 0xFF4488FF;
-            graphics.fill(bx + 2, by + BAR_H - fillH, bx + BAR_W - 2, by + BAR_H - 1, fillColor);
-        }
+        float renderValue = (1-partialTick) * lastAnimatedValue + animatedValue * partialTick;
+        final int CUT_OFF = SLIDER_HEIGHT - (int)(renderValue * (float)SLIDER_HEIGHT);
+        graphics.blit(
+            GUI_TEXTURE,
+            width - SLIDER_WIDTH/2, height - SLIDER_HEIGHT/2 + CUT_OFF,
+            SLIDER_WIDTH, CUT_OFF,
+            SLIDER_WIDTH, SLIDER_HEIGHT - CUT_OFF
+        );
 
         // Draw the cursor (horizontal bar showing current strength)
-        int cursorY = by + BAR_H - (int) (BAR_H * renderValue);
-        int cursorX = cx - CURSOR_W / 2;
-        graphics.fill(cursorX - 1, cursorY - CURSOR_H / 2 - 1, cursorX + CURSOR_W + 1, cursorY + CURSOR_H / 2 + 1, 0xFFAAAAAA);
-        graphics.fill(cursorX, cursorY - CURSOR_H / 2, cursorX + CURSOR_W, cursorY + CURSOR_H / 2, 0xFFFFFFFF);
+        final int HANDLE_WIDTH = 2*SLIDER_WIDTH;
+        final int HANDLE_HEIGHT = 16;
+
+        final int HANDLE_POSITION = height - HANDLE_HEIGHT/2 - SLIDER_HEIGHT/2 + CUT_OFF;
+        graphics.blit(
+            GUI_TEXTURE,
+            width - HANDLE_WIDTH/2, HANDLE_POSITION,
+            2*SLIDER_WIDTH, 0,
+            HANDLE_WIDTH, HANDLE_HEIGHT
+        );
+
+        graphics.pose().popPose();
 
         // Strength number label next to cursor
         String text = String.valueOf(strength);
-        graphics.drawString(font, text, cx + BAR_W / 2 + 8, cursorY - 4, strength > 0 ? 0xFFFFFF : 0x888888, false);
-
-        if (strength > 0) {
-            graphics.drawCenteredString(font,
-                Component.translatable("screen.joc.portable_throttle.bound_strength", strength),
-                cx, by + BAR_H + 48, 0x22AA44);
-        }
+        int color_strength = 0x00FE0000 / 15;
+        graphics.drawString(
+            font, text,
+            cx + BAR_W/2 + 16, HANDLE_POSITION/2,
+            0xFF000000 + (strength*color_strength & 0x00FF0000), true
+        );
     }
 
     // No background overlay so the game world is visible behind the slider
