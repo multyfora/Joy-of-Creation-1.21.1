@@ -70,7 +70,8 @@ public class GraphicsUtils {
         GuiGraphics graphics, Font font,
         Vector2i center, int size, int gap,
         Vector2i mousePosition,
-        ItemStack firstItem, ItemStack secondItem
+        ItemStack firstItem, ItemStack secondItem,
+        boolean isVertical, boolean allowHover
     ) {
         final ResourceLocation FREQUENCY_TEXTURES =
             ResourceLocation.fromNamespaceAndPath(
@@ -79,13 +80,22 @@ public class GraphicsUtils {
             )
         ;
 
-        int totalW = 2*size + gap;
-        int slotX1 = center.x - totalW/2;
-        int slotX2 = slotX1 + size + gap;
-        Vector2i firstStart    = new Vector2i(slotX1, center.y);
-        Vector2i secondStart   = new Vector2i(slotX2, center.y);
-        Vector2i firstEnd      = new Vector2i(slotX1+size, center.y+size);
-        Vector2i secondEnd     = new Vector2i(slotX2+size, center.y+size);
+        int center_delta = (size + gap)/2;
+        Vector2i adjustedCenter = new Vector2i(center.x, center.y);
+        if(!isVertical) {
+            adjustedCenter.sub(
+                new Vector2i(size/2, size/2)
+            );
+        }
+
+        Vector2i firstStart = new Vector2i(
+            adjustedCenter.x - (isVertical ? 0 : center_delta),
+            adjustedCenter.y - (isVertical ? center_delta : 0)
+        );
+        Vector2i secondStart = new Vector2i(
+            adjustedCenter.x + (isVertical ? 0 : center_delta),
+            adjustedCenter.y + (isVertical ? center_delta : 0)
+        );
 
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -97,25 +107,25 @@ public class GraphicsUtils {
         graphics.pose().scale(SCALE, SCALE, 1.0f);
 
         // first (red)
-        Vector2i adjustedPosition = new Vector2i(
+        Vector2i adjustedFirstPosition = new Vector2i(
             (int)( (double)(firstStart.x) / SCALE ),
             (int)( (double)(firstStart.y) / SCALE )
         );
         graphics.blit(
             FREQUENCY_TEXTURES,
-            adjustedPosition.x, adjustedPosition.y,
+            adjustedFirstPosition.x, adjustedFirstPosition.y,
             0, 0,
             FREQUENCY_SLOT_SIZE, FREQUENCY_SLOT_SIZE
         );
 
         // second (blue)
-        adjustedPosition = new Vector2i(
+        Vector2i adjustedSecondPosition = new Vector2i(
             (int)( (double)(secondStart.x) / SCALE ),
             (int)( (double)(secondStart.y) / SCALE )
         );
         graphics.blit(
             FREQUENCY_TEXTURES,
-            adjustedPosition.x, adjustedPosition.y,
+            adjustedSecondPosition.x, adjustedSecondPosition.y,
             FREQUENCY_SLOT_SIZE, 0,
             FREQUENCY_SLOT_SIZE, FREQUENCY_SLOT_SIZE
         );
@@ -123,34 +133,58 @@ public class GraphicsUtils {
         graphics.pose().popPose();
 
         // Items
-        Vector2i itemSize = new Vector2i(firstEnd.x - firstStart.x, firstEnd.x - firstStart.x);
-        renderItemStack(
-            graphics, font,
-            firstItem, firstStart,
-            Math.min(itemSize.x, itemSize.y)
+        Vector2i firstItemPosition = new Vector2i(
+            firstStart.x + size/2,
+            firstStart.y + size/2
         );
         renderItemStack(
             graphics, font,
-            secondItem, secondStart,
-            Math.min(itemSize.x, itemSize.y)
+            firstItem, firstItemPosition,
+            0
+        );
+
+        Vector2i secondItemPosition = new Vector2i(
+            secondStart.x + size/2,
+            secondStart.y + size/2
+        );
+        renderItemStack(
+            graphics, font,
+            secondItem, secondItemPosition,
+            0
         );
 
         // Hover
+        if(!allowHover) {
+            return;
+        }
+
         GraphicsFiller hoverFiller = new SimpleGraphicsFiller(
             0x33FFFFFF, 0x00FFFFFF, 0
         );
 
-        final Vector2i SLOT_THICKNESS = new Vector2i(1, 1);
-        Vector2i adjustedFirstStart  =  firstStart.add(SLOT_THICKNESS);
-        Vector2i adjustedFirstEnd    =    firstEnd.sub(SLOT_THICKNESS);
-        Vector2i adjustedSecondStart = secondStart.add(SLOT_THICKNESS);
-        Vector2i adjustedSecondEnd   =   secondEnd.sub(SLOT_THICKNESS);
+        final int OUTLINE_THICKNESS = 1;
 
-        if( isInBounds(adjustedFirstStart, adjustedFirstEnd, mousePosition) ) {
-            hoverFiller.fill(graphics, adjustedFirstStart, adjustedFirstEnd);
+        adjustedFirstPosition.div(1.0f/SCALE);
+        adjustedFirstPosition.add(OUTLINE_THICKNESS+1, OUTLINE_THICKNESS+1);
+        Vector2i adjustedFirstEnd = new Vector2i(
+            adjustedFirstPosition.x + size,
+            adjustedFirstPosition.y + size
+        );
+        adjustedFirstEnd.sub(OUTLINE_THICKNESS+1, OUTLINE_THICKNESS+1);
+
+        adjustedSecondPosition.div(1.0f/SCALE);
+        adjustedSecondPosition.add(OUTLINE_THICKNESS+1, OUTLINE_THICKNESS+1);
+        Vector2i adjustedSecondEnd = new Vector2i(
+            adjustedSecondPosition.x + size,
+            adjustedSecondPosition.y + size
+        );
+        adjustedSecondEnd.sub(OUTLINE_THICKNESS+1, OUTLINE_THICKNESS+1);
+
+        if( isInBounds(adjustedFirstPosition, adjustedFirstEnd, mousePosition) ) {
+            hoverFiller.fill(graphics, adjustedFirstPosition, adjustedFirstEnd);
         }
-        if( isInBounds(adjustedSecondStart, adjustedSecondEnd, mousePosition) ) {
-            hoverFiller.fill(graphics, adjustedSecondStart, adjustedSecondEnd);
+        if( isInBounds(adjustedSecondPosition, adjustedSecondEnd, mousePosition) ) {
+            hoverFiller.fill(graphics, adjustedSecondPosition, adjustedSecondEnd);
         }
     }
 

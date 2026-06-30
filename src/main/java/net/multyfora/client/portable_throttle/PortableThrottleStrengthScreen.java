@@ -6,13 +6,11 @@ import net.createmod.catnip.data.Couple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.multyfora.AeronauticsJoyofcreation;
-import net.multyfora.client.graphics.GraphicsFiller;
-import net.multyfora.client.graphics.GraphicsFillers;
+import net.multyfora.client.graphics.GraphicsUtils;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
@@ -33,13 +31,17 @@ public class PortableThrottleStrengthScreen extends Screen {
             "textures/gui/portable_throttle_lever.png"
         )
     ;
-    //final TextureAtlasSprite SPRITE = new TextureAtlasSprite(GUI_TEXTURE);
 
     // Layout constants
-    private static final int BAR_W = 16;
-    private static final int BAR_H = 100;
-    private static final int CURSOR_W = 28;
-    private static final int CURSOR_H = 3;
+    private static final int
+        BAR_W = 16,
+        BAR_H = 100
+    ;
+
+    private static final int
+        FREQUENCY_SIZE = 22,
+        FREQUENCY_GAP = 8
+    ;
 
     // Current value (0.0-1.0), animated value, and last frame's animated value for smooth interpolation
     private float value;
@@ -62,19 +64,6 @@ public class PortableThrottleStrengthScreen extends Screen {
         value = strength / 15.0f;
         animatedValue = value;
         lastAnimatedValue = value;
-
-        // Display the currently bound frequency
-        // TODO: Replace with display
-        Minecraft mc = Minecraft.getInstance();
-        ItemStack held = getHeldItem();
-        if (held != null && mc.level != null) {
-            Couple<Frequency> freq = PortableThrottleItem.getFrequency(held, mc.level.registryAccess());
-            if (freq != null) {
-                String first = freq.getFirst().getStack().getHoverName().getString();
-                String second = freq.getSecond().getStack().getHoverName().getString();
-                freqInfo = Component.literal(first + " + " + second);
-            }
-        }
     }
 
     private int barY() {
@@ -179,6 +168,28 @@ public class PortableThrottleStrengthScreen extends Screen {
             cx + BAR_W/2 + 16, HANDLE_POSITION/2,
             0xFF000000 + (strength*color_strength & 0x00FF0000), true
         );
+
+        // Frequency Information
+        Couple<Frequency> frequencies = null; {
+            Minecraft client = Minecraft.getInstance();
+            ItemStack held = getHeldItem();
+            if(held != null && client.level != null) {
+                frequencies = PortableThrottleItem.getFrequency(held, client.level.registryAccess());
+            }
+        }
+
+        if(frequencies != null) {
+            GraphicsUtils.renderFrequencySlots(
+                graphics, font,
+                new Vector2i(
+                    width/2 - 2*FREQUENCY_SIZE,
+                    height/2 - FREQUENCY_SIZE/2
+                ), FREQUENCY_SIZE, FREQUENCY_GAP,
+                new Vector2i(mouseX, mouseY),
+                frequencies.getFirst().getStack(), frequencies.getSecond().getStack(),
+                true, false
+            );
+        }
     }
 
     // No background overlay so the game world is visible behind the slider

@@ -105,12 +105,16 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
 
         Vector2i mousePosition = new Vector2i(mouseX, mouseY);
 
-        Vector2i center = new Vector2i( getFreqSlotsCenterX(), getFreqSlotsY() );
+        Vector2i center = new Vector2i(
+            getFreqSlotsCenterX(),
+            getFreqSlotsY()
+        );
         GraphicsUtils.renderFrequencySlots(
             graphics, font,
             center, FREQ_SLOT_SIZE, FREQ_SLOT_GAP,
             mousePosition,
-            firstItem, secondItem
+            firstItem, secondItem,
+            false, true
         );
 
         Vector2i origin = new Vector2i(
@@ -132,23 +136,45 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
 
-        int cx = getFreqSlotsCenterX();
-        int slotY = getFreqSlotsY();
-        int totalW = FREQ_SLOT_SIZE * 2 + FREQ_SLOT_GAP;
-        int slotX1 = cx - totalW / 2;
-        int slotX2 = slotX1 + FREQ_SLOT_SIZE + FREQ_SLOT_GAP;
 
-        Vector2i start1 = new Vector2i(slotX1, slotY);
-        Vector2i start2 = new Vector2i(slotX2, slotY);
-        Vector2i end1   = new Vector2i(slotX1+ FREQ_SLOT_SIZE, slotY+ FREQ_SLOT_SIZE);
-        Vector2i end2   = new Vector2i(slotX2+ FREQ_SLOT_SIZE, slotY+ FREQ_SLOT_SIZE);
-        Vector2i mousePosition = new Vector2i((int)mouseX, (int)mouseY);
+        Vector2i center = new Vector2i(
+            getFreqSlotsCenterX(),
+            getFreqSlotsY()
+        );
+        int center_delta = (FREQ_SLOT_SIZE + FREQ_SLOT_GAP)/2;
+        Vector2i adjustedCenter = new Vector2i(center.x, center.y);
 
-        if ( isInBounds(start1, end1, mousePosition) ) {
+        Vector2i firstStart = new Vector2i(
+            adjustedCenter.x - center_delta - FREQ_SLOT_SIZE/2,
+            adjustedCenter.y - FREQ_SLOT_SIZE/2
+        );
+        Vector2i secondStart = new Vector2i(
+            adjustedCenter.x + center_delta - FREQ_SLOT_SIZE/2,
+            adjustedCenter.y - FREQ_SLOT_SIZE/2
+        );
+
+        final int OUTLINE_THICKNESS = 1;
+
+        firstStart.add(OUTLINE_THICKNESS, OUTLINE_THICKNESS);
+        Vector2i firstEnd = new Vector2i(
+            firstStart.x + FREQ_SLOT_SIZE,
+            firstStart.y + FREQ_SLOT_SIZE
+        );
+        firstEnd.sub(OUTLINE_THICKNESS, OUTLINE_THICKNESS);
+
+        secondStart.add(OUTLINE_THICKNESS, OUTLINE_THICKNESS);
+        Vector2i SecondEnd = new Vector2i(
+            secondStart.x + FREQ_SLOT_SIZE,
+            secondStart.y + FREQ_SLOT_SIZE
+        );
+        SecondEnd.sub(OUTLINE_THICKNESS, OUTLINE_THICKNESS);
+
+        Vector2i mousePosition = new Vector2i( (int)mouseX, (int)mouseY );
+        if ( isInBounds(firstStart, firstEnd, mousePosition) ) {
             handleFreqSlotClick(0);
             return true;
         }
-        if ( isInBounds(start2, end2, mousePosition) ) {
+        if ( isInBounds(secondStart, SecondEnd, mousePosition) ) {
             handleFreqSlotClick(1);
             return true;
         }

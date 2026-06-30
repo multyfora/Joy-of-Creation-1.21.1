@@ -104,7 +104,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     }
 
     private int freqSlotsTop() {
-        return keyboardBottom() + 8;
+        return keyboardBottom() + 14;
     }
 
     private int freqSlotsCenterX() {
@@ -112,7 +112,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     }
 
     private int invTopY() {
-        return freqSlotsTop() + FREQ_SLOT_SIZE + 2*INV_SLOT_THICKNESS + 20;
+        return freqSlotsTop() + FREQ_SLOT_SIZE + 2*INV_SLOT_THICKNESS - 11;
     }
 
     private int invLeft() {
@@ -173,19 +173,20 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         if(0 <= selectedKeyCode) {
             Vector2i center = new Vector2i(
                 freqSlotsCenterX(),
-                freqSlotsTop() - 6
+                freqSlotsTop()
             );
             GraphicsUtils.renderFrequencySlots(
                 graphics, font,
                 center, FREQ_SLOT_SIZE, FREQ_SLOT_GAP,
                 mousePosition,
-                firstFreqItem, secondFreqItem
+                firstFreqItem, secondFreqItem,
+                false, true
             );
         }
 
         Vector2i origin = new Vector2i(
             invLeft(),
-            invTopY() - 28
+            invTopY()
         );
         GraphicsUtils.renderInventory(
             graphics, font,
@@ -239,12 +240,11 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     }
 
     private boolean handleInvClick(double mx, double my) {
-        //TODO: this does not perfectly line-up with GraphicsUtils::renderInventory
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return false;
         Inventory inv = mc.player.getInventory();
         int startX = invLeft();
-        int startY = invTopY() - INV_SLOT_SIZE - 2*INV_SLOT_THICKNESS;
+        int startY = invTopY();;
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
