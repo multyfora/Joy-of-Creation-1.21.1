@@ -8,7 +8,8 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -18,15 +19,18 @@ import net.multyfora.index.JocBlockEntityTypes;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
+import javax.annotation.Nullable;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Block entity for the Player Direction block.
- * Finds the nearest player within 10 blocks, captures their look direction, and computes
- * redstone signal outputs on each lateral side based on where the player is facing,
- * relative to the block's facing direction. Fully sublevel-aware.
+ * Tracks the player who last right-clicked the block (not just the nearest), captures
+ * their look direction, and computes redstone signal outputs on all 6 sides via a single
+ * uniform direct-dot formula (no FACING property, no axis branching).
+ * Fully sublevel-aware.
  **/
 public class PlayerDirectionBlockEntity extends SmartBlockEntity {
 
@@ -36,6 +40,10 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
     private SubLevel subLevel;
     // Cache of last-known signal strengths per direction
     private final Map<Direction, Integer> signalStrengthCache = new EnumMap<>(Direction.class);
+
+    // UUID of the player who last activated this block via right-click
+    @Nullable
+    private UUID trackedPlayerUUID = null;
 
     private static final double EPSILON = 1.0e-6;
     // Maximum distance to track players
@@ -50,8 +58,30 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {}
 
     /**
-     * Server tick: finds the nearest player, captures their look direction, inverts and
-     * rotates it into the block's local coordinate space, and updates redstone outputs
+     * Call this from PlayerDirectionBlock#useWithoutItem when a player right-clicks the block.
+     * Sets that player as the one whose look direction is tracked going forward.
+     */
+    public void setTrackedPlayer(Player player) {
+        trackedPlayerUUID = player.getUUID();
+        signalStrengthCache.clear();
+        setChanged();
+    }
+
+    /**
+     * Returns the tracked player from the current level, or null if they are
+     * offline, dead, spectating, or no player has been registered yet.
+     */
+    @Nullable
+    private Player getTrackedPlayer() {
+        if (trackedPlayerUUID == null || level == null) return null;
+        Player player = level.getPlayerByUUID(trackedPlayerUUID);
+        if (player == null || !player.isAlive() || player.isSpectator()) return null;
+        return player;
+    }
+
+    /**
+     * Server tick: looks up the tracked player, captures their look direction, inverts
+     * and rotates it into the block's local coordinate space, and updates redstone outputs.
      **/
     @Override
     public void tick() {
@@ -68,20 +98,15 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
         // Skip if the block is not powered (toggled off)
         if (!getBlockState().getValue(PlayerDirectionBlock.POWERED)) return;
 
-        // Find nearest non-spectator, alive player within tracking range
-        Player nearestPlayer = level.getNearestPlayer(
-            worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), TRACK_RANGE,
-            p -> p.isAlive() && !p.isSpectator()
-        );
-        if (nearestPlayer == null) return;
+        Player trackedPlayer = getTrackedPlayer();
+        if (trackedPlayer == null) return;
 
         /**
          * Get the player's look angle, invert it (we want the direction from player to block)
-         * and rotate by inverse sublevel rotation to get local-space direction
+         * and rotate by inverse sublevel rotation to get local-space direction.
          **/
-        Vec3 lookAngle = nearestPlayer.getLookAngle();
+        Vec3 lookAngle = trackedPlayer.getLookAngle();
         Quaterniond invRot = new Quaterniond(getSublevelRot()).invert();
-        // Scale by -1 to invert the direction (we want the direction the player is looking toward, not away from)
         lookDir = rotateQuat(lookAngle.normalize(), invRot).scale(-1);
 
         if (selectivelyUpdateNeighbors()) {
@@ -100,13 +125,10 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
         signalStrengthCache.clear();
 
         if (getBlockState().getValue(PlayerDirectionBlock.POWERED)) {
-            // Immediately capture player look direction when turned on
-            Player nearestPlayer = level.getNearestPlayer(
-                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), TRACK_RANGE,
-                p -> p.isAlive() && !p.isSpectator()
-            );
-            if (nearestPlayer != null) {
-                Vec3 lookAngle = nearestPlayer.getLookAngle();
+            // Immediately capture tracked player's look direction when turned on
+            Player trackedPlayer = getTrackedPlayer();
+            if (trackedPlayer != null) {
+                Vec3 lookAngle = trackedPlayer.getLookAngle();
                 Quaterniond invRot = new Quaterniond(getSublevelRot()).invert();
                 lookDir = rotateQuat(lookAngle.normalize(), invRot).scale(-1);
             }
@@ -116,24 +138,21 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
     }
 
     /**
-     * Computes redstone signal strength for a given direction based on how closely the
-     * player's look direction aligns with that direction on the block's facing plane.
+     * Computes redstone signal strength for a given direction.
+     *
+     * Uses a single direct dot-product formula for ALL 6 directions: dot(lookDir, dirNormal)
+     * is cos(theta) between the player's look direction and that side's normal (both unit
+     * vectors), and arcsin(cos(theta)) = 90 - theta is a clean linear remap of theta into
+     * the [-15, 15] signal range. No FACING property, no plane-projection special case —
+     * every side is computed identically, so there is no per-axis asymmetry.
      **/
     public int getRedstoneStrength(Direction direction) {
         if (level == null || !getBlockState().getValue(PlayerDirectionBlock.POWERED)) return 0;
+        if (lookDir.lengthSqr() <= EPSILON) return 0;
 
-        Direction facing = getBlockState().getValue(PlayerDirectionBlock.FACING);
-        Vec3i facingNormal = facing.getNormal();
-
-        // Project the look direction onto the plane perpendicular to the block's facing axis
-        Vec3 projected = getPlaneProjectedPos(lookDir, facingNormal);
-        double planeDist = projected.length();
-
-        if (planeDist <= EPSILON) return 0;
-
-        // Dot product with the queried direction, normalised, mapped via arcsin to 0-15
-        double dot = projected.dot(Vec3.atLowerCornerOf(direction.getNormal()));
-        return (int) (Math.asin(dot / planeDist) / Math.PI * 30.0 + 0.5);
+        Vec3 dirNormal = Vec3.atLowerCornerOf(direction.getNormal());
+        double dot = Math.max(-1.0, Math.min(1.0, lookDir.dot(dirNormal)));
+        return (int) (Math.asin(dot) / Math.PI * 30.0 + 0.5);
     }
 
     // Returns the orientation quaternion of the containing sublevel, or identity if not in one
@@ -147,6 +166,7 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
         return q;
     }
 
+
     // Compares current signal strengths with cached values and updates neighbors if any changed
     private boolean selectivelyUpdateNeighbors() {
         if (level == null || level.isClientSide) return false;
@@ -155,8 +175,6 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
         boolean updated = false;
 
         for (Direction dir : Direction.values()) {
-            if (dir.getAxis() == state.getValue(PlayerDirectionBlock.FACING).getAxis()) continue;
-
             int prev = signalStrengthCache.getOrDefault(dir, -1);
             int curr = getRedstoneStrength(dir);
             if (prev != curr) {
@@ -168,11 +186,21 @@ public class PlayerDirectionBlockEntity extends SmartBlockEntity {
         return updated;
     }
 
-    // Projects a vector onto the plane perpendicular to the given normal
-    public static Vec3 getPlaneProjectedPos(Vec3 vec, Vec3i normal) {
-        Vec3 normalVec = Vec3.atLowerCornerOf(normal);
-        double dot = vec.dot(normalVec);
-        return vec.subtract(normalVec.scale(dot));
+
+    @Override
+    public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(tag, registries, clientPacket);
+        if (trackedPlayerUUID != null) {
+            tag.putUUID("TrackedPlayer", trackedPlayerUUID);
+        }
+    }
+
+    @Override
+    public void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(tag, registries, clientPacket);
+        if (tag.hasUUID("TrackedPlayer")) {
+            trackedPlayerUUID = tag.getUUID("TrackedPlayer");
+        }
     }
 
     // Rotates a Vec3 by a double-precision quaternion

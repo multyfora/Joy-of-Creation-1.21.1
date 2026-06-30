@@ -27,6 +27,8 @@ import net.multyfora.index.JocBlockEntityTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
+import org.joml.Quaternionf;
+import org.joml.Vector3d;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -52,11 +54,15 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     public boolean isPowering;
     // Smoothed angle for client-side rendering of the pointer
     public final LerpedFloat lerpedAngleDegrees = LerpedFloat.angular();
+    public final LerpedFloat lerpedTiltDegrees = LerpedFloat.angular();
     // Computed angle from the block toward the target (0-360 degrees)
     private float relativeAngle;
+    // Same thing as the relative, but for up and down rotation
+    private float tiltAngle;
     // Tick counter for periodic distance recalculation
     private int ticks;
     private double distanceToTarget;
+    private double lastDistanceToTarget;
     // Cache of last-known signal strengths per direction to avoid unnecessary neighbor updates
     private final Map<Direction, Integer> signalStrengthCache = new EnumMap<>(Direction.class);
     // Reference to the sublevel containing this block, if any
@@ -73,7 +79,7 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {}
-
+    public float getTiltAngle() { return tiltAngle; }
     // Main tick: updates target tracking, redstone strengths, and client-side angle interpolation
     @Override
     public void tick() {
@@ -84,6 +90,7 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         // Tick the lerped angle on the client for smooth pointer animation
         if (level.isClientSide) {
             lerpedAngleDegrees.tickChaser();
+            lerpedTiltDegrees.tickChaser();
         }
 
         // Skip server-side logic on the client (except for virtual renders) and for virtual BE
@@ -106,6 +113,7 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
                 if (distanceToTarget >= 5000) {
                     lastDistanceToTarget = distanceToTarget;
                 }
+                relativeAngle = calculateRelativeAngle();
                 sendData();
             }
         }
@@ -139,17 +147,34 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
     // Sets the target coordinates and triggers redstone recalculation
     public void setTarget(double x, double y, double z) {
-        this.targetX = x;
-        this.targetY = y;
-        this.targetZ = z;
+        this.targetX = x; this.targetY = y; this.targetZ = z;
         this.hasTarget = true;
         this.currentTarget = new Vec3(x, y, z);
+        relativeAngle = calculateRelativeAngle();
         setChanged();
         sendData();
 
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
             selectivelyUpdateNeighbors();
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    // Clears the target and resets redstone output
+    public void clearTarget() {
+        this.hasTarget = false;
+        this.currentTarget = null;
+        this.targetX = 0;
+        this.targetY = 0;
+        this.targetZ = 0;
+        setChanged();
+        sendData();
+
+        if (level != null && !level.isClientSide) {
+            selectivelyUpdateNeighbors();
+
+            // Force an update when clearing, too
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
     }
@@ -247,6 +272,32 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         return updated;
     }
 
+    /**
+     * Projects a vector onto a plane defined by a normal vector.
+     * Used to flatten the target direction onto the plane perpendicular to the block's facing axis.
+     **/
+    public static Vec3 getPlaneProjectedPos(Vec3 vec, Vec3i normal) {
+        Vec3 normalVec = Vec3.atLowerCornerOf(normal);
+        double dot = vec.dot(normalVec);
+        return vec.subtract(normalVec.scale(dot));
+    }
+
+    // Rotates a Vec3 by a double-precision quaternion (for sublevel orientation)
+    public static Vec3 rotateQuat(Vec3 vec, Quaterniond quat) {
+        if (quat.equals(new Quaterniond())) return vec;
+        Vector3d v = new Vector3d(vec.x, vec.y, vec.z);
+        quat.transform(v);
+        return new Vec3(v.x, v.y, v.z);
+    }
+
+    // Rotates a Vec3 by a float-precision quaternion (for block facing rotation)
+    public static Vec3 rotateQuat(Vec3 vec, Quaternionf quat) {
+        if (quat.equals(new Quaternionf())) return vec;
+        org.joml.Vector3f v = new org.joml.Vector3f((float) vec.x, (float) vec.y, (float) vec.z);
+        quat.transform(v);
+        return new Vec3(v.x, v.y, v.z);
+    }
+
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
@@ -255,6 +306,7 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         tag.putDouble("target_z", targetZ);
         tag.putBoolean("has_target", hasTarget);
         tag.putFloat("relative_angle", relativeAngle);
+        tag.putFloat("tilt_angle", tiltAngle);
     }
 
     @Override
@@ -271,10 +323,63 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         }
         isPowering = hasTarget;
         relativeAngle = tag.getFloat("relative_angle");
+        tiltAngle = tag.getFloat("tilt_angle");
         if (clientPacket) {
             // On the client, start chasing the server-provided angle for smooth animation
             lerpedAngleDegrees.chase(relativeAngle, 1.0, LerpedFloat.Chaser.EXP);
+            lerpedTiltDegrees.chase(tiltAngle, 1.0, LerpedFloat.Chaser.EXP);
         }
+    }
+    /**
+     * Computes the angle (degrees) that, when applied as a YP rotation after the
+     * per-facing reorientation in the renderer, points the spyglass toward the
+     * projected target direction.
+     *
+     * Derivation sketch (all cases verified with rotation-matrix algebra):
+     *   proj = normalise( project(targetDir, facingNormal) )
+     *   FACING=UP/DOWN : atan2( proj.x,  proj.z)   — sweep in XZ, no reorientation
+     *   FACING=NORTH   : atan2( proj.x, -proj.y)   — reorient XP90, tip starts at −Y
+     *   FACING=SOUTH   : atan2( proj.x,  proj.y)   — reorient XP−90, tip starts at +Y
+     *   FACING=EAST    : atan2( proj.y,  proj.z)   — reorient ZP90,  tip starts at +Y in YZ
+     *   FACING=WEST    : atan2(-proj.y,  proj.z)   — reorient ZP−90, tip starts at −Y in YZ
+     */
+    private float calculateRelativeAngle() {
+        if (currentTarget == null || level == null) return relativeAngle;
+
+        Direction facing = getBlockState().getValue(CoordNavBlock.FACING);
+        Vec3 targetWorld = getTargetPosition(true);
+        if (targetWorld == null) return relativeAngle;
+
+        Vec3 diff = rotateQuat(targetWorld.subtract(getProjectedSelfPos()), getSublevelRot());
+
+        // Planar component (for yaw)
+        Vec3 proj = net.multyfora.content.coordnav.NavigationTarget.getPlaneProjectedPos(diff, facing.getNormal());
+        double planarLen = proj.length();
+
+        // Tilt: angle between planar projection and full vector
+        double fullLen = diff.length();
+        if (fullLen < 1e-6) {
+            tiltAngle = 0;
+            return relativeAngle;
+        }
+
+        Vec3 facingNormal = Vec3.atLowerCornerOf(facing.getNormal());
+        double outComponent = diff.dot(facingNormal);
+        tiltAngle = (float) Math.toDegrees(Math.atan2(-outComponent, planarLen));
+
+        // Yaw: angle in the sweep plane
+        if (planarLen < 1e-6) return relativeAngle;
+        Vec3 projNorm = proj.scale(1.0 / planarLen);
+
+        double radians = switch (facing) {
+            case UP    -> Math.atan2( projNorm.x,  projNorm.z);
+            case DOWN  -> Math.atan2( projNorm.x, -projNorm.z);
+            case NORTH -> Math.atan2( projNorm.x,  projNorm.y);
+            case SOUTH -> Math.atan2( projNorm.x, -projNorm.y);
+            case EAST  -> Math.atan2(-projNorm.y,  projNorm.z);
+            case WEST  -> Math.atan2( projNorm.y,  projNorm.z);
+        };
+        return (float) Math.toDegrees(radians);
     }
 
     @Override

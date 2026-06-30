@@ -7,6 +7,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.client.CoordNavBlockEntityRenderer;
+import net.multyfora.client.CoordNavPartialModels;
 import net.multyfora.client.balloon.BalloonTetherRenderer;
 import net.multyfora.client.coordnav.CoordNavRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
@@ -22,10 +24,7 @@ import net.multyfora.network.EntityGrabPayloads;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 @EventBusSubscriber(modid = AeronauticsJoyofcreation.MODID, value = Dist.CLIENT)
@@ -35,7 +34,7 @@ public class ClientSubscriptions {
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(JocBlockEntityTypes.BALLOON.get(), BalloonTetherRenderer::new);
-        event.registerBlockEntityRenderer(JocBlockEntityTypes.COORD_NAV.get(), CoordNavRenderer::new);
+        event.registerBlockEntityRenderer(JocBlockEntityTypes.COORD_NAV.get(), CoordNavBlockEntityRenderer::new);
     }
 
     @SubscribeEvent
@@ -43,8 +42,11 @@ public class ClientSubscriptions {
         event.register(JocMenuTypes.TYPEWRITER_SCREEN.get(), PortableTypewriterScreen::new);
         event.register(JocMenuTypes.THROTTLE_SCREEN.get(), PortableThrottleLinkScreen::new);
     }
+    static {
+        CoordNavPartialModels.init();
+    }
 
-    @SubscribeEvent
+        @SubscribeEvent
     static void onClientTick(ClientTickEvent.Pre event) {
         PortableTypewriterClientHandler.tick();
         PortableThrottleClientHandler.tick();

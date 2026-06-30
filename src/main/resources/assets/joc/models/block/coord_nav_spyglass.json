@@ -1,0 +1,66 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"texture_size": [64, 64],
+	"textures": {
+		"spyglass_in_hand": "minecraft:item/spyglass_model"
+	},
+	"elements": [
+		{
+			"from": [7, 7.25, 8.25],
+			"to": [9, 9.25, 13.25],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8.25, 8]},
+			"faces": {
+				"east": {"uv": [0, 2, 2, 7], "rotation": 270, "texture": "#spyglass_in_hand"},
+				"south": {"uv": [0, 0, 2, 2], "rotation": 180, "texture": "#spyglass_in_hand"},
+				"west": {"uv": [0, 2, 2, 7], "rotation": 90, "texture": "#spyglass_in_hand"},
+				"up": {"uv": [0, 2, 2, 7], "rotation": 180, "texture": "#spyglass_in_hand"},
+				"down": {"uv": [0, 2, 2, 7], "texture": "#spyglass_in_hand"}
+			}
+		},
+		{
+			"from": [6.9, 7.15, 2.15],
+			"to": [9.1, 9.35, 8.35],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8.25, 8]},
+			"faces": {
+				"north": {"uv": [0, 13, 2, 15], "texture": "#spyglass_in_hand"},
+				"east": {"uv": [0, 7, 2, 13], "rotation": 270, "texture": "#spyglass_in_hand"},
+				"south": {"uv": [0, 5, 2, 7], "rotation": 180, "texture": "#spyglass_in_hand"},
+				"west": {"uv": [0, 7, 2, 13], "rotation": 90, "texture": "#spyglass_in_hand"},
+				"up": {"uv": [0, 7, 2, 13], "rotation": 180, "texture": "#spyglass_in_hand"},
+				"down": {"uv": [0, 7, 2, 13], "texture": "#spyglass_in_hand"}
+			}
+		}
+	],
+	"gui_light": "front",
+	"display": {
+		"thirdperson_righthand": {
+			"translation": [0, -2, 0]
+		},
+		"ground": {
+			"rotation": [90, 0, 0]
+		},
+		"gui": {
+			"rotation": [-67.5, 0, 45],
+			"scale": [1.5, 1.5, 1.5]
+		},
+		"head": {
+			"rotation": [90, 0, 0],
+			"translation": [0, 0, -16],
+			"scale": [1.6, 1.6, 1.6]
+		},
+		"fixed": {
+			"translation": [0, 0, -1.5],
+			"scale": [1.5, 1.5, 1.5]
+		}
+	},
+	"groups": [
+		{
+			"name": "spyglass_in_hand",
+			"origin": [8, 8, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [0, 1]
+		}
+	]
+}
