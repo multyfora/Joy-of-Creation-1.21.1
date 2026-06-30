@@ -1,11 +1,15 @@
 package net.multyfora.client.graphics;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.multyfora.AeronauticsJoyofcreation;
 import org.joml.Vector2i;
 
 import static net.multyfora.client.graphics.GraphicsFillers.INVENTORY_GRAPHICS_FILLER;
@@ -44,9 +48,19 @@ public class GraphicsUtils {
         filler.fill(graphics, startPosition, endPosition);
 
         Vector2i size = new Vector2i(endPosition.x - startPosition.x, endPosition.y - startPosition.y);
+        renderItemStack(
+            graphics, font,
+            stack, startPosition, size.x
+        );
+    }
+
+    private static void renderItemStack(
+            GuiGraphics graphics, Font font,
+            ItemStack stack, Vector2i position, int size
+    ) {
         if( !stack.isEmpty() ) {
-            int ix = startPosition.x + (size.x - 16) / 2;
-            int iy = startPosition.y + (size.y - 16) / 2;
+            int ix = position.x + (size - 16) / 2;
+            int iy = position.y + (size - 16) / 2;
             graphics.renderItem(stack, ix, iy);
             graphics.renderItemDecorations(font, stack, ix, iy);
         }
@@ -58,17 +72,86 @@ public class GraphicsUtils {
         Vector2i mousePosition,
         ItemStack firstItem, ItemStack secondItem
     ) {
+        final ResourceLocation FREQUENCY_TEXTURES =
+            ResourceLocation.fromNamespaceAndPath(
+                AeronauticsJoyofcreation.MODID,
+                "textures/gui/frequency_slots.png"
+            )
+        ;
+
         int totalW = 2*size + gap;
         int slotX1 = center.x - totalW/2;
         int slotX2 = slotX1 + size + gap;
-
         Vector2i firstStart    = new Vector2i(slotX1, center.y);
         Vector2i secondStart   = new Vector2i(slotX2, center.y);
         Vector2i firstEnd      = new Vector2i(slotX1+size, center.y+size);
         Vector2i secondEnd     = new Vector2i(slotX2+size, center.y+size);
 
-        GraphicsUtils.renderSlot(graphics, GraphicsFillers.RED_FILLER,  font, firstStart, firstEnd,  mousePosition,   firstItem );
-        GraphicsUtils.renderSlot(graphics, GraphicsFillers.BLUE_FILLER, font, secondStart, secondEnd, mousePosition, secondItem);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, FREQUENCY_TEXTURES);
+
+        final int FREQUENCY_SLOT_SIZE = 128;
+        final float SCALE = 1.0f/5.7f;
+        graphics.pose().pushPose();
+        graphics.pose().scale(SCALE, SCALE, 1.0f);
+
+        // first (red)
+        Vector2i adjustedPosition = new Vector2i(
+            (int)( (double)(firstStart.x) / SCALE ),
+            (int)( (double)(firstStart.y) / SCALE )
+        );
+        graphics.blit(
+            FREQUENCY_TEXTURES,
+            adjustedPosition.x, adjustedPosition.y,
+            0, 0,
+            FREQUENCY_SLOT_SIZE, FREQUENCY_SLOT_SIZE
+        );
+
+        // second (blue)
+        adjustedPosition = new Vector2i(
+            (int)( (double)(secondStart.x) / SCALE ),
+            (int)( (double)(secondStart.y) / SCALE )
+        );
+        graphics.blit(
+            FREQUENCY_TEXTURES,
+            adjustedPosition.x, adjustedPosition.y,
+            FREQUENCY_SLOT_SIZE, 0,
+            FREQUENCY_SLOT_SIZE, FREQUENCY_SLOT_SIZE
+        );
+
+        graphics.pose().popPose();
+
+        // Items
+        Vector2i itemSize = new Vector2i(firstEnd.x - firstStart.x, firstEnd.x - firstStart.x);
+        renderItemStack(
+            graphics, font,
+            firstItem, firstStart,
+            Math.min(itemSize.x, itemSize.y)
+        );
+        renderItemStack(
+            graphics, font,
+            secondItem, secondStart,
+            Math.min(itemSize.x, itemSize.y)
+        );
+
+        // Hover
+        GraphicsFiller hoverFiller = new SimpleGraphicsFiller(
+            0x33FFFFFF, 0x00FFFFFF, 0
+        );
+
+        final Vector2i SLOT_THICKNESS = new Vector2i(1, 1);
+        Vector2i adjustedFirstStart  =  firstStart.add(SLOT_THICKNESS);
+        Vector2i adjustedFirstEnd    =    firstEnd.sub(SLOT_THICKNESS);
+        Vector2i adjustedSecondStart = secondStart.add(SLOT_THICKNESS);
+        Vector2i adjustedSecondEnd   =   secondEnd.sub(SLOT_THICKNESS);
+
+        if( isInBounds(adjustedFirstStart, adjustedFirstEnd, mousePosition) ) {
+            hoverFiller.fill(graphics, adjustedFirstStart, adjustedFirstEnd);
+        }
+        if( isInBounds(adjustedSecondStart, adjustedSecondEnd, mousePosition) ) {
+            hoverFiller.fill(graphics, adjustedSecondStart, adjustedSecondEnd);
+        }
     }
 
     public static void renderInventory(
