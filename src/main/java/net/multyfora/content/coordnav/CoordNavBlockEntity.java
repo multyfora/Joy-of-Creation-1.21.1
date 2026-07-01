@@ -13,7 +13,6 @@ import net.createmod.catnip.animation.LerpedFloat;
 import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -22,13 +21,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import net.multyfora.client.coordnav.CoordNavMenu;
+import net.multyfora.content.Pointer;
+import net.multyfora.content.SpaceUtils;
 import net.multyfora.index.JocBlockEntityTypes;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Quaterniond;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -52,13 +50,10 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
     // Whether the block is currently emitting power
     public boolean isPowering;
-    // Smoothed angle for client-side rendering of the pointer
-    public final LerpedFloat lerpedAngleDegrees = LerpedFloat.angular();
-    public final LerpedFloat lerpedTiltDegrees = LerpedFloat.angular();
-    // Computed angle from the block toward the target (0-360 degrees)
-    private float relativeAngle;
-    // Same thing as the relative, but for up and down rotation
-    private float tiltAngle;
+
+    // Spyglass Pointer
+    public final Pointer spyglassPointer = new Pointer();
+
     // Tick counter for periodic distance recalculation
     private int ticks;
     private double distanceToTarget;
@@ -79,43 +74,45 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {}
-    public float getTiltAngle() { return tiltAngle; }
+
     // Main tick: updates target tracking, redstone strengths, and client-side angle interpolation
     @Override
     public void tick() {
         super.tick();
 
-        if (level == null) return;
+        if(level == null) {
+            return;
+        }
 
         // Tick the lerped angle on the client for smooth pointer animation
-        if (level.isClientSide) {
-            lerpedAngleDegrees.tickChaser();
-            lerpedTiltDegrees.tickChaser();
+        if(level.isClientSide) {
+            spyglassPointer.lerpedPitchDegrees.tickChaser();
+            spyglassPointer.lerpedYawDegrees.tickChaser();
         }
 
         // Skip server-side logic on the client (except for virtual renders) and for virtual BE
-        if (level.isClientSide && !isVirtual()) return;
-        if (isVirtual()) return;
+        if(isVirtual() || level.isClientSide) {
+            return;
+        }
 
         // Attempt to get the sublevel containing this block
         try {
             subLevel = Sable.HELPER.getContaining(this);
         } catch (Exception ignored) {}
 
-        double lastDistanceToTarget;
-        if (!level.isClientSide) {
-            updateTarget();
-
-            // Recalculate distance to target every tick
-            Vec3 targetLocal = getTargetPosition(false);
-            if (targetLocal != null) {
-                distanceToTarget = getProjectedSelfPos().distanceTo(getTargetPosition(true));
-                if (distanceToTarget >= 5000) {
-                    lastDistanceToTarget = distanceToTarget;
-                }
-                relativeAngle = calculateRelativeAngle();
-                sendData();
+        // Recalculate distance to target every tick
+        updateTarget();
+        Vec3 targetLocal = getTargetPosition(false);
+        if (targetLocal != null) {
+            distanceToTarget = SpaceUtils
+                .getProjectedSelfPos(subLevel, worldPosition)
+                .distanceTo( getTargetPosition(true) )
+            ;
+            if (distanceToTarget >= 5000) {
+                lastDistanceToTarget = distanceToTarget;
             }
+            spyglassPointer.tick(this);
+            sendData();
         }
 
         // Update neighbor blocks if signal strength changed on any side
@@ -130,7 +127,10 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
             if (ticks >= 10) {
                 ticks = 0;
                 lastDistanceToTarget = distanceToTarget;
-                distanceToTarget = getProjectedSelfPos().distanceTo(getTargetPosition(true));
+                distanceToTarget = SpaceUtils
+                    .getProjectedSelfPos(subLevel, worldPosition)
+                    .distanceTo( getTargetPosition(true) )
+                ;
             }
         }
     }
@@ -150,7 +150,7 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         this.targetX = x; this.targetY = y; this.targetZ = z;
         this.hasTarget = true;
         this.currentTarget = new Vec3(x, y, z);
-        relativeAngle = calculateRelativeAngle();
+        spyglassPointer.calculateRelativeAngle(this);
         setChanged();
         sendData();
 
@@ -179,11 +179,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         }
     }
 
-    public double getTargetX() { return targetX; }
-    public double getTargetY() { return targetY; }
-    public double getTargetZ() { return targetZ; }
-    public boolean hasTarget() { return hasTarget; }
-
     /**
      * Computes the redstone signal strength for a given direction.
      * The strength is based on the dot product of the direction vector with the projected
@@ -192,38 +187,32 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
      **/
     public int getRedstoneStrength(Direction direction) {
         if( this.level != null && this.level.isClientSide && this.isVirtual() ) {
-            Direction facing = (Direction)this.getBlockState().getValue(NavTableBlock.FACING);
+            Direction facing = this.getBlockState().getValue(NavTableBlock.FACING);
             Vec3i normal = facing.getNormal();
-            double angleRad = Math.toRadians((double)this.lerpedAngleDegrees.getValue());
-            Vec3 targetPos = new Vec3(Math.cos(angleRad), (double)0.0F, Math.sin(angleRad));
+            double angleRad = Math.toRadians(
+                this.spyglassPointer.lerpedPitchDegrees.getValue()
+            );
+            Vec3 targetPos = new Vec3( Math.cos(angleRad), 0.0F, Math.sin(angleRad) );
             targetPos = NavigationTarget.getPlaneProjectedPos(targetPos, normal);
-            double dot = -targetPos.dot(Vec3.atLowerCornerOf(direction.getNormal()));
+            double dot = -targetPos.dot(  Vec3.atLowerCornerOf( direction.getNormal() )  );
             return (int)(Math.asin(dot) / Math.PI * (double)30.0F + (double)0.5F);
         } else {
             int power = 0;
-            net.multyfora.content.coordnav.NavigationTarget nti = new net.multyfora.content.coordnav.NavigationTarget(
+            if(this.level == null) {
+                return power;
+            }
+            CoordinateNavigationTarget nti = new CoordinateNavigationTarget(
                 new GlobalPos(
                     this.level.dimension(),
                     this.getBlockPos()
                 )
             );
-            if( nti != null && this.getTargetPosition(false) != null ) {
+            if(this.getTargetPosition(false) != null) {
                 power = nti.getRedstoneStrength(this, direction);
             }
 
             return power;
         }
-    }
-
-    // Returns the block's position transformed by the sublevel's logical pose (for sublevel-aware positioning)
-    public Vec3 getProjectedSelfPos() {
-        Vec3 pos = Vec3.atCenterOf(worldPosition);
-        if (subLevel != null) {
-            try {
-                pos = subLevel.logicalPose().transformPosition(pos);
-            } catch (Exception ignored) {}
-        }
-        return pos;
     }
 
     // Returns the target position, optionally transformed into world space from sublevel space
@@ -235,17 +224,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
             } catch (Exception ignored) {}
         }
         return currentTarget;
-    }
-
-    // Returns the orientation quaternion of the containing sublevel, or identity if not in a sublevel
-    public Quaterniond getSublevelRot() {
-        Quaterniond q = new Quaterniond();
-        if (subLevel != null) {
-            try {
-                q = subLevel.logicalPose().orientation();
-            } catch (Exception ignored) {}
-        }
-        return q;
     }
 
     /**
@@ -272,32 +250,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         return updated;
     }
 
-    /**
-     * Projects a vector onto a plane defined by a normal vector.
-     * Used to flatten the target direction onto the plane perpendicular to the block's facing axis.
-     **/
-    public static Vec3 getPlaneProjectedPos(Vec3 vec, Vec3i normal) {
-        Vec3 normalVec = Vec3.atLowerCornerOf(normal);
-        double dot = vec.dot(normalVec);
-        return vec.subtract(normalVec.scale(dot));
-    }
-
-    // Rotates a Vec3 by a double-precision quaternion (for sublevel orientation)
-    public static Vec3 rotateQuat(Vec3 vec, Quaterniond quat) {
-        if (quat.equals(new Quaterniond())) return vec;
-        Vector3d v = new Vector3d(vec.x, vec.y, vec.z);
-        quat.transform(v);
-        return new Vec3(v.x, v.y, v.z);
-    }
-
-    // Rotates a Vec3 by a float-precision quaternion (for block facing rotation)
-    public static Vec3 rotateQuat(Vec3 vec, Quaternionf quat) {
-        if (quat.equals(new Quaternionf())) return vec;
-        org.joml.Vector3f v = new org.joml.Vector3f((float) vec.x, (float) vec.y, (float) vec.z);
-        quat.transform(v);
-        return new Vec3(v.x, v.y, v.z);
-    }
-
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
@@ -305,8 +257,8 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         tag.putDouble("target_y", targetY);
         tag.putDouble("target_z", targetZ);
         tag.putBoolean("has_target", hasTarget);
-        tag.putFloat("relative_angle", relativeAngle);
-        tag.putFloat("tilt_angle", tiltAngle);
+        tag.putFloat("relative_angle", spyglassPointer.getYaw() );
+        tag.putFloat("tilt_angle",     spyglassPointer.getPitch()   );
     }
 
     @Override
@@ -322,64 +274,20 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
             currentTarget = null;
         }
         isPowering = hasTarget;
-        relativeAngle = tag.getFloat("relative_angle");
-        tiltAngle = tag.getFloat("tilt_angle");
-        if (clientPacket) {
+
+        spyglassPointer.setLocation(this.getBlockPos() );
+        spyglassPointer.setTarget( this.getTarget() );
+        spyglassPointer.calculateRelativeAngle(this);
+
+        if(clientPacket) {
             // On the client, start chasing the server-provided angle for smooth animation
-            lerpedAngleDegrees.chase(relativeAngle, 1.0, LerpedFloat.Chaser.EXP);
-            lerpedTiltDegrees.chase(tiltAngle, 1.0, LerpedFloat.Chaser.EXP);
+            this.spyglassPointer.lerpedPitchDegrees.chase(
+                spyglassPointer.getYaw(), 1.0, LerpedFloat.Chaser.EXP
+            );
+            this.spyglassPointer.lerpedYawDegrees.chase(
+                spyglassPointer.getPitch(), 1.0, LerpedFloat.Chaser.EXP
+            );
         }
-    }
-    /**
-     * Computes the angle (degrees) that, when applied as a YP rotation after the
-     * per-facing reorientation in the renderer, points the spyglass toward the
-     * projected target direction.
-     *
-     * Derivation sketch (all cases verified with rotation-matrix algebra):
-     *   proj = normalise( project(targetDir, facingNormal) )
-     *   FACING=UP/DOWN : atan2( proj.x,  proj.z)   — sweep in XZ, no reorientation
-     *   FACING=NORTH   : atan2( proj.x, -proj.y)   — reorient XP90, tip starts at −Y
-     *   FACING=SOUTH   : atan2( proj.x,  proj.y)   — reorient XP−90, tip starts at +Y
-     *   FACING=EAST    : atan2( proj.y,  proj.z)   — reorient ZP90,  tip starts at +Y in YZ
-     *   FACING=WEST    : atan2(-proj.y,  proj.z)   — reorient ZP−90, tip starts at −Y in YZ
-     */
-    private float calculateRelativeAngle() {
-        if (currentTarget == null || level == null) return relativeAngle;
-
-        Direction facing = getBlockState().getValue(CoordNavBlock.FACING);
-        Vec3 targetWorld = getTargetPosition(true);
-        if (targetWorld == null) return relativeAngle;
-
-        Vec3 diff = rotateQuat(targetWorld.subtract(getProjectedSelfPos()), getSublevelRot());
-
-        // Planar component (for yaw)
-        Vec3 proj = net.multyfora.content.coordnav.NavigationTarget.getPlaneProjectedPos(diff, facing.getNormal());
-        double planarLen = proj.length();
-
-        // Tilt: angle between planar projection and full vector
-        double fullLen = diff.length();
-        if (fullLen < 1e-6) {
-            tiltAngle = 0;
-            return relativeAngle;
-        }
-
-        Vec3 facingNormal = Vec3.atLowerCornerOf(facing.getNormal());
-        double outComponent = diff.dot(facingNormal);
-        tiltAngle = (float) Math.toDegrees(Math.atan2(-outComponent, planarLen));
-
-        // Yaw: angle in the sweep plane
-        if (planarLen < 1e-6) return relativeAngle;
-        Vec3 projNorm = proj.scale(1.0 / planarLen);
-
-        double radians = switch (facing) {
-            case UP    -> Math.atan2( projNorm.x,  projNorm.z);
-            case DOWN  -> Math.atan2( projNorm.x, -projNorm.z);
-            case NORTH -> Math.atan2( projNorm.x,  projNorm.y);
-            case SOUTH -> Math.atan2( projNorm.x, -projNorm.y);
-            case EAST  -> Math.atan2(-projNorm.y,  projNorm.z);
-            case WEST  -> Math.atan2( projNorm.y,  projNorm.z);
-        };
-        return (float) Math.toDegrees(radians);
     }
 
     @Override
@@ -394,6 +302,19 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         return new CoordNavMenu(i, inventory, this);
     }
 
+    public double getTargetX() {
+        return targetX;
+    }
+    public double getTargetY() {
+        return targetY;
+    }
+    public double getTargetZ() {
+        return targetZ;
+    }
+    public boolean hasTarget() {
+        return hasTarget;
+    }
+
     public BlockPos getTarget() {
         if(!hasTarget) {
             return null;
@@ -405,16 +326,12 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         );
     }
 
-    @Override
-    public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registries) {
-        CompoundTag tag = new CompoundTag();
-        write(tag, registries, false);
-        return tag;
+    public BlockPos getWorldPosition() {
+        return worldPosition;
     }
 
-    @Override
-    public @NotNull ClientboundBlockEntityDataPacket getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
+    public SubLevel getSubLevel() {
+        return subLevel;
     }
 
 }

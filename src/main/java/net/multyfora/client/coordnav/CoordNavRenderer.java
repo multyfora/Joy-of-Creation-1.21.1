@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
+import net.multyfora.content.SpaceUtils;
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,16 +23,19 @@ public class CoordNavRenderer implements BlockEntityRenderer<CoordNavBlockEntity
 
     @Override
     public void render(
-        CoordNavBlockEntity blockEntity, float partialTick,
+        CoordNavBlockEntity coordNavBlockEntity, float partialTick,
         @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource,
         int packedLight, int packedOverlay
     ) {
-        if( blockEntity.getTargetPosition(false) == null ) {
+        if( coordNavBlockEntity.getTargetPosition(false) == null ) {
             return;
         }
 
-        Vec3 from = blockEntity.getProjectedSelfPos();
-        Vec3 target = blockEntity.getTargetPosition(true);
+        Vec3 from = SpaceUtils.getProjectedSelfPos(
+            coordNavBlockEntity.getSubLevel(),
+            coordNavBlockEntity.getWorldPosition()
+        );
+        Vec3 target = coordNavBlockEntity.getTargetPosition(true);
         if(target == null) {
             return;
         }

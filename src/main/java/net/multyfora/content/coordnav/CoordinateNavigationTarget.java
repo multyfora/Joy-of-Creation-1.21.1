@@ -9,18 +9,19 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.multyfora.content.SpaceUtils;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 
 // Based on dev.simulated_team.simulated.content.blocks.nav_table.navigation_target.NavigationTarget
-public class NavigationTarget {
+public class CoordinateNavigationTarget {
     static final float DEADZONE = 2.0F;
     static final float MAX_RANGE = 200.0F;
     static final float MODULATING_RANGE = 200.0F;
 
     GlobalPos location; //TODO: use in CoordNavBlockEntity
 
-    public NavigationTarget(GlobalPos location) {
+    public CoordinateNavigationTarget(GlobalPos location) {
         this.location = location;
     }
 
@@ -41,7 +42,10 @@ public class NavigationTarget {
             return 0;
         } else {
             Vec3 target = navBE.getTargetPosition(true);
-            Vec3 navPos = navBE.getProjectedSelfPos();
+            Vec3 navPos = SpaceUtils.getProjectedSelfPos(
+                navBE.getSubLevel(),
+                navBE.getWorldPosition()
+            );
             double distance = target.distanceTo(navPos);
             return (int)Math.round(
                 ( (double)MODULATING_RANGE - distance )  *  (double)(15.0F/MODULATING_RANGE)
@@ -61,9 +65,12 @@ public class NavigationTarget {
             Direction facing = (Direction)navBE.getBlockState().getValue(NavTableBlock.FACING);
             Vec3i normal = facing.getNormal();
             Vec3 projectedTarget = navBE.getTargetPosition(true);
-            Vec3 navPos = navBE.getProjectedSelfPos();
+            Vec3 navPos = SpaceUtils.getProjectedSelfPos(
+                navBE.getSubLevel(),
+                navBE.getWorldPosition()
+            );
             Vec3 differenceVec = projectedTarget.subtract(navPos);
-            Quaterniond worldshellRot = navBE.getSublevelRot();
+            Quaterniond worldshellRot = SpaceUtils.getSublevelRot( navBE.getSubLevel() );
             differenceVec = SimMathUtils.rotateQuat(differenceVec, worldshellRot);
             Vec3 projectedPos = getPlaneProjectedPos(differenceVec, normal);
             double distance = projectedPos.length();
@@ -86,7 +93,12 @@ public class NavigationTarget {
 
         Vec3 targetPosition = navBE.getTargetPosition(true);
         if(targetPosition != null) {
-            return navBE.getProjectedSelfPos().distanceTo(targetPosition);
+            return SpaceUtils
+                .getProjectedSelfPos(
+                    navBE.getSubLevel(),
+                    navBE.getWorldPosition()
+                )
+                .distanceTo(targetPosition);
         }
         return (double)-1.0F;
     }
