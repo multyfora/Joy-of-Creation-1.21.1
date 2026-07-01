@@ -272,9 +272,9 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        targetX = tag.getDouble("target_x");
-        targetY = tag.getDouble("target_y");
-        targetZ = tag.getDouble("target_z");
+        targetX   = tag.getDouble("target_x");
+        targetY   = tag.getDouble("target_y");
+        targetZ   = tag.getDouble("target_z");
         hasTarget = tag.getBoolean("has_target");
         if (hasTarget) {
             currentTarget = new Vec3(targetX, targetY, targetZ);
@@ -283,19 +283,15 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         }
         isPowering = hasTarget;
 
-        spyglassPointer.setSubLevel(subLevel);
-        spyglassPointer.setLocation(this.worldPosition);
-        spyglassPointer.setTarget( this.getTarget() );
-        spyglassPointer.calculateRelativeAngle(this);
 
-        if(clientPacket) {
-            // On the client, start chasing the server-provided angle for smooth animation
-            this.spyglassPointer.lerpedPitchDegrees.chase(
-                spyglassPointer.getYaw(), 1.0, LerpedFloat.Chaser.EXP
-            );
-            this.spyglassPointer.lerpedYawDegrees.chase(
-                spyglassPointer.getPitch(), 1.0, LerpedFloat.Chaser.EXP
-            );
+        float yaw   = tag.getFloat("relative_angle");
+        float pitch = tag.getFloat("tilt_angle");
+        spyglassPointer.setYaw(yaw);
+        spyglassPointer.setPitch(pitch);
+
+        if (clientPacket) {
+            spyglassPointer.lerpedYawDegrees.chase(yaw,   1.0, LerpedFloat.Chaser.EXP);
+            spyglassPointer.lerpedPitchDegrees.chase(pitch, 1.0, LerpedFloat.Chaser.EXP);
         }
     }
 

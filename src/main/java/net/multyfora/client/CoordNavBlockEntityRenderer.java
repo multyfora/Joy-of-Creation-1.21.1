@@ -30,8 +30,8 @@ public class CoordNavBlockEntityRenderer extends SafeBlockEntityRenderer<CoordNa
 
         BlockState state  = blockEntity.getBlockState();
         Direction  facing = state.getValue(CoordNavBlock.FACING);
-        float      pitch  = blockEntity.spyglassPointer.lerpedPitchDegrees.getValue(partialTick) + 180.0f;
-        float      yaw    = blockEntity.spyglassPointer.lerpedYawDegrees.getValue(partialTick);
+        float      pitch  = blockEntity.spyglassPointer.lerpedYawDegrees.getValue(partialTick) + 180.0f;
+        float      yaw    = blockEntity.spyglassPointer.lerpedPitchDegrees.getValue(partialTick);
 
         ms.pushPose();
         ms.translate(0.5, 0.5, 0.5);
