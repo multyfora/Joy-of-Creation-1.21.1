@@ -1,5 +1,6 @@
 package net.multyfora.content;
 
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.simulated_team.simulated.content.blocks.nav_table.navigation_target.NavigationTarget;
 import net.createmod.catnip.animation.LerpedFloat;
 import net.minecraft.core.BlockPos;
@@ -11,6 +12,7 @@ import net.multyfora.content.coordnav.CoordNavBlockEntity;
 public class Pointer {
     private float yaw = 0.0f, pitch = 0.0f;
     private BlockPos location = null, target = null;
+    private SubLevel subLevel = null;
 
     // Smoothed angle for client-side rendering of the pointer
     public final LerpedFloat lerpedPitchDegrees = LerpedFloat.angular();
@@ -40,18 +42,15 @@ public class Pointer {
 
         Direction facing = parent.getBlockState().getValue(CoordNavBlock.FACING);
         Vec3 targetWorld = parent.getTargetPosition(true);
-        if (targetWorld == null) {
-            return;
-        }
+        Vec3 location = SpaceUtils.getProjectedSelfPos(
+            parent.getSubLevel(),
+            parent.getWorldPosition()
+        );
+        Vec3 difference = targetWorld.subtract(location);
 
         Vec3 diff = SpaceUtils
             .rotateQuat(
-                targetWorld.subtract(
-                    SpaceUtils.getProjectedSelfPos(
-                        parent.getSubLevel(),
-                        parent.getWorldPosition()
-                    )
-                ),
+                difference,
                 SpaceUtils.getSublevelRot( parent.getSubLevel() )
             )
             .add(
@@ -80,7 +79,7 @@ public class Pointer {
         }
         Vec3 projNorm = proj.scale(1.0 / planarLen);
 
-        double radians = switch (facing) {
+        double radians = switch(facing) {
             case UP    -> Math.atan2( projNorm.x,  projNorm.z);
             case DOWN  -> Math.atan2( projNorm.x, -projNorm.z);
             case NORTH -> Math.atan2( projNorm.x,  projNorm.y);
@@ -88,15 +87,34 @@ public class Pointer {
             case EAST  -> Math.atan2(-projNorm.y,  projNorm.z);
             case WEST  -> Math.atan2( projNorm.y,  projNorm.z);
         };
+
         yaw = (float)Math.toDegrees(radians);
+    }
+
+    public void setSubLevel(SubLevel subLevel) {
+        this.subLevel = subLevel;
     }
 
     public void setLocation(BlockPos position) {
         this.location = position;
     }
+    public void setLocation(Vec3 position) {
+        this.location = new BlockPos(
+            (int)position.x,
+            (int)position.y,
+            (int)position.z
+        );
+    }
 
     public void setTarget(BlockPos position) {
         this.target = position;
+    }
+    public void setTarget(Vec3 position) {
+        this.target = new BlockPos(
+            (int)position.x,
+            (int)position.y,
+            (int)position.z
+        );
     }
 
     public float getYaw() {
