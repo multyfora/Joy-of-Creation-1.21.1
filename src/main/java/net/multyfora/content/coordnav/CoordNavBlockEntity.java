@@ -187,40 +187,30 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         }
     }
 
-    /**
-     * Computes the redstone signal strength for a given direction.
-     * The strength is based on the dot product of the direction vector with the projected
-     * target direction on the plane perpendicular to the block's facing axis.
-     * Uses arcsin to map the angle to a 0-15 signal range.
-     **/
     public int getRedstoneStrength(Direction direction) {
-        if( this.level != null && this.level.isClientSide && this.isVirtual() ) {
-            Direction facing = this.getBlockState().getValue(NavTableBlock.FACING);
-            Vec3i normal = facing.getNormal();
-            double angleRad = Math.toRadians(
-                this.spyglassPointer.lerpedPitchDegrees.getValue()
-            );
-            Vec3 targetPos = new Vec3( Math.cos(angleRad), 0.0F, Math.sin(angleRad) );
-            targetPos = NavigationTarget.getPlaneProjectedPos(targetPos, normal);
-            double dot = -targetPos.dot(  Vec3.atLowerCornerOf( direction.getNormal() )  );
-            return (int)(Math.asin(dot) / Math.PI * (double)30.0F + (double)0.5F);
-        } else {
-            int power = 0;
-            if(this.level == null) {
-                return power;
-            }
-            CoordinateNavigationTarget nti = new CoordinateNavigationTarget(
-                new GlobalPos(
-                    this.level.dimension(),
-                    this.getBlockPos()
-                )
-            );
-            if(this.getTargetPosition(false) != null) {
-                power = nti.getRedstoneStrength(this, direction);
-            }
-
-            return power;
+        if (this.level == null || getTargetPosition(false) == null) {
+            return 0;
         }
+
+        Vec3 targetWorld = getTargetPosition(true);
+        if (targetWorld == null) return 0;
+
+        Vec3 selfPos = SpaceUtils.getProjectedSelfPos(subLevel, worldPosition);
+        Vec3 diffWorld = targetWorld.subtract(selfPos);
+
+        if (diffWorld.lengthSqr() < 1e-6) return 0;
+
+        var forwardRot = SpaceUtils.getSublevelRot(subLevel);
+        var inverseRot = new org.joml.Quaterniond(forwardRot).conjugate();
+        Vec3 diffLocal = SpaceUtils.rotateQuat(diffWorld, inverseRot).normalize();
+
+        Vec3 dirNormal = Vec3.atLowerCornerOf(direction.getNormal());
+        double dot = -diffLocal.dot(dirNormal);
+
+        if (dot <= 0) return 0;
+
+        int power = (int) Math.round((Math.asin(dot) / Math.PI) * 30.0);
+        return Math.min(15, Math.max(0, power));
     }
 
     // Returns the target position, optionally transformed into world space from sublevel space
@@ -244,14 +234,15 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         BlockState state = getBlockState();
         boolean updated = false;
 
-        for (Direction dir : Direction.values()) {
-            if (dir.getAxis() == state.getValue(CoordNavBlock.FACING).getAxis()) continue;
+        for (Direction neighborDir : Direction.values()) {
+            Direction queryDir = neighborDir.getOpposite();
 
-            int prev = signalStrengthCache.getOrDefault(dir, -1);
-            int curr = getRedstoneStrength(dir);
+            int prev = signalStrengthCache.getOrDefault(queryDir, -1);
+            int curr = getRedstoneStrength(queryDir);
+
             if (prev != curr) {
-                signalStrengthCache.put(dir, curr);
-                level.updateNeighborsAt(worldPosition.relative(dir), state.getBlock());
+                signalStrengthCache.put(queryDir, curr);
+                level.updateNeighborsAt(worldPosition.relative(neighborDir), state.getBlock());
                 updated = true;
             }
         }

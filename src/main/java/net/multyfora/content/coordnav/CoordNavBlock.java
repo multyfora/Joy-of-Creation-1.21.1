@@ -116,37 +116,24 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
      **/
     @Override
     public int getSignal(
-        @NotNull BlockState state, BlockGetter getter,
-        @NotNull BlockPos pos, @NotNull Direction direction
+            @NotNull BlockState state, BlockGetter getter,
+            @NotNull BlockPos pos, @NotNull Direction direction
     ) {
         if( getter.getBlockEntity(pos) instanceof CoordNavBlockEntity blockEntity ) {
-            if( direction.getAxis() == state.getValue(FACING).getAxis() ) {
-                return 0;
-            }
             return blockEntity.getRedstoneStrength(direction);
         }
         return 0;
     }
 
     /**
-     * Strong (direct) redstone power: only outputs on the face opposite the facing direction
-     * when the block faces horizontally, and also on the bottom face
+     * Strong (direct) redstone power: outputs identically to weak power.
      **/
     @Override
     public int getDirectSignal(
-        BlockState state, @NotNull BlockGetter getter,
-        @NotNull BlockPos pos, Direction direction
+            BlockState state, @NotNull BlockGetter getter,
+            @NotNull BlockPos pos, Direction direction
     ) {
-        if( direction.getAxis() == state.getValue(FACING).getAxis() ) {
-            return 0;
-        }
-        if(
-            state.getValue(FACING).getAxis().isHorizontal()
-            && direction == Direction.DOWN
-        ) {
-            return getSignal(state, getter, pos, direction);
-        }
-        return 0;
+        return getSignal(state, getter, pos, direction);
     }
 
     @Override
