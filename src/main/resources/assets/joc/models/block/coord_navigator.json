@@ -3,35 +3,9 @@
 	"credit": "Hollow-Egg, with Blockbench",
 	"texture_size": [64, 64],
 	"textures": {
-		"9": "joc:block/seeker_magnet",
-		"spyglass_in_hand": "joc:block/spyglass_model"
+		"9": "joc:block/seeker_magnet"
 	},
 	"elements": [
-		{
-			"from": [7, 7.25, 8.25],
-			"to": [9, 9.25, 13.25],
-			"rotation": {"angle": 22.5, "axis": "x", "origin": [8, 8.25, 8]},
-			"faces": {
-				"east": {"uv": [0, 2, 2, 7], "rotation": 270, "texture": "#spyglass_in_hand"},
-				"south": {"uv": [0, 0, 2, 2], "rotation": 180, "texture": "#spyglass_in_hand"},
-				"west": {"uv": [0, 2, 2, 7], "rotation": 90, "texture": "#spyglass_in_hand"},
-				"up": {"uv": [0, 2, 2, 7], "rotation": 180, "texture": "#spyglass_in_hand"},
-				"down": {"uv": [0, 2, 2, 7], "texture": "#spyglass_in_hand"}
-			}
-		},
-		{
-			"from": [6.9, 7.15, 2.15],
-			"to": [9.1, 9.35, 8.35],
-			"rotation": {"angle": 22.5, "axis": "x", "origin": [8, 8.25, 8]},
-			"faces": {
-				"north": {"uv": [0, 13, 2, 15], "texture": "#spyglass_in_hand"},
-				"east": {"uv": [0, 7, 2, 13], "rotation": 270, "texture": "#spyglass_in_hand"},
-				"south": {"uv": [0, 5, 2, 7], "rotation": 180, "texture": "#spyglass_in_hand"},
-				"west": {"uv": [0, 7, 2, 13], "rotation": 90, "texture": "#spyglass_in_hand"},
-				"up": {"uv": [0, 7, 2, 13], "rotation": 180, "texture": "#spyglass_in_hand"},
-				"down": {"uv": [0, 7, 2, 13], "texture": "#spyglass_in_hand"}
-			}
-		},
 		{
 			"from": [14, 0, 14],
 			"to": [16, 16, 16],
@@ -302,35 +276,35 @@
 			"origin": [8, 8, 8],
 			"scope": 0,
 			"color": 0,
-			"children": [0, 1]
+			"children": []
 		},
 		{
 			"name": "poles",
 			"origin": [16, 0, 0],
 			"scope": 0,
 			"color": 0,
-			"children": [2, 3, 4, 5]
+			"children": [0, 1, 2, 3]
 		},
 		{
 			"name": "indicators",
 			"origin": [1, 7, 0],
 			"scope": 0,
 			"color": 3,
-			"children": [6, 7, 8, 9, 10, 11, 12, 13]
+			"children": [4, 5, 6, 7, 8, 9, 10, 11]
 		},
 		{
 			"name": "bottom",
 			"origin": [8.01041, 14.5, 8.01041],
 			"scope": 0,
 			"color": 0,
-			"children": [14, 15, 16]
+			"children": [12, 13, 14]
 		},
 		{
 			"name": "top",
 			"origin": [8.01041, 14.5, 8.01041],
 			"scope": 0,
 			"color": 0,
-			"children": [17, 18, 19]
+			"children": [15, 16, 17]
 		}
 	]
 }
