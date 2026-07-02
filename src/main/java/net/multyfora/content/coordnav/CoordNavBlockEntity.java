@@ -6,9 +6,6 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 
-import dev.simulated_team.simulated.content.blocks.nav_table.NavTableBlock;
-import dev.simulated_team.simulated.content.blocks.nav_table.NavTableBlockEntity;
-import dev.simulated_team.simulated.content.blocks.nav_table.navigation_target.NavigationTarget;
 import net.createmod.catnip.animation.LerpedFloat;
 
 import net.minecraft.core.*;
@@ -28,7 +25,6 @@ import net.multyfora.index.JocBlockEntityTypes;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3d;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -99,7 +95,7 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
         // Attempt to get the sublevel containing this block
         try {
-            setSubLevel();
+            this.subLevel = Sable.HELPER.getContaining(this);
         } catch(Exception ignored) {}
 
         // Recalculate distance to target every tick
@@ -147,17 +143,11 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         notifyUpdate();
     }
 
-    private void setSubLevel() {
-        this.subLevel = Sable.HELPER.getContaining(this);
-        spyglassPointer.setSubLevel(subLevel);
-    }
-
     // Sets the target coordinates and triggers redstone recalculation
     public void setTarget(double x, double y, double z) {
         this.targetX = x; this.targetY = y; this.targetZ = z;
         this.hasTarget = true;
         this.currentTarget = new Vec3(x, y, z);
-        spyglassPointer.setLocation(this.worldPosition);
         spyglassPointer.calculateRelativeAngle(this);
         setChanged();
         sendData();

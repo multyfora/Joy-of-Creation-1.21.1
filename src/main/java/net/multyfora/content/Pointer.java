@@ -3,15 +3,14 @@ package net.multyfora.content;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.simulated_team.simulated.content.blocks.nav_table.navigation_target.NavigationTarget;
 import net.createmod.catnip.animation.LerpedFloat;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 import net.multyfora.content.coordnav.CoordNavBlock;
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import org.joml.Quaterniond;
 
 public class Pointer {
     private float yaw = 0.0f, pitch = 0.0f;
-    private SubLevel subLevel = null;
 
     public final LerpedFloat lerpedPitchDegrees = LerpedFloat.angular();
     public final LerpedFloat lerpedYawDegrees   = LerpedFloat.angular();
@@ -21,14 +20,16 @@ public class Pointer {
     }
 
     public void calculateRelativeAngle(CoordNavBlockEntity parent) {
-        Vec3 targetWorld = parent.getTargetPosition(true);
-        if (targetWorld == null) return;
+        Vec3 targetWorld = parent
+            .getTargetPosition(true)
+            .add( new Vec3(0.5, 0.5, 0.5) )
+        ;
 
         Direction facing = parent.getBlockState().getValue(CoordNavBlock.FACING);
 
         Vec3 selfPos = SpaceUtils.getProjectedSelfPos(
-                parent.getSubLevel(),
-                parent.getWorldPosition()
+            parent.getSubLevel(),
+            parent.getWorldPosition()
         );
 
         // Calculate the difference in WORLD space
@@ -38,7 +39,7 @@ public class Pointer {
         var forwardRot = SpaceUtils.getSublevelRot(parent.getSubLevel());
 
         // INVERT the rotation (Going from World -> Local requires the conjugate)
-        var inverseRot = new org.joml.Quaterniond(forwardRot).conjugate();
+        var inverseRot = new Quaterniond(forwardRot).conjugate();
 
         // Rotate the vector into sublevel-local space using the inverse
         Vec3 diff = SpaceUtils.rotateQuat(diffWorld, inverseRot);
@@ -73,16 +74,17 @@ public class Pointer {
         yaw = (float) Math.toDegrees(radians);
     }
 
-    public void setSubLevel(SubLevel subLevel) { this.subLevel = subLevel; }
+    public void setYaw(float yaw)     {
+        this.yaw   = yaw;
+    }
+    public void setPitch(float pitch) {
+        this.pitch = pitch;
+    }
 
-    public void setLocation(BlockPos position) {}
-    public void setLocation(Vec3 position) {}
-    public void setTarget(BlockPos position) {}
-    public void setTarget(Vec3 position) {}
-
-    public void setYaw(float yaw)     { this.yaw   = yaw;   }
-    public void setPitch(float pitch) { this.pitch = pitch; }
-
-    public float getYaw()   { return yaw;   }
-    public float getPitch() { return pitch; }
+    public float getYaw()   {
+        return yaw;
+    }
+    public float getPitch() {
+        return pitch;
+    }
 }
