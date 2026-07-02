@@ -84,18 +84,24 @@ public class PortableThrottleClientHandler {
             }
         }
 
-        long window = client.getWindow().getWindow();
-
         // Send pending bind packet if we have a target
         if (bindTarget != null) {
             PacketDistributor.sendToServer(new PortableThrottleBindPacket(bindTarget));
             bindTarget = null;
         }
 
-        if( client.options.keyAttack.isDown() ) {
+        if( client.options.keyUse.isDown() ) {
             // Open the strength slider screen on the rising edge if no screen is open
             if(client.screen == null) {
-                client.setScreen( new PortableThrottleStrengthScreen() );
+                if( client.options.keyShift.isDown() ) {
+                    PacketDistributor.sendToServer(
+                        new PortableThrottleSignalPacket(lastStrength)
+                    );
+                } else {
+                    client.setScreen(
+                        new PortableThrottleStrengthScreen()
+                    );
+                }
             }
         }
 
