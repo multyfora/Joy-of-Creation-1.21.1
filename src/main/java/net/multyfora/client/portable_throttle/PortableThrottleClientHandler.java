@@ -1,5 +1,6 @@
 package net.multyfora.client.portable_throttle;
 
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
@@ -66,8 +67,8 @@ public class PortableThrottleClientHandler {
      * strength screen opening, and keepalive signal transmission
      **/
     public static void tick() {
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
+        Minecraft client = Minecraft.getInstance();
+        LocalPlayer player = client.player;
         if (player == null || player.isSpectator()) {
             reset();
             return;
@@ -83,7 +84,7 @@ public class PortableThrottleClientHandler {
             }
         }
 
-        long window = mc.getWindow().getWindow();
+        long window = client.getWindow().getWindow();
 
         // Send pending bind packet if we have a target
         if (bindTarget != null) {
@@ -91,28 +92,21 @@ public class PortableThrottleClientHandler {
             bindTarget = null;
         }
 
-        // Detect left-click (mouse button 1)
-        boolean leftDown = GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_1) == GLFW.GLFW_PRESS;
-
-        if (leftDown) {
-            // Consume the attack action so the player doesn't swing
-            mc.options.keyAttack.consumeClick();
-            mc.options.keyAttack.setDown(false);
-
+        if( client.options.keyAttack.isDown() ) {
             // Open the strength slider screen on the rising edge if no screen is open
-            if (!wasLeftDown && mc.screen == null) {
-                mc.setScreen(new PortableThrottleStrengthScreen());
+            if(client.screen == null) {
+                client.setScreen( new PortableThrottleStrengthScreen() );
             }
         }
 
-        wasLeftDown = leftDown;
-
         // Send keepalive signal while the strength screen is open and strength > 0
-        if (lastStrength > 0 && mc.screen == null) {
-            if (keepAliveCooldown > 0) {
+        if(0 < lastStrength && client.screen == null) {
+            if(0 < keepAliveCooldown) {
                 keepAliveCooldown--;
             } else {
-                PacketDistributor.sendToServer(new PortableThrottleSignalPacket(lastStrength));
+                PacketDistributor.sendToServer(
+                    new PortableThrottleSignalPacket(lastStrength)
+                );
                 keepAliveCooldown = KEEP_ALIVE_RATE;
             }
         }

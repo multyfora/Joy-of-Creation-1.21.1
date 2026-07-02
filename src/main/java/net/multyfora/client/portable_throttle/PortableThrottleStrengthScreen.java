@@ -174,22 +174,24 @@ public class PortableThrottleStrengthScreen extends Screen {
             Minecraft client = Minecraft.getInstance();
             ItemStack held = getHeldItem();
             if(held != null && client.level != null) {
-                frequencies = PortableThrottleItem.getFrequency(held, client.level.registryAccess());
+                frequencies = PortableThrottleItem.getFrequency(
+                    held,
+                    client.level.registryAccess()
+                );
             }
         }
 
-        if(frequencies != null) {
-            GraphicsUtils.renderFrequencySlots(
-                graphics, font,
-                new Vector2i(
-                    width/2 - 2*FREQUENCY_SIZE,
-                    height/2 - FREQUENCY_SIZE/2
-                ), FREQUENCY_SIZE, FREQUENCY_GAP,
-                new Vector2i(mouseX, mouseY),
-                frequencies.getFirst().getStack(), frequencies.getSecond().getStack(),
-                true, false
-            );
-        }
+        GraphicsUtils.renderFrequencySlots(
+            graphics, font,
+            new Vector2i(
+                width/2 - 2*FREQUENCY_SIZE,
+                height/2 - FREQUENCY_SIZE/2
+            ), FREQUENCY_SIZE, FREQUENCY_GAP,
+            new Vector2i(mouseX, mouseY),
+            frequencies == null ? null : frequencies.getFirst().getStack(),
+            frequencies == null ? null : frequencies.getSecond().getStack(),
+            true, false
+        );
     }
 
     // No background overlay so the game world is visible behind the slider

@@ -55,15 +55,17 @@ public class GraphicsUtils {
     }
 
     private static void renderItemStack(
-            GuiGraphics graphics, Font font,
-            ItemStack stack, Vector2i position, int size
+        GuiGraphics graphics, Font font,
+        ItemStack stack, Vector2i position, int size
     ) {
-        if( !stack.isEmpty() ) {
-            int ix = position.x + (size - 16) / 2;
-            int iy = position.y + (size - 16) / 2;
-            graphics.renderItem(stack, ix, iy);
-            graphics.renderItemDecorations(font, stack, ix, iy);
+        if( stack == null || stack.isEmpty() ) {
+            return;
         }
+
+        int ix = position.x + (size - 16) / 2;
+        int iy = position.y + (size - 16) / 2;
+        graphics.renderItem(stack, ix, iy);
+        graphics.renderItemDecorations(font, stack, ix, iy);
     }
 
     public static void renderFrequencySlots(
