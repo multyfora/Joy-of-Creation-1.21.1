@@ -6,13 +6,13 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-
 import net.multyfora.AeronauticsJoyofcreation;
 
 /**
- * Holds the two custom payload types used by the Coordinate Navigator block:
+ * Holds the custom payload types used by the Coordinate Navigator block:
  * OpenCoordNavPayload: sent from server to client to open the coordinate configuration GUI
  * UpdateCoordPayload: sent from client to server when the user sets new target coordinates
+ * ToggleModePayload: sent from client to server when the user toggles 2D/3D mode
  **/
 public final class CoordNavPayloads {
     private CoordNavPayloads() {}
@@ -23,8 +23,7 @@ public final class CoordNavPayloads {
         public static final Type<OpenCoordNavPayload> TYPE = new Type<>(ID);
         // Stream codec: just a BlockPos (compact long encoding)
         public static final StreamCodec<ByteBuf, OpenCoordNavPayload> CODEC =
-            BlockPos.STREAM_CODEC.map(OpenCoordNavPayload::new, OpenCoordNavPayload::pos);
-
+                BlockPos.STREAM_CODEC.map(OpenCoordNavPayload::new, OpenCoordNavPayload::pos);
         @Override
         public Type<? extends CustomPacketPayload> type() {
             return TYPE;
@@ -37,13 +36,28 @@ public final class CoordNavPayloads {
         public static final Type<UpdateCoordPayload> TYPE = new Type<>(ID);
         // Stream codec: BlockPos + 3 doubles
         public static final StreamCodec<ByteBuf, UpdateCoordPayload> CODEC = StreamCodec.composite(
-            BlockPos.STREAM_CODEC, UpdateCoordPayload::pos,
-            ByteBufCodecs.DOUBLE, UpdateCoordPayload::x,
-            ByteBufCodecs.DOUBLE, UpdateCoordPayload::y,
-            ByteBufCodecs.DOUBLE, UpdateCoordPayload::z,
-            UpdateCoordPayload::new
+                BlockPos.STREAM_CODEC, UpdateCoordPayload::pos,
+                ByteBufCodecs.DOUBLE, UpdateCoordPayload::x,
+                ByteBufCodecs.DOUBLE, UpdateCoordPayload::y,
+                ByteBufCodecs.DOUBLE, UpdateCoordPayload::z,
+                UpdateCoordPayload::new
         );
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
 
+    // Client-to-server: toggles between 3D (6-sided) and 2D (XZ-plane, 4-sided) calculation modes
+    public record ToggleModePayload(BlockPos pos, boolean use3D) implements CustomPacketPayload {
+        public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "toggle_coord_nav_mode");
+        public static final Type<ToggleModePayload> TYPE = new Type<>(ID);
+        // Stream codec: BlockPos + boolean
+        public static final StreamCodec<ByteBuf, ToggleModePayload> CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, ToggleModePayload::pos,
+                ByteBufCodecs.BOOL, ToggleModePayload::use3D,
+                ToggleModePayload::new
+        );
         @Override
         public Type<? extends CustomPacketPayload> type() {
             return TYPE;

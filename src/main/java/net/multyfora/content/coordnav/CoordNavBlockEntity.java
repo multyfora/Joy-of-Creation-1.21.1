@@ -45,6 +45,7 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     // Cached target vector, null when no target is set
     private Vec3 currentTarget;
     private boolean hasTarget;
+    private boolean use3D = true;
 
     // Whether the block is currently emitting power
     public boolean isPowering;
@@ -182,6 +183,11 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
             return 0;
         }
 
+        // In 2D mode, vertical faces never output
+        if (!use3D && (direction == Direction.UP || direction == Direction.DOWN)) {
+            return 0;
+        }
+
         Vec3 targetWorld = getTargetPosition(true);
         if (targetWorld == null) return 0;
 
@@ -192,10 +198,20 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
         var forwardRot = SpaceUtils.getSublevelRot(subLevel);
         var inverseRot = new org.joml.Quaterniond(forwardRot).conjugate();
-        Vec3 diffLocal = SpaceUtils.rotateQuat(diffWorld, inverseRot).normalize();
+        Vec3 diffLocal = SpaceUtils.rotateQuat(diffWorld, inverseRot);
+
+        Vec3 diffForCalc;
+        if (use3D) {
+            diffForCalc = diffLocal.normalize();
+        } else {
+            // Flatten to XZ plane — vertical offset to the target is ignored entirely
+            Vec3 diffXZ = new Vec3(diffLocal.x, 0, diffLocal.z);
+            if (diffXZ.lengthSqr() < 1e-6) return 0;
+            diffForCalc = diffXZ.normalize();
+        }
 
         Vec3 dirNormal = Vec3.atLowerCornerOf(direction.getNormal());
-        double dot = -diffLocal.dot(dirNormal);
+        double dot = -diffForCalc.dot(dirNormal);
 
         if (dot <= 0) return 0;
 
@@ -246,8 +262,9 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         tag.putDouble("target_y", targetY);
         tag.putDouble("target_z", targetZ);
         tag.putBoolean("has_target", hasTarget);
-        tag.putFloat("relative_angle", spyglassPointer.getYaw() );
-        tag.putFloat("tilt_angle",     spyglassPointer.getPitch()   );
+        tag.putBoolean("use_3d", use3D);
+        tag.putFloat("relative_angle", spyglassPointer.getYaw());
+        tag.putFloat("tilt_angle",     spyglassPointer.getPitch());
     }
 
     @Override
@@ -257,13 +274,13 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         targetY   = tag.getDouble("target_y");
         targetZ   = tag.getDouble("target_z");
         hasTarget = tag.getBoolean("has_target");
+        use3D     = tag.contains("use_3d") ? tag.getBoolean("use_3d") : true;
         if (hasTarget) {
             currentTarget = new Vec3(targetX, targetY, targetZ);
         } else {
             currentTarget = null;
         }
         isPowering = hasTarget;
-
 
         float yaw   = tag.getFloat("relative_angle");
         float pitch = tag.getFloat("tilt_angle");
@@ -299,6 +316,20 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     }
     public boolean hasTarget() {
         return hasTarget;
+    }
+    public boolean isUse3D() { return use3D; }
+
+    public void setUse3D(boolean use3D) {
+        this.use3D = use3D;
+        spyglassPointer.calculateRelativeAngle(this);
+        setChanged();
+        sendData();
+
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            selectivelyUpdateNeighbors();
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
     }
 
     public BlockPos getTarget() {

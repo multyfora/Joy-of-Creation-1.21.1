@@ -43,6 +43,10 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
     private EditBox yField;
     private EditBox zField;
 
+    private boolean use3D;
+
+    private Button modeButton;
+
     public CoordNavScreen(CoordNavMenu menu, Inventory inventory) {
         super(
             menu,
@@ -69,27 +73,31 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
 
     private void addFields() {
         CoordNavBlockEntity blockEntity = getBlockEntity();
+        use3D = blockEntity == null || blockEntity.isUse3D();  // ← now sets the field
+
         int center_x = width/2;
         int center_y = height/2;
 
         xField = createIntegerField(
-            new Vector2i(center_x - 80, center_y - 40),
-            new Vector2i(160, 20),
-            Component.literal("X"),
-            ( blockEntity != null ? (int)blockEntity.getTargetX() : pos.getX() )
+                new Vector2i(center_x - 80, center_y - 40),
+                new Vector2i(160, 20),
+                Component.literal("X"),
+                ( blockEntity != null ? (int)blockEntity.getTargetX() : pos.getX() )
         );
         yField = createIntegerField(
-            new Vector2i(center_x - 80, center_y - 10),
-            new Vector2i(160, 20),
-            Component.literal("Y"),
-            ( blockEntity != null ? (int)blockEntity.getTargetY() : pos.getY() )
+                new Vector2i(center_x - 80, center_y - 10),
+                new Vector2i(160, 20),
+                Component.literal("Y"),
+                ( blockEntity != null ? (int)blockEntity.getTargetY() : pos.getY() )
         );
         zField = createIntegerField(
-            new Vector2i(center_x - 80, center_y + 20),
-            new Vector2i(160, 20),
-            Component.literal("Z"),
-            ( blockEntity != null ? (int)blockEntity.getTargetZ() : pos.getZ() )
+                new Vector2i(center_x - 80, center_y + 20),
+                new Vector2i(160, 20),
+                Component.literal("Z"),
+                ( blockEntity != null ? (int)blockEntity.getTargetZ() : pos.getZ() )
         );
+
+        yField.setEditable(use3D);
     }
 
     private void addWidgets() {
@@ -139,9 +147,38 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
                 )
                 .build()
         );
+        modeButton = addRenderableWidget(
+                Button
+                        .builder(
+                                Component.literal(use3D ? "3D" : "2D"),
+                                btn -> toggleMode()
+                        )
+                        .bounds(center_x + 90, center_y - 40, 40, 20)
+                        .build()
+        );
         return;
-    }
 
+    }
+    private void toggleMode() {
+        CoordNavBlockEntity blockEntity = getBlockEntity();
+        use3D = !use3D;
+
+        if (blockEntity != null) {
+            blockEntity.setUse3D(use3D);
+        }
+
+        yField.setEditable(use3D);
+        if (!use3D) {
+            yField.setValue(String.valueOf(pos.getY()));
+        }
+        modeButton.setMessage(Component.literal(use3D ? "3D" : "2D"));
+
+        try {
+            PacketDistributor.sendToServer(
+                    new CoordNavPayloads.ToggleModePayload(pos, use3D)
+            );
+        } catch (Exception ignored) {}
+    }
     private EditBox createIntegerField(
         Vector2i position, Vector2i size,
         Component text, int initial_value

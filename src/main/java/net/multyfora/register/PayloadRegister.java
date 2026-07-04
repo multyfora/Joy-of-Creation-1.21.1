@@ -43,6 +43,21 @@ public class PayloadRegister {
                 );
             }
         ;
+        IPayloadHandler<CoordNavPayloads.ToggleModePayload> ToggleModePayloader =
+                (payload, context) -> {
+                    context.enqueueWork(
+                            () -> {
+                                Level level = context.player().level();
+                                BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
+                                if( !(blockEntity instanceof CoordNavBlockEntity coordNavBlockEntity) ) {
+                                    return;
+                                }
+
+                                coordNavBlockEntity.setUse3D( payload.use3D() );
+                            }
+                    );
+                }
+                ;
         IPayloadHandler<CoordNavPayloads.UpdateCoordPayload> UpdateCoordPayloader =
             (payload, context) -> {
                 context.enqueueWork(
@@ -86,6 +101,12 @@ public class PayloadRegister {
                     CoordNavPayloads.UpdateCoordPayload.TYPE,
                     CoordNavPayloads.UpdateCoordPayload.CODEC,
                     UpdateCoordPayloader
+                );
+                // Server-bound: toggles 2D/3D calculation mode for the Coordinate Navigator
+                registrar.playToServer(
+                        CoordNavPayloads.ToggleModePayload.TYPE,
+                        CoordNavPayloads.ToggleModePayload.CODEC,
+                        ToggleModePayloader
                 );
                 // Server-bound: handles typewriter key press/release input
                 registrar.playToServer(
