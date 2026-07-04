@@ -23,11 +23,14 @@ public class CoordNavRenderer implements BlockEntityRenderer<CoordNavBlockEntity
 
     @Override
     public void render(
-        CoordNavBlockEntity coordNavBlockEntity, float partialTick,
-        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource,
-        int packedLight, int packedOverlay
+            CoordNavBlockEntity coordNavBlockEntity, float partialTick,
+            @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource,
+            int packedLight, int packedOverlay
     ) {
-        if( coordNavBlockEntity.getTargetPosition(false) == null ) {
+        if (!coordNavBlockEntity.hasModule()) {
+            return;
+        }
+        if (coordNavBlockEntity.getTargetPosition(false) == null) {
             return;
         }
 

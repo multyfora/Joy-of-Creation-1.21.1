@@ -15,6 +15,8 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -22,44 +24,62 @@ import net.multyfora.client.coordnav.CoordNavMenu;
 import net.multyfora.content.Pointer;
 import net.multyfora.content.SpaceUtils;
 import net.multyfora.index.JocBlockEntityTypes;
+import net.multyfora.index.JocItems;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaterniond;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Block entity for the Coordinate Navigator.
- * Computes redstone signal strengths on each lateral side based on the direction from the
- * block to a configurable target coordinate. Includes sublevel-aware coordinate transforms
- * so it works correctly on moving ships.
+ * The block itself is a shell — its actual behaviour comes from an installed "module" item.
+ * Without a module installed, the block does nothing: no redstone output, no rendering, no GUI.
+ *
+ * Modules:
+ *  - SPYGLASS:   points toward a configurable target coordinate, outputs redstone based on
+ *                the angle between each side and the target direction.
+ *  - PLAYER_DIR: tracks the last player who right-clicked it and outputs redstone on all
+ *                6 sides based on that player's look direction.
  **/
 public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvider {
 
-    // Target coordinates (in logical sublevel space)
+    public enum ModuleType {
+        NONE,
+        SPYGLASS,
+        PLAYER_DIR
+        // Future modules go here
+    }
+
+
     private double targetX;
     private double targetY;
     private double targetZ;
-    // Cached target vector, null when no target is set
     private Vec3 currentTarget;
     private boolean hasTarget;
     private boolean use3D = true;
 
-    // Whether the block is currently emitting power
     public boolean isPowering;
-
-    // Spyglass Pointer
     public final Pointer spyglassPointer = new Pointer();
 
-    // Tick counter for periodic distance recalculation
+
+    private Vec3 playerDirLookDir = Vec3.ZERO;
+    @Nullable
+    private UUID trackedPlayerUUID = null;
+    private boolean playerDirPowered = false;
+    private static final double PLAYER_DIR_EPSILON = 1.0e-6;
+
+
+    private ModuleType module = ModuleType.NONE;
+
     private int ticks;
     private double distanceToTarget;
     private double lastDistanceToTarget;
-    // Cache of last-known signal strengths per direction to avoid unnecessary neighbor updates
     private final Map<Direction, Integer> signalStrengthCache = new EnumMap<>(Direction.class);
-    // Reference to the sublevel containing this block, if any
     private SubLevel subLevel;
 
     public CoordNavBlockEntity(BlockPos pos, BlockState state) {
@@ -74,39 +94,39 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {}
 
-    // Main tick: updates target tracking, redstone strengths, and client-side angle interpolation
     @Override
     public void tick() {
         super.tick();
 
-        if(level == null) {
-            return;
-        }
+        if (level == null) return;
 
-        // Tick the lerped angle on the client for smooth pointer animation
-        if(level.isClientSide) {
+        if (level.isClientSide) {
             spyglassPointer.lerpedPitchDegrees.tickChaser();
             spyglassPointer.lerpedYawDegrees.tickChaser();
         }
 
-        // Skip server-side logic on the client (except for virtual renders) and for virtual BE
-        if(isVirtual() || level.isClientSide) {
-            return;
-        }
+        if (isVirtual() || level.isClientSide) return;
 
-        // Attempt to get the sublevel containing this block
+        if (module == ModuleType.NONE) return;
+
         try {
             this.subLevel = Sable.HELPER.getContaining(this);
-        } catch(Exception ignored) {}
+        } catch (Exception ignored) {}
 
-        // Recalculate distance to target every tick
+        if (module == ModuleType.SPYGLASS) {
+            tickSpyglass();
+        } else if (module == ModuleType.PLAYER_DIR) {
+            tickPlayerDir();
+        }
+    }
+
+    private void tickSpyglass() {
         updateTarget();
         Vec3 targetLocal = getTargetPosition(false);
         if (targetLocal != null) {
             distanceToTarget = SpaceUtils
-                .getProjectedSelfPos(subLevel, worldPosition)
-                .distanceTo( getTargetPosition(true) )
-            ;
+                    .getProjectedSelfPos(subLevel, worldPosition)
+                    .distanceTo(getTargetPosition(true));
             if (distanceToTarget >= 5000) {
                 lastDistanceToTarget = distanceToTarget;
             }
@@ -114,27 +134,101 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
             sendData();
         }
 
-        // Update neighbor blocks if signal strength changed on any side
         if (selectivelyUpdateNeighbors()) {
             notifyUpdate();
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
 
-        // Periodic distance recalculation every 10 ticks to reduce CPU load
-        if (!level.isClientSide && getTargetPosition(false) != null) {
+        if (getTargetPosition(false) != null) {
             ticks++;
             if (ticks >= 10) {
                 ticks = 0;
                 lastDistanceToTarget = distanceToTarget;
                 distanceToTarget = SpaceUtils
-                    .getProjectedSelfPos(subLevel, worldPosition)
-                    .distanceTo( getTargetPosition(true) )
-                ;
+                        .getProjectedSelfPos(subLevel, worldPosition)
+                        .distanceTo(getTargetPosition(true));
             }
         }
     }
 
-    // Updates the cached currentTarget vector from stored coordinates
+    private void tickPlayerDir() {
+        if (!playerDirPowered) return;
+
+        Player trackedPlayer = getTrackedPlayer();
+        if (trackedPlayer == null) return;
+
+        Vec3 lookAngle = trackedPlayer.getLookAngle();
+        Quaterniond invRot = new Quaterniond(SpaceUtils.getSublevelRot(subLevel)).invert();
+        playerDirLookDir = SpaceUtils.rotateQuat(lookAngle.normalize(), invRot).scale(-1);
+
+        updatePlayerDirAngles();
+        sendData();
+
+        if (selectivelyUpdateNeighbors()) {
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    /**
+     * Computes yaw/pitch from playerDirLookDir and stores them in spyglassPointer's
+     * yaw/pitch fields, reusing its LerpedFloats for smooth client-side rotation.
+     * Omnidirectional — no facing-plane logic needed since this module tracks a
+     * player anywhere around the block, not a single swept plane.
+     **/
+    private void updatePlayerDirAngles() {
+        Vec3 dir = playerDirLookDir;
+        double len = dir.length();
+        if (len < 1e-6) return;
+
+        Vec3 n = dir.scale(1.0 / len);
+        float yaw   = (float) Math.toDegrees(Math.atan2(n.x, n.z));
+        float pitch = (float) Math.toDegrees(Math.atan2(-n.y, Math.sqrt(n.x * n.x + n.z * n.z)));
+
+        spyglassPointer.setYaw(yaw);
+        spyglassPointer.setPitch(pitch);
+    }
+
+
+    /**
+     * Called when a player right-clicks the block with an empty hand while a PLAYER_DIR
+     * module is installed. Mirrors PlayerDirectionBlock's toggle: first click while off
+     * registers the player and turns on, click while on turns off.
+     **/
+    public void onPlayerDirActivated(Player player) {
+        if (module != ModuleType.PLAYER_DIR || level == null || level.isClientSide) return;
+
+        try {
+            subLevel = Sable.HELPER.getContaining(this);
+        } catch (Exception ignored) {}
+
+        signalStrengthCache.clear();
+
+        if (!playerDirPowered) {
+            trackedPlayerUUID = player.getUUID();
+            playerDirPowered = true;
+
+            Vec3 lookAngle = player.getLookAngle();
+            Quaterniond invRot = new Quaterniond(SpaceUtils.getSublevelRot(subLevel)).invert();
+            playerDirLookDir = SpaceUtils.rotateQuat(lookAngle.normalize(), invRot).scale(-1);
+            updatePlayerDirAngles();
+        } else {
+            playerDirPowered = false;
+        }
+
+        setChanged();
+        sendData();
+        level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+    }
+
+    @Nullable
+    private Player getTrackedPlayer() {
+        if (trackedPlayerUUID == null || level == null) return null;
+        Player player = level.getPlayerByUUID(trackedPlayerUUID);
+        if (player == null || !player.isAlive() || player.isSpectator()) return null;
+        return player;
+    }
+
+
     private void updateTarget() {
         if (hasTarget) {
             currentTarget = new Vec3(targetX, targetY, targetZ);
@@ -144,12 +238,13 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         notifyUpdate();
     }
 
-    // Sets the target coordinates and triggers redstone recalculation
     public void setTarget(double x, double y, double z) {
         this.targetX = x; this.targetY = y; this.targetZ = z;
         this.hasTarget = true;
         this.currentTarget = new Vec3(x, y, z);
-        spyglassPointer.calculateRelativeAngle(this);
+        if (module == ModuleType.SPYGLASS) {
+            spyglassPointer.calculateRelativeAngle(this);
+        }
         setChanged();
         sendData();
 
@@ -160,7 +255,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         }
     }
 
-    // Clears the target and resets redstone output
     public void clearTarget() {
         this.hasTarget = false;
         this.currentTarget = null;
@@ -172,21 +266,96 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
         if (level != null && !level.isClientSide) {
             selectivelyUpdateNeighbors();
-
-            // Force an update when clearing, too
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
     }
 
-    public int getRedstoneStrength(Direction direction) {
-        if (this.level == null || getTargetPosition(false) == null) {
-            return 0;
+
+
+    public ModuleType getModule() { return module; }
+    public boolean hasModule() { return module != ModuleType.NONE; }
+
+    public boolean insertModule(ItemStack stack, Player player) {
+        if (hasModule()) return false;
+
+        ModuleType incoming = moduleTypeForItem(stack);
+        if (incoming == ModuleType.NONE) return false;
+
+        this.module = incoming;
+
+        if (!player.getAbilities().instabuild) {
+            stack.shrink(1);
         }
 
-        // In 2D mode, vertical faces never output
-        if (!use3D && (direction == Direction.UP || direction == Direction.DOWN)) {
-            return 0;
+        onModuleChanged();
+        return true;
+    }
+
+    public boolean extractModule(Player player) {
+        if (!hasModule()) return false;
+
+        ItemStack drop = itemForModuleType(module);
+        this.module = ModuleType.NONE;
+
+        // Reset transient state for both module types
+        spyglassPointer.setYaw(0);
+        spyglassPointer.setPitch(0);
+        playerDirLookDir = Vec3.ZERO;
+        trackedPlayerUUID = null;
+        playerDirPowered = false;
+        signalStrengthCache.clear();
+
+        if (!drop.isEmpty()) {
+            if (!player.getInventory().add(drop)) {
+                player.drop(drop, false);
+            }
         }
+
+        onModuleChanged();
+        return true;
+    }
+
+    private void onModuleChanged() {
+        setChanged();
+        sendData();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            selectivelyUpdateNeighbors();
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    private static ModuleType moduleTypeForItem(ItemStack stack) {
+        if (stack.is(Items.SPYGLASS)) {
+            return ModuleType.SPYGLASS;
+        }
+        if (stack.is(Items.ENDER_EYE)) {
+            return ModuleType.PLAYER_DIR;
+        }
+        return ModuleType.NONE;
+    }
+
+    private static ItemStack itemForModuleType(ModuleType type) {
+        return switch (type) {
+            case SPYGLASS   -> new ItemStack(Items.SPYGLASS);
+            case PLAYER_DIR -> new ItemStack(Items.ENDER_EYE);
+            case NONE       -> ItemStack.EMPTY;
+        };
+    }
+
+
+    public int getRedstoneStrength(Direction direction) {
+        return switch (module) {
+            case SPYGLASS -> getSpyglassRedstoneStrength(direction);
+            case PLAYER_DIR -> getPlayerDirRedstoneStrength(direction);
+            case NONE -> 0;
+        };
+    }
+
+    private int getSpyglassRedstoneStrength(Direction direction) {
+        if (this.level == null || getTargetPosition(false) == null) return 0;
+
+        if (!use3D && (direction == Direction.UP || direction == Direction.DOWN)) return 0;
 
         Vec3 targetWorld = getTargetPosition(true);
         if (targetWorld == null) return 0;
@@ -197,14 +366,13 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         if (diffWorld.lengthSqr() < 1e-6) return 0;
 
         var forwardRot = SpaceUtils.getSublevelRot(subLevel);
-        var inverseRot = new org.joml.Quaterniond(forwardRot).conjugate();
+        var inverseRot = new Quaterniond(forwardRot).conjugate();
         Vec3 diffLocal = SpaceUtils.rotateQuat(diffWorld, inverseRot);
 
         Vec3 diffForCalc;
         if (use3D) {
             diffForCalc = diffLocal.normalize();
         } else {
-            // Flatten to XZ plane — vertical offset to the target is ignored entirely
             Vec3 diffXZ = new Vec3(diffLocal.x, 0, diffLocal.z);
             if (diffXZ.lengthSqr() < 1e-6) return 0;
             diffForCalc = diffXZ.normalize();
@@ -219,7 +387,16 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         return Math.min(15, Math.max(0, power));
     }
 
-    // Returns the target position, optionally transformed into world space from sublevel space
+    private int getPlayerDirRedstoneStrength(Direction direction) {
+        if (level == null || !playerDirPowered) return 0;
+        if (playerDirLookDir.lengthSqr() <= PLAYER_DIR_EPSILON) return 0;
+
+        Vec3 dirNormal = Vec3.atLowerCornerOf(direction.getNormal());
+        double dot = Math.max(-1.0, Math.min(1.0, playerDirLookDir.dot(dirNormal)));
+        return (int) (Math.asin(dot) / Math.PI * 30.0 + 0.5);
+    }
+
+
     public Vec3 getTargetPosition(boolean worldSpace) {
         if (currentTarget == null) return null;
         if (worldSpace && subLevel != null) {
@@ -230,10 +407,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         return currentTarget;
     }
 
-    /**
-     * Checks each lateral direction for signal strength changes and updates neighbors accordingly.
-     * Returns true if any strength changed.
-     **/
     private boolean selectivelyUpdateNeighbors() {
         if (level == null || level.isClientSide) return false;
 
@@ -263,8 +436,14 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         tag.putDouble("target_z", targetZ);
         tag.putBoolean("has_target", hasTarget);
         tag.putBoolean("use_3d", use3D);
+        tag.putString("module", module.name());
         tag.putFloat("relative_angle", spyglassPointer.getYaw());
         tag.putFloat("tilt_angle",     spyglassPointer.getPitch());
+
+        tag.putBoolean("player_dir_powered", playerDirPowered);
+        if (trackedPlayerUUID != null) {
+            tag.putUUID("tracked_player", trackedPlayerUUID);
+        }
     }
 
     @Override
@@ -275,6 +454,17 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         targetZ   = tag.getDouble("target_z");
         hasTarget = tag.getBoolean("has_target");
         use3D     = tag.contains("use_3d") ? tag.getBoolean("use_3d") : true;
+
+        if (tag.contains("module")) {
+            try {
+                module = ModuleType.valueOf(tag.getString("module"));
+            } catch (IllegalArgumentException e) {
+                module = ModuleType.NONE;
+            }
+        } else {
+            module = ModuleType.NONE;
+        }
+
         if (hasTarget) {
             currentTarget = new Vec3(targetX, targetY, targetZ);
         } else {
@@ -291,6 +481,13 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
             spyglassPointer.lerpedYawDegrees.chase(yaw,   1.0, LerpedFloat.Chaser.EXP);
             spyglassPointer.lerpedPitchDegrees.chase(pitch, 1.0, LerpedFloat.Chaser.EXP);
         }
+
+        playerDirPowered = tag.getBoolean("player_dir_powered");
+        if (tag.hasUUID("tracked_player")) {
+            trackedPlayerUUID = tag.getUUID("tracked_player");
+        } else {
+            trackedPlayerUUID = null;
+        }
     }
 
     @Override
@@ -300,28 +497,22 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
     @Override
     public @Nullable AbstractContainerMenu createMenu(
-        int i, @NotNull Inventory inventory, @NotNull Player player
+            int i, @NotNull Inventory inventory, @NotNull Player player
     ) {
         return new CoordNavMenu(i, inventory, this);
     }
 
-    public double getTargetX() {
-        return targetX;
-    }
-    public double getTargetY() {
-        return targetY;
-    }
-    public double getTargetZ() {
-        return targetZ;
-    }
-    public boolean hasTarget() {
-        return hasTarget;
-    }
-    public boolean isUse3D() { return use3D; }
+    public double getTargetX() { return targetX; }
+    public double getTargetY() { return targetY; }
+    public double getTargetZ() { return targetZ; }
+    public boolean hasTarget() { return hasTarget; }
+    public boolean isUse3D()   { return use3D; }
 
     public void setUse3D(boolean use3D) {
         this.use3D = use3D;
-        spyglassPointer.calculateRelativeAngle(this);
+        if (module == ModuleType.SPYGLASS) {
+            spyglassPointer.calculateRelativeAngle(this);
+        }
         setChanged();
         sendData();
 
@@ -333,22 +524,10 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     }
 
     public BlockPos getTarget() {
-        if(!hasTarget) {
-            return null;
-        }
-        return new BlockPos(
-            (int)targetX,
-            (int)targetY,
-            (int)targetZ
-        );
+        if (!hasTarget) return null;
+        return new BlockPos((int) targetX, (int) targetY, (int) targetZ);
     }
 
-    public BlockPos getWorldPosition() {
-        return worldPosition;
-    }
-
-    public SubLevel getSubLevel() {
-        return subLevel;
-    }
-
+    public BlockPos getWorldPosition() { return worldPosition; }
+    public SubLevel getSubLevel() { return subLevel; }
 }

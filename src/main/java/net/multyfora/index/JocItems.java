@@ -22,8 +22,6 @@ public class JocItems {
             "balloon", JocBlocks.BALLOON);
     public static final DeferredItem<BlockItem> COORD_NAV = ITEMS.registerSimpleBlockItem(
             "coord_navigator", JocBlocks.COORD_NAV);
-    public static final DeferredItem<BlockItem> PLAYER_DIRECTION = ITEMS.registerSimpleBlockItem(
-            "player_direction", JocBlocks.PLAYER_DIRECTION);
 
     // Custom handheld items (stack size 1) with special right-click behaviours
     public static final DeferredItem<PortableTypewriterItem> PORTABLE_TYPEWRITER = ITEMS.register("portable_typewriter",

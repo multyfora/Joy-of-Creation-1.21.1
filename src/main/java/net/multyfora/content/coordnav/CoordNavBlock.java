@@ -69,15 +69,15 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
     ) {
         final VoxelShape SHAPE = VoxelUtils.combineVoxelShapes(
             //MAGNETS
-            Block.box(3, 0,    3, 16-3, 3,  16-3),
-            Block.box(3, 16-3, 3, 16-3, 16, 16-3),
+            Block.box(3, 0,    3, 16-3, 16,  16-3),
+//            Block.box(3, 16-3, 3, 16-3, 16, 16-3),
             //POLES
             Block.box(0,    0, 0,    2,    16, 2 ),
             Block.box(16-2, 0, 0,    16,   16, 2 ),
             Block.box(0,    0, 16-2, 2,    16, 16),
             Block.box(16-2, 0, 16-2, 16,   16, 16),
             //CENTER
-            Block.box(8-1, 8-1, 8-1, 8+1, 8+1 ,8+1),
+//            Block.box(8-1, 8-1, 8-1, 8+1, 8+1 ,8+1),
             //PADS
             Block.box(0,    8-2, 0,    4-2, 8+2, 4-1),
             Block.box(0,    8-2, 16-2, 3,   8+2, 16 ),
@@ -93,21 +93,56 @@ public class CoordNavBlock extends DirectionalBlock implements IBE<CoordNavBlock
         return rotateShape(axis, SHAPE);
     }
 
-    // Opens the coordinate configuration GUI when right-clicked with an empty hand
     @Override
     protected @NotNull ItemInteractionResult useItemOn(
-        @NotNull ItemStack stack,
-        @NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos,
-        Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit
+            @NotNull ItemStack stack,
+            @NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos,
+            Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit
     ) {
-        if( !player.getItemInHand(hand).isEmpty() ) {
+        if (!(level.getBlockEntity(pos) instanceof CoordNavBlockEntity be)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
-        if(player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.connection.send( new CoordNavPayloads.OpenCoordNavPayload(pos) );
+        // Shift + right-click: extract the installed module, if any
+        if (player.isShiftKeyDown()) {
+            if (be.hasModule()) {
+                if (!level.isClientSide) {
+                    be.extractModule(player);
+                }
+                return ItemInteractionResult.SUCCESS;
+            }
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        return ItemInteractionResult.SUCCESS;
+
+        // Right-click with a valid module item while empty: install it
+        if (!be.hasModule() && !stack.isEmpty()) {
+            if (!level.isClientSide) {
+                boolean inserted = be.insertModule(stack, player);
+                return inserted ? ItemInteractionResult.SUCCESS : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            }
+            return ItemInteractionResult.SUCCESS;
+        }
+
+        // Right-click with empty hand while a module is installed: behavior depends on module type
+        if (stack.isEmpty() && be.hasModule()) {
+            switch (be.getModule()) {
+                case SPYGLASS -> {
+                    if (player instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.connection.send(new CoordNavPayloads.OpenCoordNavPayload(pos));
+                    }
+                    return ItemInteractionResult.SUCCESS;
+                }
+                case PLAYER_DIR -> {
+                    if (!level.isClientSide) {
+                        be.onPlayerDirActivated(player);
+                    }
+                    return ItemInteractionResult.SUCCESS;
+                }
+                default -> {}
+            }
+        }
+
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     /**

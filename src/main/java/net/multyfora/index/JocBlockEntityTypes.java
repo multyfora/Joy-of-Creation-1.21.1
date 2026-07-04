@@ -7,7 +7,6 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.balloon.BalloonBlockEntity;
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
-import net.multyfora.content.playerdir.PlayerDirectionBlockEntity;
 
 import static net.minecraft.core.registries.Registries.BLOCK_ENTITY_TYPE;
 
@@ -35,13 +34,4 @@ public class JocBlockEntityTypes {
             ).build(null)
         );
 
-    // Player Direction block entity: tracks nearest player and outputs direction-based signal
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PlayerDirectionBlockEntity>> PLAYER_DIRECTION =
-        BLOCK_ENTITY_TYPES.register(
-            "player_direction",
-            () -> BlockEntityType.Builder.of(
-                PlayerDirectionBlockEntity::new, JocBlocks.PLAYER_DIRECTION.get()
-            )
-            .build(null)
-        );
 }

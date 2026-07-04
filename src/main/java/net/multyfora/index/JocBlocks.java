@@ -8,7 +8,6 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.balloon.BalloonBlock;
 import net.multyfora.content.coordnav.CoordNavBlock;
-import net.multyfora.content.playerdir.PlayerDirectionBlock;
 
 /**
  * Registry holder for all custom blocks in the mod.
@@ -19,8 +18,6 @@ public class JocBlocks {
     public static final DeferredBlock<BalloonBlock> BALLOON;
     // Coordinate Navigator block: directional block that emits redstone toward a target
     public static final DeferredBlock<CoordNavBlock> COORD_NAV;
-    // Player Direction block: directional block that tracks player look direction
-    public static final DeferredBlock<PlayerDirectionBlock> PLAYER_DIRECTION;
 
     static {
         // Balloon: wool-like properties, transparent, no suffocation, no view blocking
@@ -44,13 +41,6 @@ public class JocBlocks {
                 );
             }
         );
-        // Player Direction block: metal block with no occlusion
-        PLAYER_DIRECTION = AeronauticsJoyofcreation.BLOCKS.register("player_direction",
-                () -> new PlayerDirectionBlock(BlockBehaviour.Properties.of()
-                        .mapColor(MapColor.METAL)
-                        .strength(3.0f)
-                        .sound(SoundType.METAL)
-                        .noOcclusion()));
     }
 
     // Dummy method to trigger static initialisation; registers blocks via the static initializer above
