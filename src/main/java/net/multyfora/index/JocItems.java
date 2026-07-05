@@ -4,7 +4,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
-
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
@@ -17,11 +16,14 @@ public class JocItems {
     // Reference to the main mod's item DeferredRegister for convenience
     public static final DeferredRegister.Items ITEMS = AeronauticsJoyofcreation.ITEMS;
 
-    // Simple block items that just place the corresponding block
+    // Simple block items that just place the corresponding block.
+    // IMPORTANT: use a Supplier lambda here, NOT JocBlocks.BALLOON directly — passing the
+    // DeferredBlock field itself forces eager cross-class static initialization, which
+    // deadlocks against JocBlocks's own static block referencing JocItems.ITEMS.
     public static final DeferredItem<BlockItem> BALLOON = ITEMS.registerSimpleBlockItem(
-            "balloon", JocBlocks.BALLOON);
+            "balloon", () -> JocBlocks.BALLOON.get());
     public static final DeferredItem<BlockItem> COORD_NAV = ITEMS.registerSimpleBlockItem(
-            "coord_navigator", JocBlocks.COORD_NAV);
+            "coord_navigator", () -> JocBlocks.COORD_NAV.get());
 
     // Custom handheld items (stack size 1) with special right-click behaviours
     public static final DeferredItem<PortableTypewriterItem> PORTABLE_TYPEWRITER = ITEMS.register("portable_typewriter",
