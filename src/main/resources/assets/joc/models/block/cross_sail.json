@@ -1,0 +1,8 @@
+{
+  "parent": "joc:block/cross_sail_base",
+  "textures": {
+    "0": "create:block/sail/canvas_white",
+    "1": "create:block/sail/frame",
+    "particle": "create:block/sail/canvas_white"
+  }
+}

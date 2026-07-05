@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=x": { "model": "joc:block/cross_sail", "x": 90, "y": 90 },
+    "axis=y": { "model": "joc:block/cross_sail" },
+    "axis=z": { "model": "joc:block/cross_sail", "x": 90 }
+  }
+}
