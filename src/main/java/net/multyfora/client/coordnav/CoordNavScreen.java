@@ -1,6 +1,7 @@
 package net.multyfora.client.coordnav;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import dev.ryanhcode.sable.Sable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -14,6 +15,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.Level;
 
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.graphics.GraphicsUtils;
 import net.multyfora.content.coordnav.CoordNavBlockEntity;
@@ -78,23 +81,31 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         int center_x = width/2;
         int center_y = height/2;
 
+        if(blockEntity == null) {
+            return;
+        }
+        Vec3 worldPosition = Sable.HELPER.projectOutOfSubLevel(
+            blockEntity.getLevel(),
+            blockEntity.getTargetPosition(true)
+        );
+
         xField = createIntegerField(
-                new Vector2i(center_x - 80, center_y - 40),
-                new Vector2i(160, 20),
-                Component.literal("X"),
-                ( blockEntity != null ? (int)blockEntity.getTargetX() : pos.getX() )
+            new Vector2i(center_x - 80, center_y - 40),
+            new Vector2i(160, 20),
+            Component.literal("X"),
+            (int)worldPosition.x
         );
         yField = createIntegerField(
-                new Vector2i(center_x - 80, center_y - 10),
-                new Vector2i(160, 20),
-                Component.literal("Y"),
-                ( blockEntity != null ? (int)blockEntity.getTargetY() : pos.getY() )
+            new Vector2i(center_x - 80, center_y - 10),
+            new Vector2i(160, 20),
+            Component.literal("Y"),
+            (int)worldPosition.y
         );
         zField = createIntegerField(
-                new Vector2i(center_x - 80, center_y + 20),
-                new Vector2i(160, 20),
-                Component.literal("Z"),
-                ( blockEntity != null ? (int)blockEntity.getTargetZ() : pos.getZ() )
+            new Vector2i(center_x - 80, center_y + 20),
+            new Vector2i(160, 20),
+            Component.literal("Z"),
+            (int)worldPosition.z
         );
 
         yField.setEditable(use3D);
@@ -220,7 +231,9 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
             GraphicsUtils.getCoordinateString( blockEntity.getTarget() )
         );
         FormattedText position = FormattedText.of(
-            GraphicsUtils.getCoordinateString( blockEntity.getBlockPos() )
+            GraphicsUtils.getCoordinateString(
+                this.getCurrentPosition()
+            )
         );
 
         guiGraphics.drawString(
@@ -248,9 +261,20 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
 
     // Fills the input fields with the block's own position
     private void useCurrentPos() {
-        xField.setValue(  String.valueOf( pos.getX() )  );
-        yField.setValue(  String.valueOf( pos.getY() )  );
-        zField.setValue(  String.valueOf( pos.getZ() )  );
+        CoordNavBlockEntity blockEntity = (CoordNavBlockEntity)getBlockEntity();
+        if(blockEntity == null) {
+            return;
+        }
+
+        BlockPos worldPosition = getCurrentPosition();
+        if(worldPosition == null) {
+            return;
+        }
+
+        Vec3 position = Vec3.atLowerCornerOf(worldPosition);
+        xField.setValue( String.valueOf(position.x) );
+        yField.setValue( String.valueOf(position.y) );
+        zField.setValue( String.valueOf(position.z) );
     }
 
     // Sends the entered coordinates to the server via UpdateCoordPayload
@@ -277,5 +301,18 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
             return blockEntity;
         }
         return null;
+    }
+
+    private BlockPos getCurrentPosition() {
+        if(this.menu.blockEntity == null) {
+            return null;
+        }
+
+        return BlockPos.containing(
+            Sable.HELPER.projectOutOfSubLevel(
+                this.menu.blockEntity.getLevel(),
+                this.menu.blockEntity.getBlockPos().getCenter()
+            )
+        );
     }
 }
