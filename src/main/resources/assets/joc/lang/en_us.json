@@ -3,6 +3,7 @@
   "block.joc.balloon": "Balloon",
   "block.joc.coord_navigator": "Coordinate Navigator",
   "block.joc.player_direction": "Player Direction",
+  "block.joc.symmetric_sail_cross": "Symmetric Sail Cross",
 
   "item.joc.portable_typewriter": "Portable Typewriter",
   "item.joc.portable_throttle": "Portable Throttle Lever",
