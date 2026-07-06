@@ -22,10 +22,14 @@ public class Pointer {
     }
 
     public void calculateRelativeAngle(CoordNavBlockEntity parent) {
-        Vec3 targetWorld = parent
-            .getTargetPosition(true)
-            .add( new Vec3(0.5, 0.5, 0.5) )
-        ;
+        Vec3 rawTarget = parent.getTargetPosition(true);
+        if (rawTarget == null) {
+            yaw = 0;
+            pitch = 0;
+            return;
+        }
+
+        Vec3 targetWorld = rawTarget.add(new Vec3(0.5, 0.5, 0.5));
 
         Vec3 selfPos = SpaceUtils.getProjectedSelfPos(
             parent.getSubLevel(),

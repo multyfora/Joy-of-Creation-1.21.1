@@ -1,5 +1,7 @@
 package net.multyfora.index;
 
+import com.simibubi.create.AllSoundEvents;
+import com.simibubi.create.CreateClient;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -77,7 +79,7 @@ public class JocBlocks {
                     BlockBehaviour.Properties.of()
                         .mapColor(MapColor.METAL)
                         .strength(3.0f)
-                        .sound(SoundType.METAL)
+                        .sound(SoundType.NETHERITE_BLOCK)
                         .noOcclusion()
                 );
             }
