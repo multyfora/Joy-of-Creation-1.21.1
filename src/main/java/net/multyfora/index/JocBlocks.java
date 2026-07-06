@@ -14,7 +14,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.balloon.BalloonBlock;
-import net.multyfora.content.coordnav.CoordNavBlock;
+import net.multyfora.content.seeker.SeekerBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import static net.multyfora.AeronauticsJoyofcreation.BLOCKS;
@@ -27,8 +27,8 @@ import static net.multyfora.index.JocItems.ITEMS;
 public class JocBlocks {
     // Balloon block: a soft, non-occluding block available in 16 colors
     public static final DeferredBlock<BalloonBlock> BALLOON;
-    // Coordinate Navigator block: directional block that emits redstone toward a target
-    public static final DeferredBlock<CoordNavBlock> COORD_NAV;
+    // Seeker block: directional block that emits redstone toward a target
+    public static final DeferredBlock<SeekerBlock> SEEKER;
 
     public static final DeferredHolder<Block, CrossSailBlock> CROSS_SAIL;
     public static final DeferredHolder<Item, BlockItem> CROSS_SAIL_ITEM;
@@ -72,10 +72,10 @@ public class JocBlocks {
                         .noOcclusion()
                         .isViewBlocking((state, level, pos) -> false)
                         .isSuffocating((state, level, pos) -> false)));
-        // Coordinate Navigator: metal block with no occlusion
-        COORD_NAV = BLOCKS.register("coord_navigator",
+        // Seeker: metal block with no occlusion
+        SEEKER = BLOCKS.register("seeker",
             () -> {
-                return new CoordNavBlock(
+                return new SeekerBlock(
                     BlockBehaviour.Properties.of()
                         .mapColor(MapColor.METAL)
                         .strength(3.0f)

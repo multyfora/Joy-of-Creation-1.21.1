@@ -2,7 +2,7 @@ package net.multyfora.index;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
-import net.multyfora.client.coordnav.CoordNavMenu;
+import net.multyfora.client.seeker.SeekerMenu;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -18,9 +18,9 @@ public class JocMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<FreqScreenMenu>> TYPEWRITER_SCREEN =
             MENU_TYPES.register("typewriter_screen",
                     () -> IMenuTypeExtension.create((id, inv, buf) -> new FreqScreenMenu(id, inv, buf)));
-    public static final DeferredHolder<MenuType<?>, MenuType<CoordNavMenu>> COORD_NAV_SCREEN =
-            MENU_TYPES.register("coord_nav_screen",
-                    () -> IMenuTypeExtension.create((id, inv, buf) -> new CoordNavMenu(id, inv, buf)));
+    public static final DeferredHolder<MenuType<?>, MenuType<SeekerMenu>> SEEKER_SCREEN =
+            MENU_TYPES.register("seeker_screen",
+                    () -> IMenuTypeExtension.create((id, inv, buf) -> new SeekerMenu(id, inv, buf)));
     public static final DeferredHolder<MenuType<?>, MenuType<FreqScreenMenu>> THROTTLE_SCREEN =
             MENU_TYPES.register("throttle_screen",
                     () -> IMenuTypeExtension.create((id, inv, buf) -> new FreqScreenMenu(id, inv, buf)));

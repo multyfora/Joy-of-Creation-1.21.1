@@ -28,8 +28,8 @@
 	Set a frequency (nearby and while holding) to a chosen strength.
 	
 
-## Coordinate Navigator
-	TODO: coordinate-navigator image
+## Seeker
+	TODO: seeker image
 	No lodestone-compass needed, pick a location and go!
 
 ## Balloon
@@ -40,4 +40,4 @@
 
 ## Examples
 	TODO: gif of (complex) remote control
-	TODO: gif of automatic navigation via Coordinate-Navigator
+	TODO: gif of automatic navigation via Seeker

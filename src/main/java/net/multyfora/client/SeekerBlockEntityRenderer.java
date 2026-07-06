@@ -10,17 +10,17 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
-import net.multyfora.content.coordnav.CoordNavBlock;
-import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import net.multyfora.content.seeker.SeekerBlock;
+import net.multyfora.content.seeker.SeekerBlockEntity;
 
-public class CoordNavBlockEntityRenderer extends SafeBlockEntityRenderer<CoordNavBlockEntity> {
-    public CoordNavBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
+public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlockEntity> {
+    public SeekerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
         super();
     }
 
     @Override
     protected void renderSafe(
-            CoordNavBlockEntity blockEntity, float partialTick,
+            SeekerBlockEntity blockEntity, float partialTick,
             PoseStack ms, MultiBufferSource buffer,
             int light, int overlay
     ) {
@@ -32,11 +32,11 @@ public class CoordNavBlockEntityRenderer extends SafeBlockEntityRenderer<CoordNa
     }
 
     private void renderSpyglass(
-            CoordNavBlockEntity blockEntity, float partialTick,
+            SeekerBlockEntity blockEntity, float partialTick,
             PoseStack ms, MultiBufferSource buffer, int light
     ) {
         BlockState state  = blockEntity.getBlockState();
-        Direction  facing = state.getValue(CoordNavBlock.FACING);
+        Direction  facing = state.getValue(SeekerBlock.FACING);
         float      pitch  = blockEntity.spyglassPointer.lerpedYawDegrees.getValue(partialTick) + 180.0f;
         float      yaw    = blockEntity.spyglassPointer.lerpedPitchDegrees.getValue(partialTick);
 
@@ -55,7 +55,7 @@ public class CoordNavBlockEntityRenderer extends SafeBlockEntityRenderer<CoordNa
         ms.translate(-0.5, -0.5, -0.5);
 
         SuperByteBuffer superBuffer = CachedBuffers.partial(
-                CoordNavPartialModels.COORD_NAV_SPYGLASS,
+                SeekerPartialModels.SEEKER_SPYGLASS,
                 blockEntity.getBlockState()
         );
         superBuffer
@@ -65,7 +65,7 @@ public class CoordNavBlockEntityRenderer extends SafeBlockEntityRenderer<CoordNa
     }
 
     private void renderEyeOfEnder(
-            CoordNavBlockEntity blockEntity, float partialTick,
+            SeekerBlockEntity blockEntity, float partialTick,
             PoseStack ms, MultiBufferSource buffer, int light
     ) {
         BlockState state = blockEntity.getBlockState();
@@ -82,7 +82,7 @@ public class CoordNavBlockEntityRenderer extends SafeBlockEntityRenderer<CoordNa
         ms.translate(-0.5, -0.5, -0.5);
 
         SuperByteBuffer superBuffer = CachedBuffers.partial(
-                CoordNavPartialModels.COORD_NAV_EYE_OF_ENDER,
+                SeekerPartialModels.SEEKER_EYE_OF_ENDER,
                 state
         );
         superBuffer

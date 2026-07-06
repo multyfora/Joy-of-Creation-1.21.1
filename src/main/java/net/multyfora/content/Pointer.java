@@ -6,8 +6,8 @@ import net.createmod.catnip.animation.LerpedFloat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
-import net.multyfora.content.coordnav.CoordNavBlock;
-import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import net.multyfora.content.seeker.SeekerBlock;
+import net.multyfora.content.seeker.SeekerBlockEntity;
 import org.joml.Quaterniond;
 
 public class Pointer {
@@ -17,11 +17,11 @@ public class Pointer {
     public final LerpedFloat lerpedPitchDegrees = LerpedFloat.angular();
     public final LerpedFloat lerpedYawDegrees   = LerpedFloat.angular();
 
-    public void tick(CoordNavBlockEntity parent) {
+    public void tick(SeekerBlockEntity parent) {
         calculateRelativeAngle(parent);
     }
 
-    public void calculateRelativeAngle(CoordNavBlockEntity parent) {
+    public void calculateRelativeAngle(SeekerBlockEntity parent) {
         Vec3 rawTarget = parent.getTargetPosition(true);
         if (rawTarget == null) {
             yaw = 0;
@@ -61,7 +61,7 @@ public class Pointer {
         }
 
         // 3D mode — unchanged
-        Direction facing = parent.getBlockState().getValue(CoordNavBlock.FACING);
+        Direction facing = parent.getBlockState().getValue(SeekerBlock.FACING);
         Vec3 proj = NavigationTarget.getPlaneProjectedPos(diff, facing.getNormal());
         double planarLen = proj.length();
 

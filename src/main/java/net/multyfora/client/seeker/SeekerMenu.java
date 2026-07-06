@@ -1,4 +1,4 @@
-package net.multyfora.client.coordnav;
+package net.multyfora.client.seeker;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -9,27 +9,27 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.index.JocMenuTypes;
 
 import org.jetbrains.annotations.NotNull;
 
-public class CoordNavMenu extends AbstractContainerMenu {
-    public final CoordNavBlockEntity blockEntity;
+public class SeekerMenu extends AbstractContainerMenu {
+    public final SeekerBlockEntity blockEntity;
     private final Level level;
 
     // Server-side / direct construction
-    public CoordNavMenu(
+    public SeekerMenu(
             int containerId, Inventory inventory,
             BlockEntity blockEntity
     ) {
-        super(JocMenuTypes.COORD_NAV_SCREEN.get(), containerId);
-        this.blockEntity = (CoordNavBlockEntity) blockEntity;
+        super(JocMenuTypes.SEEKER_SCREEN.get(), containerId);
+        this.blockEntity = (SeekerBlockEntity) blockEntity;
         this.level = inventory.player.level();
     }
 
     // Client-side network constructor, required by IMenuTypeExtension.create
-    public CoordNavMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf buf) {
+    public SeekerMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf buf) {
         this(containerId, inventory, resolveBlockEntity(inventory, buf));
     }
 

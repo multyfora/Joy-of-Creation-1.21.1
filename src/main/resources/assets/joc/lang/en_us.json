@@ -1,7 +1,7 @@
 {
   "itemGroup.joc": "Aeronautics: Joy of Creation",
   "block.joc.balloon": "Balloon",
-  "block.joc.coord_navigator": "Coordinate Navigator",
+  "block.joc.seeker": "Seeker",
   "block.joc.player_direction": "Player Direction",
   "block.joc.symmetric_sail_cross": "Symmetric Sail Cross",
 
@@ -15,9 +15,9 @@
   "screen.joc.portable_typewriter.click_hint": "Click a key to select it for binding",
   "screen.joc.portable_typewriter.bound_count": "%s keys bound",
 
-  "screen.joc.coord_navigator": "Coordinate Navigator",
-  "screen.joc.coord_navigator.set": "Set Target",
-  "screen.joc.coord_navigator.current_pos": "Use Current",
+  "screen.joc.seeker": "Seeker",
+  "screen.joc.seeker.set": "Set Target",
+  "screen.joc.seeker.current_pos": "Use Current",
 
   "joc.configuration.title": "Aeronautics: Joy of Creation Configs",
   "joc.configuration.section.joc.common.toml": "Aeronautics: Joy of Creation Configs",

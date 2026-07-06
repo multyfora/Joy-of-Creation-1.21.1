@@ -6,7 +6,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.balloon.BalloonBlockEntity;
-import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import net.multyfora.content.seeker.SeekerBlockEntity;
 
 import static net.minecraft.core.registries.Registries.BLOCK_ENTITY_TYPE;
 
@@ -25,12 +25,12 @@ public class JocBlockEntityTypes {
             ).build(null)
         );
 
-    // Coordinate Navigator block entity: computes redstone output based on target direction
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CoordNavBlockEntity>> COORD_NAV =
+    // Seeker block entity: computes redstone output based on target direction
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SeekerBlockEntity>> SEEKER =
         BLOCK_ENTITY_TYPES.register(
-            "coord_navigator",
+            "seeker",
             () -> BlockEntityType.Builder.of(
-                CoordNavBlockEntity::new, JocBlocks.COORD_NAV.get()
+                SeekerBlockEntity::new, JocBlocks.SEEKER.get()
             ).build(null)
         );
 

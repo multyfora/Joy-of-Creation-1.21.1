@@ -1,4 +1,4 @@
-package net.multyfora.content.coordnav;
+package net.multyfora.content.seeker;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -20,7 +20,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import net.multyfora.client.coordnav.CoordNavMenu;
+import net.multyfora.client.seeker.SeekerMenu;
 import net.multyfora.content.Pointer;
 import net.multyfora.content.SpaceUtils;
 import net.multyfora.index.JocBlockEntityTypes;
@@ -35,24 +35,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Block entity for the Coordinate Navigator.
- * The block itself is a shell — its actual behaviour comes from an installed "module" item.
- * Without a module installed, the block does nothing: no redstone output, no rendering, no GUI.
- *
- * Modules:
- *  - SPYGLASS:   points toward a configurable target coordinate, outputs redstone based on
- *                the angle between each side and the target direction.
- *  - PLAYER_DIR: tracks the last player who right-clicked it and outputs redstone on all
- *                6 sides based on that player's look direction.
- **/
-public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvider {
+public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider {
 
     public enum ModuleType {
         NONE,
         SPYGLASS,
         PLAYER_DIR
-        // Future modules go here
     }
 
 
@@ -82,8 +70,8 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     private final Map<Direction, Integer> signalStrengthCache = new EnumMap<>(Direction.class);
     private SubLevel subLevel;
 
-    public CoordNavBlockEntity(BlockPos pos, BlockState state) {
-        super(JocBlockEntityTypes.COORD_NAV.get(), pos, state);
+    public SeekerBlockEntity(BlockPos pos, BlockState state) {
+        super(JocBlockEntityTypes.SEEKER.get(), pos, state);
         targetX = 0;
         targetY = 0;
         targetZ = 0;
@@ -169,12 +157,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
         }
     }
 
-    /**
-     * Computes yaw/pitch from playerDirLookDir and stores them in spyglassPointer's
-     * yaw/pitch fields, reusing its LerpedFloats for smooth client-side rotation.
-     * Omnidirectional — no facing-plane logic needed since this module tracks a
-     * player anywhere around the block, not a single swept plane.
-     **/
     private void updatePlayerDirAngles() {
         Vec3 dir = playerDirLookDir;
         double len = dir.length();
@@ -189,11 +171,6 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
     }
 
 
-    /**
-     * Called when a player right-clicks the block with an empty hand while a PLAYER_DIR
-     * module is installed. Mirrors PlayerDirectionBlock's toggle: first click while off
-     * registers the player and turns on, click while on turns off.
-     **/
     public void onPlayerDirActivated(Player player) {
         if (module != ModuleType.PLAYER_DIR || level == null || level.isClientSide) return;
 
@@ -492,14 +469,14 @@ public class CoordNavBlockEntity extends SmartBlockEntity implements MenuProvide
 
     @Override
     public @NotNull Component getDisplayName() {
-        return Component.translatable("screen.joc.coord_navigator");
+        return Component.translatable("screen.joc.seeker");
     }
 
     @Override
     public @Nullable AbstractContainerMenu createMenu(
             int i, @NotNull Inventory inventory, @NotNull Player player
     ) {
-        return new CoordNavMenu(i, inventory, this);
+        return new SeekerMenu(i, inventory, this);
     }
 
     public double getTargetX() { return targetX; }

@@ -5,9 +5,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.multyfora.client.coordnav.CoordNavMenu;
-import net.multyfora.client.coordnav.CoordNavScreen;
-import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import net.multyfora.client.seeker.SeekerMenu;
+import net.multyfora.client.seeker.SeekerScreen;
+import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.network.*;
@@ -16,7 +16,7 @@ import net.neoforged.neoforge.network.handling.IPayloadHandler;
 
 public class PayloadRegister {
     public static void RegisterPayloads(IEventBus modEventBus) {
-        IPayloadHandler<CoordNavPayloads.OpenCoordNavPayload> CoordNavPayloader =
+        IPayloadHandler<SeekerPayloads.OpenSeekerPayload> SeekerPayloader =
             (payload, context) -> {
                 context.enqueueWork(
                     () -> {
@@ -24,60 +24,60 @@ public class PayloadRegister {
                         Level level = player.level();
                         BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
 
-                        if( !(blockEntity instanceof CoordNavBlockEntity coordNavBlockEntity) ) {
+                        if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
                             return;
                         }
 
                         int x = payload.pos().getX();
                         int y = payload.pos().getY();
                         int z = payload.pos().getZ();
-                        coordNavBlockEntity.setTarget(x, y, z);
+                        seekerBlockEntity.setTarget(x, y, z);
 
-                        CoordNavMenu coordNavMenu = new CoordNavMenu(
-                            0, player.getInventory(), coordNavBlockEntity
+                        SeekerMenu seekerMenu = new SeekerMenu(
+                            0, player.getInventory(), seekerBlockEntity
                         );
                         Minecraft.getInstance().setScreen(
-                            new CoordNavScreen( coordNavMenu, player.getInventory() )
+                            new SeekerScreen( seekerMenu, player.getInventory() )
                         );
                     }
                 );
             }
         ;
-        IPayloadHandler<CoordNavPayloads.ToggleModePayload> ToggleModePayloader =
+        IPayloadHandler<SeekerPayloads.ToggleModePayload> ToggleModePayloader =
                 (payload, context) -> {
                     context.enqueueWork(
                             () -> {
                                 Level level = context.player().level();
                                 BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
-                                if( !(blockEntity instanceof CoordNavBlockEntity coordNavBlockEntity) ) {
+                                if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
                                     return;
                                 }
 
-                                coordNavBlockEntity.setUse3D( payload.use3D() );
+                                seekerBlockEntity.setUse3D( payload.use3D() );
                             }
                     );
                 }
                 ;
-        IPayloadHandler<CoordNavPayloads.UpdateCoordPayload> UpdateCoordPayloader =
+        IPayloadHandler<SeekerPayloads.UpdateSeekerPayload> UpdateSeekerPayloader =
             (payload, context) -> {
                 context.enqueueWork(
                     () -> {
                         Level level = context.player().level();
                         BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
-                        if( !(blockEntity instanceof CoordNavBlockEntity coordNavBlockEntity) ) {
+                        if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
                             return;
                         }
 
-                        coordNavBlockEntity.setTarget(
+                        seekerBlockEntity.setTarget(
                             payload.x(),
                             payload.y(),
                             payload.z()
                         );
-                        coordNavBlockEntity.setChanged();
+                        seekerBlockEntity.setChanged();
                         level.sendBlockUpdated(
                             payload.pos(),
-                            coordNavBlockEntity.getBlockState(),
-                            coordNavBlockEntity.getBlockState(),
+                            seekerBlockEntity.getBlockState(),
+                            seekerBlockEntity.getBlockState(),
                             3
                         );
                     }
@@ -90,22 +90,22 @@ public class PayloadRegister {
             net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent.class,
             (event) -> {
                 var registrar = event.registrar("1.0.0");
-                // Client-bound: opens the CoordNavScreen GUI when the server tells the client to
+                // Client-bound: opens the SeekerScreen GUI when the server tells the client to
                 registrar.playToClient(
-                    CoordNavPayloads.OpenCoordNavPayload.TYPE,
-                    CoordNavPayloads.OpenCoordNavPayload.CODEC,
-                    CoordNavPayloader
+                    SeekerPayloads.OpenSeekerPayload.TYPE,
+                    SeekerPayloads.OpenSeekerPayload.CODEC,
+                    SeekerPayloader
                 );
-                // Server-bound: updates the CoordNavBlockEntity's target coordinates from the GUI
+                // Server-bound: updates the SeekerBlockEntity's target coordinates from the GUI
                 registrar.playToServer(
-                    CoordNavPayloads.UpdateCoordPayload.TYPE,
-                    CoordNavPayloads.UpdateCoordPayload.CODEC,
-                    UpdateCoordPayloader
+                    SeekerPayloads.UpdateSeekerPayload.TYPE,
+                    SeekerPayloads.UpdateSeekerPayload.CODEC,
+                    UpdateSeekerPayloader
                 );
-                // Server-bound: toggles 2D/3D calculation mode for the Coordinate Navigator
+                // Server-bound: toggles 2D/3D calculation mode for the Seeker
                 registrar.playToServer(
-                        CoordNavPayloads.ToggleModePayload.TYPE,
-                        CoordNavPayloads.ToggleModePayload.CODEC,
+                        SeekerPayloads.ToggleModePayload.TYPE,
+                        SeekerPayloads.ToggleModePayload.CODEC,
                         ToggleModePayloader
                 );
                 // Server-bound: handles typewriter key press/release input

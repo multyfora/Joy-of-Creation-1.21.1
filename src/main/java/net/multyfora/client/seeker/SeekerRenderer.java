@@ -1,4 +1,4 @@
-package net.multyfora.client.coordnav;
+package net.multyfora.client.seeker;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -10,35 +10,31 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
 import net.multyfora.content.SpaceUtils;
-import net.multyfora.content.coordnav.CoordNavBlockEntity;
+import net.multyfora.content.seeker.SeekerBlockEntity;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Client-side renderer for the Coordinate Navigator: draws a green pointer line
- * from the block toward its configured target position.
- **/
-public class CoordNavRenderer implements BlockEntityRenderer<CoordNavBlockEntity> {
+public class SeekerRenderer implements BlockEntityRenderer<SeekerBlockEntity> {
 
-    public CoordNavRenderer(BlockEntityRendererProvider.Context ctx) {}
+    public SeekerRenderer(BlockEntityRendererProvider.Context ctx) {}
 
     @Override
     public void render(
-            CoordNavBlockEntity coordNavBlockEntity, float partialTick,
+            SeekerBlockEntity seekerBlockEntity, float partialTick,
             @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource,
             int packedLight, int packedOverlay
     ) {
-        if (!coordNavBlockEntity.hasModule()) {
+        if (!seekerBlockEntity.hasModule()) {
             return;
         }
-        if (coordNavBlockEntity.getTargetPosition(false) == null) {
+        if (seekerBlockEntity.getTargetPosition(false) == null) {
             return;
         }
 
         Vec3 from = SpaceUtils.getProjectedSelfPos(
-            coordNavBlockEntity.getSubLevel(),
-            coordNavBlockEntity.getWorldPosition()
+            seekerBlockEntity.getSubLevel(),
+            seekerBlockEntity.getWorldPosition()
         );
-        Vec3 target = coordNavBlockEntity.getTargetPosition(true);
+        Vec3 target = seekerBlockEntity.getTargetPosition(true);
         if(target == null) {
             return;
         }
@@ -81,7 +77,7 @@ public class CoordNavRenderer implements BlockEntityRenderer<CoordNavBlockEntity
 
     // Render even when the block entity is off-screen so the pointer is always visible
     @Override
-    public boolean shouldRenderOffScreen(@NotNull CoordNavBlockEntity blockEntity) {
+    public boolean shouldRenderOffScreen(@NotNull SeekerBlockEntity blockEntity) {
         return true;
     }
 }

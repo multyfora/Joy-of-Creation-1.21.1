@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "joc:block/seeker_bottom",
+    "side": "joc:block/seeker_side",
+    "top": "joc:block/seeker_top"
+  }
+}

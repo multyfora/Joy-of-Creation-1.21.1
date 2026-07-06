@@ -7,10 +7,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
-import net.multyfora.client.CoordNavBlockEntityRenderer;
-import net.multyfora.client.CoordNavPartialModels;
+import net.multyfora.client.SeekerBlockEntityRenderer;
+import net.multyfora.client.SeekerPartialModels;
 import net.multyfora.client.balloon.BalloonTetherRenderer;
-import net.multyfora.client.coordnav.CoordNavRenderer;
+import net.multyfora.client.seeker.SeekerRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
 import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 import net.multyfora.client.portable_typewriter.PortableTypewriterClientHandler;
@@ -34,7 +34,7 @@ public class ClientSubscriptions {
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(JocBlockEntityTypes.BALLOON.get(), BalloonTetherRenderer::new);
-        event.registerBlockEntityRenderer(JocBlockEntityTypes.COORD_NAV.get(), CoordNavBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER.get(), SeekerBlockEntityRenderer::new);
     }
 
     @SubscribeEvent
@@ -43,7 +43,7 @@ public class ClientSubscriptions {
         event.register(JocMenuTypes.THROTTLE_SCREEN.get(), PortableThrottleLinkScreen::new);
     }
     static {
-        CoordNavPartialModels.init();
+        SeekerPartialModels.init();
     }
 
         @SubscribeEvent

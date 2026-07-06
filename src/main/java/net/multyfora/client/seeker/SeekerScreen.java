@@ -1,4 +1,4 @@
-package net.multyfora.client.coordnav;
+package net.multyfora.client.seeker;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.ryanhcode.sable.Sable;
@@ -19,23 +19,18 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.graphics.GraphicsUtils;
-import net.multyfora.content.coordnav.CoordNavBlockEntity;
-import net.multyfora.network.CoordNavPayloads;
+import net.multyfora.content.seeker.SeekerBlockEntity;
+import net.multyfora.network.SeekerPayloads;
 
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
 
-/**
- * GUI screen for configuring the Coordinate Navigator's target coordinates.
- * Shows three input fields (X, Y, Z), a Set button to apply, and a Current Pos button
- * to fill in the block's own position.
- **/
-public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
+public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
     public static final ResourceLocation GUI_TEXTURE =
         ResourceLocation.fromNamespaceAndPath(
             AeronauticsJoyofcreation.MODID,
-            "textures/gui/coord_navigator.png"
+            "textures/gui/seeker.png"
         )
     ;
 
@@ -50,11 +45,11 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
 
     private Button modeButton;
 
-    public CoordNavScreen(CoordNavMenu menu, Inventory inventory) {
+    public SeekerScreen(SeekerMenu menu, Inventory inventory) {
         super(
             menu,
             inventory,
-            Component.translatable("screen.joc.coord_navigator")
+            Component.translatable("screen.joc.seeker")
         );
         this.pos = menu.blockEntity.getBlockPos();
     }
@@ -75,8 +70,8 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
     }
 
     private void addFields() {
-        CoordNavBlockEntity blockEntity = getBlockEntity();
-        use3D = blockEntity == null || blockEntity.isUse3D();  // ← now sets the field
+        SeekerBlockEntity blockEntity = getBlockEntity();
+        use3D = blockEntity == null || blockEntity.isUse3D();
 
         int center_x = width/2;
         int center_y = height/2;
@@ -118,7 +113,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         addRenderableWidget(
             Button
                 .builder(
-                    Component.translatable("screen.joc.coord_navigator.set"),
+                    Component.translatable("screen.joc.seeker.set"),
                     (btn) -> {
                         if(this.menu.blockEntity == null) {
                             return;
@@ -138,7 +133,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         addRenderableWidget(
             Button
                 .builder(
-                    Component.translatable("screen.joc.coord_navigator.current_pos"),
+                    Component.translatable("screen.joc.seeker.current_pos"),
                     btn -> useCurrentPos()
                 )
                 .bounds(center_x + 5, center_y + 50, 75, 20)
@@ -171,7 +166,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
 
     }
     private void toggleMode() {
-        CoordNavBlockEntity blockEntity = getBlockEntity();
+        SeekerBlockEntity blockEntity = getBlockEntity();
         use3D = !use3D;
 
         if (blockEntity != null) {
@@ -186,7 +181,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
 
         try {
             PacketDistributor.sendToServer(
-                    new CoordNavPayloads.ToggleModePayload(pos, use3D)
+                    new SeekerPayloads.ToggleModePayload(pos, use3D)
             );
         } catch (Exception ignored) {}
     }
@@ -222,7 +217,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         super.renderLabels(guiGraphics, mouseX, mouseY);
 
         //positions
-        CoordNavBlockEntity blockEntity = this.menu.blockEntity;
+        SeekerBlockEntity blockEntity = this.menu.blockEntity;
         if(blockEntity == null) {
             return;
         }
@@ -261,7 +256,7 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
 
     // Fills the input fields with the block's own position
     private void useCurrentPos() {
-        CoordNavBlockEntity blockEntity = (CoordNavBlockEntity)getBlockEntity();
+        SeekerBlockEntity blockEntity = (SeekerBlockEntity)getBlockEntity();
         if(blockEntity == null) {
             return;
         }
@@ -277,11 +272,11 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
         zField.setValue( String.valueOf(position.z) );
     }
 
-    // Sends the entered coordinates to the server via UpdateCoordPayload
+    // Sends the entered coordinates to the server via UpdateSeekerPayload
     private void sendUpdate(int x, int y, int z) {
         try {
             PacketDistributor.sendToServer(
-                new CoordNavPayloads.UpdateCoordPayload(pos, x, y, z)
+                new SeekerPayloads.UpdateSeekerPayload(pos, x, y, z)
             );
         } catch(NumberFormatException ignored) {}
     }
@@ -292,11 +287,11 @@ public class CoordNavScreen extends AbstractContainerScreen<CoordNavMenu> {
     }
 
     // Helper to fetch the block entity from the client level
-    private CoordNavBlockEntity getBlockEntity() {
+    private SeekerBlockEntity getBlockEntity() {
         Level level = Minecraft.getInstance().level;
         if(
             level != null
-            && level.getBlockEntity(pos) instanceof CoordNavBlockEntity blockEntity
+            && level.getBlockEntity(pos) instanceof SeekerBlockEntity blockEntity
         ) {
             return blockEntity;
         }

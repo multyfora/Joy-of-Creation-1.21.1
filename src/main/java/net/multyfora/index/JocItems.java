@@ -22,8 +22,8 @@ public class JocItems {
     // deadlocks against JocBlocks's own static block referencing JocItems.ITEMS.
     public static final DeferredItem<BlockItem> BALLOON = ITEMS.registerSimpleBlockItem(
             "balloon", () -> JocBlocks.BALLOON.get());
-    public static final DeferredItem<BlockItem> COORD_NAV = ITEMS.registerSimpleBlockItem(
-            "coord_navigator", () -> JocBlocks.COORD_NAV.get());
+    public static final DeferredItem<BlockItem> SEEKER = ITEMS.registerSimpleBlockItem(
+            "seeker", () -> JocBlocks.SEEKER.get());
 
     // Custom handheld items (stack size 1) with special right-click behaviours
     public static final DeferredItem<PortableTypewriterItem> PORTABLE_TYPEWRITER = ITEMS.register("portable_typewriter",

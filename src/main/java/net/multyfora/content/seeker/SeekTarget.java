@@ -1,4 +1,4 @@
-package net.multyfora.content.coordnav;
+package net.multyfora.content.seeker;
 
 import dev.simulated_team.simulated.content.blocks.nav_table.NavTableBlock;
 import dev.simulated_team.simulated.util.SimMathUtils;
@@ -14,14 +14,14 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 
 // Based on dev.simulated_team.simulated.content.blocks.nav_table.navigation_target.NavigationTarget
-public class CoordinateNavigationTarget {
+public class SeekTarget {
     static final float DEADZONE = 2.0F;
     static final float MAX_RANGE = 200.0F;
     static final float MODULATING_RANGE = 200.0F;
 
-    GlobalPos location; //TODO: use in CoordNavBlockEntity
+    GlobalPos location;
 
-    public CoordinateNavigationTarget(GlobalPos location) {
+    public SeekTarget(GlobalPos location) {
         this.location = location;
     }
 
@@ -32,11 +32,11 @@ public class CoordinateNavigationTarget {
         return location.pos();
     }
 
-    int getRedstoneStrength(CoordNavBlockEntity navBE, Direction direction) {
+    int getRedstoneStrength(SeekerBlockEntity navBE, Direction direction) {
         return this.calculateSideStrength(navBE, direction);
     }
 
-    int calculateModulatingStrength(CoordNavBlockEntity navBE) {
+    int calculateModulatingStrength(SeekerBlockEntity navBE) {
         Vec3 currentTarget = navBE.getTargetPosition(false);
         if(currentTarget == null) {
             return 0;
@@ -53,7 +53,7 @@ public class CoordinateNavigationTarget {
         }
     }
 
-    int calculateSideStrength(CoordNavBlockEntity navBE, Direction direction) {
+    int calculateSideStrength(SeekerBlockEntity navBE, Direction direction) {
         if( navBE.getLevel() == null || navBE.getLevel().dimension() != this.location.dimension() ) {
             return 0;
         }
@@ -86,7 +86,7 @@ public class CoordinateNavigationTarget {
 
     }
 
-    private Double distanceToTarget(CoordNavBlockEntity navBE) {
+    private Double distanceToTarget(SeekerBlockEntity navBE) {
         if( navBE.getLevel() == null || navBE.getLevel().dimension() != this.location.dimension() ) {
             return (double)-1.0F;
         }
