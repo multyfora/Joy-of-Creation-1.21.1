@@ -1,5 +1,6 @@
 package net.multyfora;
 
+import net.multyfora.index.*;
 import net.multyfora.register.CreativeRegister;
 import org.slf4j.Logger;
 
@@ -10,10 +11,6 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import net.multyfora.index.JocBlockEntityTypes;
-import net.multyfora.index.JocBlocks;
-import net.multyfora.index.JocItems;
-import net.multyfora.index.JocMenuTypes;
 import net.multyfora.config.JocConfig;
 
 import static net.multyfora.register.CreativeRegister.registerCreativeModeTab;
@@ -37,6 +34,7 @@ public class AeronauticsJoyofcreation {
         JocBlocks.register();
         JocItems.register();
         JocMenuTypes.register();
+        JocSounds.register(modEventBus);
 
         // Register deferred registers with the mod event bus so NeoForge processes them
         JocBlockEntityTypes.BLOCK_ENTITY_TYPES.register(modEventBus);

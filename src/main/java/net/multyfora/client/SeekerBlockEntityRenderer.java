@@ -14,6 +14,10 @@ import net.multyfora.content.seeker.SeekerBlock;
 import net.multyfora.content.seeker.SeekerBlockEntity;
 
 public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlockEntity> {
+
+    // Total degrees of "extra" spin applied on insertion, easing out to zero over the animation
+    private static final float SPIN_TOTAL_DEGREES = 720f;
+
     public SeekerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
         super();
     }
@@ -24,15 +28,17 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
             PoseStack ms, MultiBufferSource buffer,
             int light, int overlay
     ) {
+        float insertProgress = blockEntity.getInsertAnimationProgress(partialTick);
+
         switch (blockEntity.getModule()) {
-            case SPYGLASS -> renderSpyglass(blockEntity, partialTick, ms, buffer, light);
-            case PLAYER_DIR -> renderEyeOfEnder(blockEntity, partialTick, ms, buffer, light);
+            case SPYGLASS -> renderSpyglass(blockEntity, partialTick, insertProgress, ms, buffer, light);
+            case PLAYER_DIR -> renderEyeOfEnder(blockEntity, partialTick, insertProgress, ms, buffer, light);
             case NONE -> {}
         }
     }
 
     private void renderSpyglass(
-            SeekerBlockEntity blockEntity, float partialTick,
+            SeekerBlockEntity blockEntity, float partialTick, float insertProgress,
             PoseStack ms, MultiBufferSource buffer, int light
     ) {
         BlockState state  = blockEntity.getBlockState();
@@ -42,6 +48,7 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
 
         ms.pushPose();
         ms.translate(0.5, 0.5, 0.5);
+        applyInsertAnimation(ms, insertProgress);
         switch (facing) {
             case NORTH -> ms.mulPose(Axis.XP.rotationDegrees(-90));
             case SOUTH -> ms.mulPose(Axis.XP.rotationDegrees( 90));
@@ -56,7 +63,7 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
 
         SuperByteBuffer superBuffer = CachedBuffers.partial(
                 SeekerPartialModels.SEEKER_SPYGLASS,
-                blockEntity.getBlockState()
+                state
         );
         superBuffer
                 .light(light)
@@ -65,7 +72,7 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
     }
 
     private void renderEyeOfEnder(
-            SeekerBlockEntity blockEntity, float partialTick,
+            SeekerBlockEntity blockEntity, float partialTick, float insertProgress,
             PoseStack ms, MultiBufferSource buffer, int light
     ) {
         BlockState state = blockEntity.getBlockState();
@@ -74,11 +81,9 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
 
         ms.pushPose();
         ms.translate(0.5, 0.5, 0.5);
-
-        // Omnidirectional: yaw around Y first, then pitch around the resulting local X axis
+        applyInsertAnimation(ms, insertProgress);
         ms.mulPose(Axis.YP.rotationDegrees(yaw));
         ms.mulPose(Axis.XP.rotationDegrees(pitch));
-
         ms.translate(-0.5, -0.5, -0.5);
 
         SuperByteBuffer superBuffer = CachedBuffers.partial(
@@ -91,4 +96,30 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
         ms.popPose();
     }
 
+    /**
+     * Applies the grow+twirl insertion animation: scale eases in with a slight overshoot
+     * bounce (easeOutBack), while an extra spin winds down to zero with easeOutCubic.
+     * No-ops entirely once the animation has finished (progress >= 1).
+     **/
+    private void applyInsertAnimation(PoseStack ms, float progress) {
+        if (progress >= 1f) return;
+
+        float scale = easeOutBack(progress);
+        float remainingSpin = SPIN_TOTAL_DEGREES * (1f - easeOutCubic(progress));
+
+        ms.mulPose(Axis.YP.rotationDegrees(remainingSpin));
+        ms.scale(scale, scale, scale);
+    }
+
+    private static float easeOutCubic(float t) {
+        float f = t - 1f;
+        return f * f * f + 1f;
+    }
+
+    private static float easeOutBack(float t) {
+        float c1 = 1.70158f;
+        float c3 = c1 + 1f;
+        float f = t - 1f;
+        return 1f + c3 * f * f * f + c1 * f * f;
+    }
 }

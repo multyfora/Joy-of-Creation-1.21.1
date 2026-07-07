@@ -61,6 +61,10 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     private boolean playerDirPowered = false;
     private static final double PLAYER_DIR_EPSILON = 1.0e-6;
 
+    //anim stuff
+    private static final float INSERT_ANIM_DURATION_TICKS = 12f; // 0.6s at 20 TPS
+    private long insertAnimStartTick = Long.MIN_VALUE;
+
 
     private ModuleType module = ModuleType.NONE;
 
@@ -264,6 +268,13 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             stack.shrink(1);
         }
 
+        markInsertAnimation();
+
+        if (level != null) {
+            level.playSound(null, worldPosition, net.multyfora.index.JocSounds.SEEKER_ITEM_IN.get(),
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 1.0f);
+        }
+
         onModuleChanged();
         return true;
     }
@@ -274,7 +285,6 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         ItemStack drop = itemForModuleType(module);
         this.module = ModuleType.NONE;
 
-        // Reset transient state for both module types
         spyglassPointer.setYaw(0);
         spyglassPointer.setPitch(0);
         playerDirLookDir = Vec3.ZERO;
@@ -286,6 +296,11 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             if (!player.getInventory().add(drop)) {
                 player.drop(drop, false);
             }
+        }
+
+        if (level != null) {
+            level.playSound(null, worldPosition, net.multyfora.index.JocSounds.SEEKER_ITEM_OUT.get(),
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 1.0f);
         }
 
         onModuleChanged();
@@ -327,6 +342,23 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             case PLAYER_DIR -> getPlayerDirRedstoneStrength(direction);
             case NONE -> 0;
         };
+    }
+
+    /** Called when a module is inserted, to kick off the client-side grow+twirl animation. */
+    private void markInsertAnimation() {
+        if (level != null) {
+            insertAnimStartTick = level.getGameTime();
+        }
+    }
+
+    /**
+     * Returns animation progress in [0, 1]; 1 means "no animation running / finished".
+     * Safe to call every frame from the renderer.
+     **/
+    public float getInsertAnimationProgress(float partialTick) {
+        if (level == null || insertAnimStartTick == Long.MIN_VALUE) return 1f;
+        float elapsed = (level.getGameTime() - insertAnimStartTick) + partialTick;
+        return net.minecraft.util.Mth.clamp(elapsed / INSERT_ANIM_DURATION_TICKS, 0f, 1f);
     }
 
     private int getSpyglassRedstoneStrength(Direction direction) {
@@ -421,6 +453,11 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (trackedPlayerUUID != null) {
             tag.putUUID("tracked_player", trackedPlayerUUID);
         }
+
+        // Only sync the animation trigger over the network — never persist it to the save file
+        if (clientPacket) {
+            tag.putLong("insert_anim_tick", insertAnimStartTick);
+        }
     }
 
     @Override
@@ -464,6 +501,10 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             trackedPlayerUUID = tag.getUUID("tracked_player");
         } else {
             trackedPlayerUUID = null;
+        }
+
+        if (clientPacket && tag.contains("insert_anim_tick")) {
+            insertAnimStartTick = tag.getLong("insert_anim_tick");
         }
     }
 

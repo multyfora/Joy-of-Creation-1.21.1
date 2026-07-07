@@ -1,0 +1,10 @@
+{
+  "seeker_item_in": {
+    "category": "block",
+    "sounds": [ "joc:seeker_item_in" ]
+  },
+  "seeker_item_out": {
+    "category": "block",
+    "sounds": [ "joc:seeker_item_out" ]
+  }
+}
