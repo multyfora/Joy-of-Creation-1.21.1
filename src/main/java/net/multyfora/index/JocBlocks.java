@@ -1,21 +1,22 @@
 package net.multyfora.index;
 
-import com.simibubi.create.AllSoundEvents;
-import com.simibubi.create.CreateClient;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
-import net.multyfora.content.crosssail.CrossSailBlock;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
 import net.neoforged.neoforge.registries.DeferredBlock;
 
-import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.balloon.BalloonBlock;
 import net.multyfora.content.seeker.SeekerBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredItem;
+
+import java.util.EnumMap;
+import java.util.Map;
 
 import static net.multyfora.AeronauticsJoyofcreation.BLOCKS;
 import static net.multyfora.index.JocItems.ITEMS;
@@ -30,38 +31,25 @@ public class JocBlocks {
     // Seeker block: directional block that emits redstone toward a target
     public static final DeferredBlock<SeekerBlock> SEEKER;
 
-    public static final DeferredHolder<Block, CrossSailBlock> CROSS_SAIL;
-    public static final DeferredHolder<Item, BlockItem> CROSS_SAIL_ITEM;
-
-    public static final DeferredHolder<Block, SymmetricCrossSailBlock> SYMMETRIC_CROSS_SAIL;
-    public static final DeferredHolder<Item, BlockItem> SYMMETRIC_CROSS_SAIL_ITEM;
+    public static final Map<DyeColor, DeferredBlock<SymmetricCrossSailBlock>> SYMMETRIC_CROSS_SAILS = new EnumMap<>(DyeColor.class);
+    public static final Map<DyeColor, DeferredItem<BlockItem>> SYMMETRIC_CROSS_SAIL_ITEMS = new EnumMap<>(DyeColor.class);
 
     static {
-        CROSS_SAIL =
-                BLOCKS.register("cross_sail",
-                        () -> new CrossSailBlock(
-                                BlockBehaviour.Properties.of()
-                                        .mapColor(MapColor.WOOL)
-                                        .noOcclusion()
-                                        .strength(0.5F)
-                                        .sound(net.minecraft.world.level.block.SoundType.WOOL)
-                        ));
-        CROSS_SAIL_ITEM =
-                ITEMS.register("cross_sail",
-                        () -> new BlockItem(CROSS_SAIL.get(), new Item.Properties()));
-
-        SYMMETRIC_CROSS_SAIL =
-                BLOCKS.register("symmetric_cross_sail",
-                        () -> new SymmetricCrossSailBlock(
-                                BlockBehaviour.Properties.of()
-                                        .mapColor(MapColor.WOOL)
-                                        .noOcclusion()
-                                        .strength(0.5F)
-                                        .sound(net.minecraft.world.level.block.SoundType.WOOL)
-                        ));
-        SYMMETRIC_CROSS_SAIL_ITEM =
-                ITEMS.register("symmetric_cross_sail",
-                        () -> new BlockItem(SYMMETRIC_CROSS_SAIL.get(), new Item.Properties()));
+        for (DyeColor color : DyeColor.values()) {
+            String symName = color.getSerializedName() + "_symmetric_cross_sail";
+            DeferredBlock<SymmetricCrossSailBlock> symBlock = BLOCKS.register(symName,
+                    () -> new SymmetricCrossSailBlock(
+                            BlockBehaviour.Properties.of()
+                                    .mapColor(MapColor.WOOL)
+                                    .noOcclusion()
+                                    .strength(0.5F)
+                                    .sound(SoundType.WOOL),
+                            color
+                    ));
+            SYMMETRIC_CROSS_SAILS.put(color, symBlock);
+            SYMMETRIC_CROSS_SAIL_ITEMS.put(color, ITEMS.register(symName,
+                    () -> new BlockItem(SYMMETRIC_CROSS_SAILS.get(color).get(), new Item.Properties())));
+        }
 
         // Balloon: wool-like properties, transparent, no suffocation, no view blocking
         BALLOON = BLOCKS.register("balloon",

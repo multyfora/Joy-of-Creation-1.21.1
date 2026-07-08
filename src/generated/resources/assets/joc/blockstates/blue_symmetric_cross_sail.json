@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "joc:block/blue_symmetric_cross_sail",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "joc:block/blue_symmetric_cross_sail"
+    },
+    "axis=z": {
+      "model": "joc:block/blue_symmetric_cross_sail",
+      "x": 90
+    }
+  }
+}

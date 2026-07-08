@@ -1,0 +1,8 @@
+{
+  "parent": "joc:block/symmetric_cross_sail_base",
+  "textures": {
+    "2": "joc:block/cross_sail/canvas_pink",
+    "4": "joc:block/cross_sail/side_pink",
+    "particle": "joc:block/cross_sail/canvas_pink"
+  }
+}
