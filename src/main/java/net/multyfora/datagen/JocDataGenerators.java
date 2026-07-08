@@ -30,5 +30,7 @@ public class JocDataGenerators {
                 new JocLootTableProvider(packOutput, lookupProvider));
         generator.addProvider(event.includeServer(),
                 new JocBlockTagsProvider(packOutput, lookupProvider, existingFileHelper));
+        generator.addProvider(event.includeServer(),
+                new JocRecipeProvider(packOutput, lookupProvider));
     }
 }

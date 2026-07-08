@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "joc_symmetric_cross_sail",
+  "ingredients": [
+    {
+      "item": "joc:white_symmetric_cross_sail"
+    },
+    {
+      "item": "minecraft:yellow_dye"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "joc:yellow_symmetric_cross_sail"
+  }
+}

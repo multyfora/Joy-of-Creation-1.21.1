@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "b": {
+      "item": "create:brass_ingot"
+    },
+    "i": {
+      "item": "create:industrial_iron_block"
+    },
+    "m": {
+      "item": "simulated:redstone_magnet"
+    },
+    "r": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "imi",
+    "rbr",
+    "imi"
+  ],
+  "result": {
+    "count": 1,
+    "id": "joc:seeker"
+  }
+}
