@@ -227,6 +227,21 @@ public class PayloadRegister {
                         );
                     }
                 );
+
+                // Shatter assembler: client → server assemble
+                registrar.playToServer(
+                    ShatterAssemblePacket.TYPE,
+                    ShatterAssemblePacket.STREAM_CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                if( context.player() instanceof ServerPlayer sp ) {
+                                    payload.handleServer(sp);
+                                }
+                            }
+                        );
+                    }
+                );
             }
         );
     }

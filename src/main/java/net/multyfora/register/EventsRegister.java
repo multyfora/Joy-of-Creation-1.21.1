@@ -4,10 +4,12 @@ import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.portable_throttle.PortableThrottleServerHandler;
 import net.multyfora.content.portable_typewriter.PortableTypewriterServerHandler;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 public class EventsRegister {
     public static void registerEvents() {
+        NeoForge.EVENT_BUS.addListener(RegisterCommandsEvent.class, JocCommands::register);
 
         /**
          * Server tick listener: ticks the PortableTypewriter and PortableThrottle server handlers

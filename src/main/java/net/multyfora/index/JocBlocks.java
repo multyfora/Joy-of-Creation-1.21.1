@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
+import net.multyfora.content.shatter_assembler.ShatterAssemblerBlock;
 import net.neoforged.neoforge.registries.DeferredBlock;
 
 import net.multyfora.content.balloon.BalloonBlock;
@@ -33,7 +34,7 @@ public class JocBlocks {
 
     public static final Map<DyeColor, DeferredBlock<SymmetricCrossSailBlock>> SYMMETRIC_CROSS_SAILS = new EnumMap<>(DyeColor.class);
     public static final Map<DyeColor, DeferredItem<BlockItem>> SYMMETRIC_CROSS_SAIL_ITEMS = new EnumMap<>(DyeColor.class);
-
+    public static final DeferredBlock<ShatterAssemblerBlock> SHATTER_ASSEMBLER;
     static {
         for (DyeColor color : DyeColor.values()) {
             String symName = color.getSerializedName() + "_symmetric_cross_sail";
@@ -50,7 +51,14 @@ public class JocBlocks {
             SYMMETRIC_CROSS_SAIL_ITEMS.put(color, ITEMS.register(symName,
                     () -> new BlockItem(SYMMETRIC_CROSS_SAILS.get(color).get(), new Item.Properties())));
         }
-
+        SHATTER_ASSEMBLER = BLOCKS.register("shatter_assembler",
+                () -> new ShatterAssemblerBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.COLOR_GRAY)
+                        .strength(0.5F)
+                        .sound(SoundType.METAL)
+                        .noOcclusion()
+                )
+        );
         // Balloon: wool-like properties, transparent, no suffocation, no view blocking
         BALLOON = BLOCKS.register("balloon",
                 () -> new BalloonBlock(BlockBehaviour.Properties.of()

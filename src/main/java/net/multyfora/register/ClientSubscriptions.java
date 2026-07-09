@@ -9,16 +9,17 @@ import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.SeekerBlockEntityRenderer;
 import net.multyfora.client.SeekerPartialModels;
-import net.multyfora.client.balloon.BalloonTetherRenderer;
 import net.multyfora.client.seeker.SeekerRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
 import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 import net.multyfora.client.portable_typewriter.PortableTypewriterClientHandler;
 import net.multyfora.client.portable_typewriter.PortableTypewriterScreen;
 import net.multyfora.config.JocConfig;
+import net.multyfora.content.balloon.BalloonBlock;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.index.JocBlockEntityTypes;
+import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.EntityGrabPayloads;
 import net.neoforged.api.distmarker.Dist;
@@ -31,10 +32,21 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class ClientSubscriptions {
 
     // Subscriptions
+    private static final int[] DYE_COLORS = {
+        0xF9FFFE, 0xF9801D, 0xC74EBD, 0x3AB3DA,
+        0xFED83D, 0x80C71F, 0xF38BAA, 0x474F52,
+        0x9D9D97, 0x169C9C, 0x8932B8, 0x3C44AA,
+        0x835432, 0x5E7C16, 0xB02E26, 0x1D1D21
+    };
+
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(JocBlockEntityTypes.BALLOON.get(), BalloonTetherRenderer::new);
         event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER.get(), SeekerBlockEntityRenderer::new);
+    }
+
+    @SubscribeEvent
+    static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
+        event.register((state, level, pos, tintIndex) -> DYE_COLORS[state.getValue(BalloonBlock.COLOR)], JocBlocks.BALLOON.get());
     }
 
     @SubscribeEvent

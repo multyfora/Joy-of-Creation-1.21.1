@@ -1,6 +1,7 @@
 package net.multyfora.index;
 
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.multyfora.content.shatter_assembler.ShatterAssemblerBlockEntity;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -16,7 +17,7 @@ public class JocBlockEntityTypes {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
         DeferredRegister.create(BLOCK_ENTITY_TYPE, AeronauticsJoyofcreation.MODID);
 
-    // Balloon block entity: handles rope tethering and connector position tracking
+    // Balloon block entity: empty for now
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BalloonBlockEntity>> BALLOON =
         BLOCK_ENTITY_TYPES.register(
             "balloon",
@@ -24,7 +25,13 @@ public class JocBlockEntityTypes {
                 BalloonBlockEntity::new, JocBlocks.BALLOON.get()
             ).build(null)
         );
-
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShatterAssemblerBlockEntity>> SHATTER_ASSEMBLER =
+            BLOCK_ENTITY_TYPES.register("shatter_assembler",
+                    () -> BlockEntityType.Builder.of(
+                            ShatterAssemblerBlockEntity::new,
+                            JocBlocks.SHATTER_ASSEMBLER.get()
+                    ).build(null)
+            );
     // Seeker block entity: computes redstone output based on target direction
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SeekerBlockEntity>> SEEKER =
         BLOCK_ENTITY_TYPES.register(

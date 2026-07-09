@@ -1,4 +1,4 @@
-{0.1
+{
   "selector": "#joc:balloon",
   "properties": {
     "sable:floating_material": "joc:balloon"
