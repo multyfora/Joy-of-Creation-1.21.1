@@ -7,8 +7,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.multyfora.client.SeekerBlockEntityRenderer;
 import net.multyfora.client.SeekerPartialModels;
+import net.multyfora.client.seeker.SeekerBakedModel;
 import net.multyfora.client.seeker.SeekerRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
 import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
@@ -54,6 +58,49 @@ public class ClientSubscriptions {
         event.register(JocMenuTypes.TYPEWRITER_SCREEN.get(), PortableTypewriterScreen::new);
         event.register(JocMenuTypes.THROTTLE_SCREEN.get(), PortableThrottleLinkScreen::new);
     }
+    @SubscribeEvent
+    static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
+        event.register(ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("joc", "block/seeker")));
+        event.register(ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_active")));
+        event.register(ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_2d")));
+        event.register(ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_2d_active")));
+    }
+
+    @SubscribeEvent
+    static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        var seekerBlockId = ResourceLocation.fromNamespaceAndPath("joc", "seeker");
+        var modelDefault = ResourceLocation.fromNamespaceAndPath("joc", "block/seeker");
+        var modelActive = ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_active");
+        var model2D = ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_2d");
+        var model2DActive = ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_2d_active");
+
+        var defaultKey = ModelResourceLocation.standalone(modelDefault);
+        var activeKey = ModelResourceLocation.standalone(modelActive);
+        var key2D = ModelResourceLocation.standalone(model2D);
+        var key2DActive = ModelResourceLocation.standalone(model2DActive);
+
+        BakedModel defaultModel = event.getModels().get(defaultKey);
+        BakedModel activeModel = event.getModels().get(activeKey);
+        BakedModel d2Model = event.getModels().get(key2D);
+        BakedModel d2ActiveModel = event.getModels().get(key2DActive);
+
+        if (defaultModel == null || activeModel == null || d2Model == null || d2ActiveModel == null) {
+            return;
+        }
+
+        var models = event.getModels();
+        for (var entry : models.entrySet().stream()
+                .filter(e -> e.getKey().id().equals(seekerBlockId))
+                .toList()
+        ) {
+            var variantKey = entry.getKey();
+            var originalVariant = entry.getValue();
+            models.put(variantKey, new SeekerBakedModel(
+                    originalVariant, activeModel, d2Model, d2ActiveModel, originalVariant
+            ));
+        }
+    }
+
     static {
         SeekerPartialModels.init();
     }

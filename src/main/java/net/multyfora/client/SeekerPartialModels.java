@@ -8,7 +8,7 @@ public class SeekerPartialModels {
             PartialModel.of(ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_spyglass"));
 
     public static final PartialModel SEEKER_EYE_OF_ENDER =
-            PartialModel.of(ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_spyglass"));
+            PartialModel.of(ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_eye_of_ender"));
 
     public static void init() {}
 }

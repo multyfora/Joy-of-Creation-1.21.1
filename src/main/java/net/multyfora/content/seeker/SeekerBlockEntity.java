@@ -20,11 +20,15 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import net.multyfora.client.seeker.SeekerBakedModel;
 import net.multyfora.client.seeker.SeekerMenu;
 import net.multyfora.content.Pointer;
 import net.multyfora.content.SpaceUtils;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocItems;
+
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelProperty;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -506,6 +510,13 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (clientPacket && tag.contains("insert_anim_tick")) {
             insertAnimStartTick = tag.getLong("insert_anim_tick");
         }
+
+        if (clientPacket) {
+            requestModelDataUpdate();
+            if (level != null) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            }
+        }
     }
 
     @Override
@@ -548,4 +559,18 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
     public BlockPos getWorldPosition() { return worldPosition; }
     public SubLevel getSubLevel() { return subLevel; }
+
+    @Override
+    public ModelData getModelData() {
+        return ModelData.builder()
+                .with(SeekerBakedModel.TEXTURE_VARIANT, getTextureVariant())
+                .build();
+    }
+
+    private int getTextureVariant() {
+        if (module == ModuleType.NONE) return 0;
+        if (module == ModuleType.PLAYER_DIR) return playerDirPowered ? 1 : 0;
+        if (use3D) return hasTarget ? 1 : 0;
+        return hasTarget ? 3 : 2;
+    }
 }

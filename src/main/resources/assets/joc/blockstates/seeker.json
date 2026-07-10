@@ -1,31 +1,7 @@
 {
   "variants": {
-    "facing=down": {
-      "model": "joc:block/seeker",
-      "y": 180,
-      "x": 180
-    },
-    "facing=up": {
+    "": {
       "model": "joc:block/seeker"
-    },
-    "facing=north": {
-      "model": "joc:block/seeker",
-      "x": -90,
-      "y": 180
-    },
-    "facing=south": {
-      "model": "joc:block/seeker",
-      "x": -90
-    },
-    "facing=west": {
-      "model": "joc:block/seeker",
-      "y": 90,
-      "x": -90
-    },
-    "facing=east": {
-      "model": "joc:block/seeker",
-      "y": -90,
-      "x": -90
     }
   }
 }

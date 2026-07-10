@@ -4,7 +4,6 @@ import com.mojang.serialization.MapCodec;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 
-import dev.simulated_team.simulated.Simulated;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,44 +15,31 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import net.multyfora.content.VoxelUtils;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.network.SeekerPayloads;
 import org.jetbrains.annotations.NotNull;
 
-import static net.multyfora.content.VoxelUtils.rotateShape;
-
-public class SeekerBlock extends DirectionalBlock implements IBE<SeekerBlockEntity>, IWrenchable {
-
-    public static final DirectionProperty FACING = DirectionalBlock.FACING;
+public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenchable {
 
     public SeekerBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.UP));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
-
-    @Override
-    protected @NotNull MapCodec<? extends DirectionalBlock> codec() {
+    protected @NotNull MapCodec<? extends Block> codec() {
         return simpleCodec(SeekerBlock::new);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return defaultBlockState().setValue( FACING, ctx.getClickedFace() );
+        return defaultBlockState();
     }
 
     @Override
@@ -61,29 +47,27 @@ public class SeekerBlock extends DirectionalBlock implements IBE<SeekerBlockEnti
         BlockState state, @NotNull BlockGetter level,
         @NotNull BlockPos pos, @NotNull CollisionContext ctx
     ) {
-        final VoxelShape SHAPE = VoxelUtils.combineVoxelShapes(
-            //MAGNETS
-            Block.box(3, 0,    3, 16-3, 16,  16-3),
-            //POLES
-            Block.box(0,    0, 0,    2,    16, 2 ),
-            Block.box(16-2, 0, 0,    16,   16, 2 ),
-            Block.box(0,    0, 16-2, 2,    16, 16),
-            Block.box(16-2, 0, 16-2, 16,   16, 16),
-            //CENTER
-            //PADS
-            Block.box(0,    8-2, 0,    4-2, 8+2, 4-1),
-            Block.box(0,    8-2, 16-2, 3,   8+2, 16 ),
-            Block.box(0,    8-2, 16-3, 2,   8+2, 16 ),
-            Block.box(0,    8-2, 0,    4-1, 8+2, 4-2),
-            Block.box(16-3, 8-2, 0,    16,  8+2, 2  ),
-            Block.box(16-2, 8-2, 0,    16,  8+2, 3  ),
-            Block.box(16-2, 8-2, 16-3, 16,  8+2, 16 ),
-            Block.box(16-3, 8-2, 16-2, 16,  8+2, 16 )
-        );
-
-        Direction.Axis axis = state.getValue(FACING).getAxis();
-        return rotateShape(axis, SHAPE);
+        return SHAPE;
     }
+
+    private static final VoxelShape SHAPE = net.multyfora.content.VoxelUtils.combineVoxelShapes(
+        //MAGNETS
+        Block.box(3, 0,    3, 16-3, 16,  16-3),
+        //POLES
+        Block.box(0,    0, 0,    2,    16, 2 ),
+        Block.box(16-2, 0, 0,    16,   16, 2 ),
+        Block.box(0,    0, 16-2, 2,    16, 16),
+        Block.box(16-2, 0, 16-2, 16,   16, 16),
+        //PADS
+        Block.box(0,    8-2, 0,    4-2, 8+2, 4-1),
+        Block.box(0,    8-2, 16-2, 3,   8+2, 16 ),
+        Block.box(0,    8-2, 16-3, 2,   8+2, 16 ),
+        Block.box(0,    8-2, 0,    4-1, 8+2, 4-2),
+        Block.box(16-3, 8-2, 0,    16,  8+2, 2  ),
+        Block.box(16-2, 8-2, 0,    16,  8+2, 3  ),
+        Block.box(16-2, 8-2, 16-3, 16,  8+2, 16 ),
+        Block.box(16-3, 8-2, 16-2, 16,  8+2, 16 )
+    );
 
     @Override
     protected @NotNull ItemInteractionResult useItemOn(
