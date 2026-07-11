@@ -53,6 +53,7 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
     private EditBox zField;
 
     private boolean use3D;
+    private boolean fieldsEdited;
 
     private IconButton waypointButton;
     private IconButton modeButton;
@@ -94,6 +95,7 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
      * has focused, so typing isn't interrupted.
      **/
     private void refreshTargetFields() {
+        if (fieldsEdited) return;
         SeekerBlockEntity blockEntity = getBlockEntity();
         if (blockEntity == null || xField == null || yField == null || zField == null) {
             return;
@@ -303,6 +305,7 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
         field.setFilter(
                 s -> s.matches("-?\\d*\\.?\\d*") // Allow negative numbers and decimals / note: fuck regex / note 2: i love regex
         );
+        field.setResponder(s -> fieldsEdited = true);
 
         return field;
     }

@@ -24,6 +24,7 @@ import net.multyfora.client.seeker.SeekerBakedModel;
 import net.multyfora.client.seeker.SeekerMenu;
 import net.multyfora.content.Pointer;
 import net.multyfora.content.SpaceUtils;
+import net.multyfora.client.seeker.SeekerDistanceMenu;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocItems;
 
@@ -44,7 +45,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     public enum ModuleType {
         NONE,
         SPYGLASS,
-        PLAYER_DIR
+        PLAYER_DIR,
+        MODULATING
     }
 
 
@@ -54,6 +56,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     private Vec3 currentTarget;
     private boolean hasTarget;
     private boolean use3D = true;
+
+    private int minDistance = 0;
+    private int maxDistance = 256;
 
     public boolean isPowering;
     public final Pointer spyglassPointer = new Pointer();
@@ -113,6 +118,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             tickSpyglass();
         } else if (module == ModuleType.PLAYER_DIR) {
             tickPlayerDir();
+        } else if (module == ModuleType.MODULATING) {
+            tickModulating();
         }
     }
 
@@ -179,6 +186,30 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     }
 
 
+    public double getDistanceToTarget() {
+        if (level == null || getTargetPosition(false) == null) return -1;
+        if (subLevel == null) {
+            try {
+                subLevel = Sable.HELPER.getContaining(this);
+            } catch (Exception ignored) {}
+        }
+        Vec3 selfPos = SpaceUtils.getProjectedSelfPos(subLevel, worldPosition);
+        Vec3 targetWorld = getTargetPosition(true);
+        if (targetWorld == null) return -1;
+        return selfPos.distanceTo(targetWorld);
+    }
+
+    private void tickModulating() {
+        updateTarget();
+        if (getTargetPosition(false) != null) {
+            sendData();
+        }
+        if (selectivelyUpdateNeighbors()) {
+            notifyUpdate();
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+    }
+
     public void onPlayerDirActivated(Player player) {
         if (module != ModuleType.PLAYER_DIR || level == null || level.isClientSide) return;
 
@@ -227,7 +258,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         this.targetX = x; this.targetY = y; this.targetZ = z;
         this.hasTarget = true;
         this.currentTarget = new Vec3(x, y, z);
-        if (module == ModuleType.SPYGLASS) {
+        if (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING) {
             spyglassPointer.calculateRelativeAngle(this);
         }
         setChanged();
@@ -291,6 +322,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         spyglassPointer.setYaw(0);
         spyglassPointer.setPitch(0);
+        minDistance = 0;
+        maxDistance = 256;
         playerDirLookDir = Vec3.ZERO;
         trackedPlayerUUID = null;
         playerDirPowered = false;
@@ -328,6 +361,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (stack.is(Items.ENDER_EYE)) {
             return ModuleType.PLAYER_DIR;
         }
+        if (stack.is(dev.simulated_team.simulated.index.SimBlocks.MODULATING_LINKED_RECEIVER.get().asItem())) {
+            return ModuleType.MODULATING;
+        }
         return ModuleType.NONE;
     }
 
@@ -335,6 +371,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         return switch (type) {
             case SPYGLASS   -> new ItemStack(Items.SPYGLASS);
             case PLAYER_DIR -> new ItemStack(Items.ENDER_EYE);
+            case MODULATING -> new ItemStack(dev.simulated_team.simulated.index.SimBlocks.MODULATING_LINKED_RECEIVER.get().asItem());
             case NONE       -> ItemStack.EMPTY;
         };
     }
@@ -344,8 +381,19 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         return switch (module) {
             case SPYGLASS -> getSpyglassRedstoneStrength(direction);
             case PLAYER_DIR -> getPlayerDirRedstoneStrength(direction);
+            case MODULATING -> getModulatingRedstoneStrength();
             case NONE -> 0;
         };
+    }
+
+    private int getModulatingRedstoneStrength() {
+        if (level == null || getTargetPosition(false) == null) return 0;
+        double dist = getDistanceToTarget();
+        if (dist < 0) return 0;
+        if (dist <= minDistance) return 15;
+        if (dist >= maxDistance) return 0;
+        if (maxDistance <= minDistance) return 0;
+        return (int) Math.round(15.0 * (1.0 - (dist - minDistance) / (double)(maxDistance - minDistance)));
     }
 
     /** Called when a module is inserted, to kick off the client-side grow+twirl animation. */
@@ -450,6 +498,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         tag.putBoolean("has_target", hasTarget);
         tag.putBoolean("use_3d", use3D);
         tag.putString("module", module.name());
+        tag.putInt("min_distance", minDistance);
+        tag.putInt("max_distance", maxDistance);
         tag.putFloat("relative_angle", spyglassPointer.getYaw());
         tag.putFloat("tilt_angle",     spyglassPointer.getPitch());
 
@@ -482,6 +532,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         } else {
             module = ModuleType.NONE;
         }
+
+        minDistance = tag.contains("min_distance") ? tag.getInt("min_distance") : 0;
+        maxDistance = tag.contains("max_distance") ? tag.getInt("max_distance") : 256;
 
         if (hasTarget) {
             currentTarget = new Vec3(targetX, targetY, targetZ);
@@ -521,6 +574,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
     @Override
     public @NotNull Component getDisplayName() {
+        if (module == ModuleType.MODULATING) {
+            return Component.translatable("screen.joc.seeker_distance");
+        }
         return Component.translatable("screen.joc.seeker");
     }
 
@@ -528,6 +584,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     public @Nullable AbstractContainerMenu createMenu(
             int i, @NotNull Inventory inventory, @NotNull Player player
     ) {
+        if (module == ModuleType.MODULATING) {
+            return new SeekerDistanceMenu(i, inventory, this);
+        }
         return new SeekerMenu(i, inventory, this);
     }
 
@@ -537,9 +596,25 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     public boolean hasTarget() { return hasTarget; }
     public boolean isUse3D()   { return use3D; }
 
+    public int getMinDistance() { return minDistance; }
+    public int getMaxDistance() { return maxDistance; }
+
+    public void setMinMaxDistance(int min, int max) {
+        this.minDistance = Math.max(0, Math.min(256, min));
+        this.maxDistance = Math.max(0, Math.min(256, max));
+        if (this.minDistance > this.maxDistance) this.minDistance = this.maxDistance;
+        setChanged();
+        sendData();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            selectivelyUpdateNeighbors();
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+    }
+
     public void setUse3D(boolean use3D) {
         this.use3D = use3D;
-        if (module == ModuleType.SPYGLASS) {
+        if (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING) {
             spyglassPointer.calculateRelativeAngle(this);
         }
         setChanged();
@@ -570,6 +645,10 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     private int getTextureVariant() {
         if (module == ModuleType.NONE) return 0;
         if (module == ModuleType.PLAYER_DIR) return playerDirPowered ? 1 : 0;
+        if (module == ModuleType.MODULATING) {
+            if (use3D) return hasTarget ? 1 : 0;
+            return hasTarget ? 3 : 2;
+        }
         if (use3D) return hasTarget ? 1 : 0;
         return hasTarget ? 3 : 2;
     }

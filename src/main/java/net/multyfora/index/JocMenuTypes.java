@@ -2,6 +2,7 @@ package net.multyfora.index;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
+import net.multyfora.client.seeker.SeekerDistanceMenu;
 import net.multyfora.client.seeker.SeekerMenu;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -21,6 +22,9 @@ public class JocMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<SeekerMenu>> SEEKER_SCREEN =
             MENU_TYPES.register("seeker_screen",
                     () -> IMenuTypeExtension.create((id, inv, buf) -> new SeekerMenu(id, inv, buf)));
+    public static final DeferredHolder<MenuType<?>, MenuType<SeekerDistanceMenu>> SEEKER_DISTANCE_SCREEN =
+            MENU_TYPES.register("seeker_distance_screen",
+                    () -> IMenuTypeExtension.create((id, inv, buf) -> new SeekerDistanceMenu(id, inv, buf)));
     public static final DeferredHolder<MenuType<?>, MenuType<FreqScreenMenu>> THROTTLE_SCREEN =
             MENU_TYPES.register("throttle_screen",
                     () -> IMenuTypeExtension.create((id, inv, buf) -> new FreqScreenMenu(id, inv, buf)));

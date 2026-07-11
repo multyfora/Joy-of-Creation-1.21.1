@@ -33,6 +33,7 @@
   "screen.joc.seeker": "Seeker",
   "screen.joc.seeker.set": "Set Target",
   "screen.joc.seeker.current_pos": "Use Current",
+  "screen.joc.seeker_distance": "Seeker - Distance",
 
   "joc.configuration.title": "Aeronautics: Joy of Creation Configs",
   "joc.configuration.section.joc.common.toml": "Aeronautics: Joy of Creation Configs",

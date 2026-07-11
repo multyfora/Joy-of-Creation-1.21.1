@@ -5,6 +5,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.multyfora.client.seeker.SeekerDistanceMenu;
+import net.multyfora.client.seeker.SeekerDistanceScreen;
 import net.multyfora.client.seeker.SeekerMenu;
 import net.multyfora.client.seeker.SeekerScreen;
 import net.multyfora.content.seeker.SeekerBlockEntity;
@@ -107,6 +109,58 @@ public class PayloadRegister {
                         SeekerPayloads.ToggleModePayload.TYPE,
                         SeekerPayloads.ToggleModePayload.CODEC,
                         ToggleModePayloader
+                );
+
+                IPayloadHandler<SeekerDistancePayloads.UpdateSeekerDistancePayload> UpdateSeekerDistancePayloader =
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                Level level = context.player().level();
+                                BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
+                                if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
+                                    return;
+                                }
+                                seekerBlockEntity.setTarget(payload.x(), payload.y(), payload.z());
+                                seekerBlockEntity.setMinMaxDistance(payload.minDistance(), payload.maxDistance());
+                                seekerBlockEntity.setChanged();
+                                level.sendBlockUpdated(payload.pos(), seekerBlockEntity.getBlockState(), seekerBlockEntity.getBlockState(), 3);
+                            }
+                        );
+                    }
+                ;
+                IPayloadHandler<SeekerDistancePayloads.OpenSeekerDistancePayload> OpenSeekerDistancePayloader =
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                Player player = context.player();
+                                Level level = player.level();
+                                BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
+                                if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
+                                    return;
+                                }
+                                int x = payload.pos().getX();
+                                int y = payload.pos().getY();
+                                int z = payload.pos().getZ();
+                                seekerBlockEntity.setTarget(x, y, z);
+                                SeekerDistanceMenu seekerDistanceMenu = new SeekerDistanceMenu(
+                                    0, player.getInventory(), seekerBlockEntity
+                                );
+                                Minecraft.getInstance().setScreen(
+                                    new SeekerDistanceScreen( seekerDistanceMenu, player.getInventory() )
+                                );
+                            }
+                        );
+                    }
+                ;
+                registrar.playToClient(
+                    SeekerDistancePayloads.OpenSeekerDistancePayload.TYPE,
+                    SeekerDistancePayloads.OpenSeekerDistancePayload.CODEC,
+                    OpenSeekerDistancePayloader
+                );
+                registrar.playToServer(
+                    SeekerDistancePayloads.UpdateSeekerDistancePayload.TYPE,
+                    SeekerDistancePayloads.UpdateSeekerDistancePayload.CODEC,
+                    UpdateSeekerDistancePayloader
                 );
                 // Server-bound: handles typewriter key press/release input
                 registrar.playToServer(

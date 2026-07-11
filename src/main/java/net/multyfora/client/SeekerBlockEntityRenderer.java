@@ -13,6 +13,7 @@ import net.multyfora.content.seeker.SeekerBlockEntity;
 public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlockEntity> {
 
     private static final float SPIN_TOTAL_DEGREES = 720f;
+    private static final float MAX_MODULATING_SPEED = 720f;
 
     public SeekerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
         super();
@@ -29,6 +30,7 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
         switch (blockEntity.getModule()) {
             case SPYGLASS -> renderSpyglass(blockEntity, partialTick, insertProgress, ms, buffer, light);
             case PLAYER_DIR -> renderEyeOfEnder(blockEntity, partialTick, insertProgress, ms, buffer, light);
+            case MODULATING -> renderModulating(blockEntity, partialTick, insertProgress, ms, buffer, light);
             case NONE -> {}
         }
     }
@@ -78,6 +80,42 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
         superBuffer
                 .light(light)
                 .renderInto(ms, buffer.getBuffer(RenderType.translucent()));
+        ms.popPose();
+    }
+
+    private void renderModulating(
+            SeekerBlockEntity blockEntity, float partialTick, float insertProgress,
+            PoseStack ms, MultiBufferSource buffer, int light
+    ) {
+        float rotationSpeed = 0;
+        double dist = blockEntity.getDistanceToTarget();
+        if (dist >= 0) {
+            int minDist = blockEntity.getMinDistance();
+            int maxDist = blockEntity.getMaxDistance();
+            if (maxDist > minDist) {
+                float t = (float) Math.max(0, Math.min(1, (dist - minDist) / (double)(maxDist - minDist)));
+                rotationSpeed = (1 - t) * MAX_MODULATING_SPEED;
+            } else {
+                rotationSpeed = MAX_MODULATING_SPEED;
+            }
+        }
+        long gameTime = blockEntity.getLevel() != null ? blockEntity.getLevel().getGameTime() : 0;
+        float rotationAngle = ((gameTime + partialTick) * rotationSpeed) % 360f;
+
+        ms.pushPose();
+        ms.translate(0.5, 0.5, 0.5);
+        applyInsertAnimation(ms, insertProgress);
+        ms.mulPose(com.mojang.math.Axis.YP.rotationDegrees(rotationAngle));
+        ms.scale(0.25f, 0.25f, 0.25f);
+        ms.translate(-0.5, -0.5, -0.5);
+
+        SuperByteBuffer superBuffer = CachedBuffers.partial(
+                SeekerPartialModels.SEEKER_MODULATING,
+                blockEntity.getBlockState()
+        );
+        superBuffer
+                .light(light)
+                .renderInto(ms, buffer.getBuffer(RenderType.cutoutMipped()));
         ms.popPose();
     }
 

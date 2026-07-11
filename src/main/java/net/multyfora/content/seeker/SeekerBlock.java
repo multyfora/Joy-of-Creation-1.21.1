@@ -23,6 +23,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.multyfora.index.JocBlockEntityTypes;
+import net.multyfora.network.SeekerDistancePayloads;
 import net.multyfora.network.SeekerPayloads;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,6 +109,12 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
                 case PLAYER_DIR -> {
                     if (!level.isClientSide) {
                         be.onPlayerDirActivated(player);
+                    }
+                    return ItemInteractionResult.SUCCESS;
+                }
+                case MODULATING -> {
+                    if (player instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.connection.send(new SeekerDistancePayloads.OpenSeekerDistancePayload(pos));
                     }
                     return ItemInteractionResult.SUCCESS;
                 }
