@@ -1,8 +1,11 @@
 package net.multyfora.register;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.multyfora.client.seeker.SeekerDistanceMenu;
@@ -12,6 +15,7 @@ import net.multyfora.client.seeker.SeekerScreen;
 import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
+import net.multyfora.index.JocDataComponents;
 import net.multyfora.network.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
@@ -60,6 +64,23 @@ public class PayloadRegister {
                     );
                 }
                 ;
+        IPayloadHandler<SeekerPayloads.SetSpyglassTargetPayload> SetSpyglassTargetPayloader =
+            (payload, context) -> {
+                context.enqueueWork(() -> {
+                    var player = context.player();
+                    if (player == null) return;
+
+                    ItemStack mainHand = player.getMainHandItem();
+                    ItemStack offHand = player.getOffhandItem();
+
+                    if (mainHand.is(Items.SPYGLASS)) {
+                        mainHand.set(JocDataComponents.SEEKER_CARRIED_TARGET.get(), payload.targetPos());
+                    } else if (offHand.is(Items.SPYGLASS)) {
+                        offHand.set(JocDataComponents.SEEKER_CARRIED_TARGET.get(), payload.targetPos());
+                    }
+                });
+            }
+        ;
         IPayloadHandler<SeekerPayloads.UpdateSeekerPayload> UpdateSeekerPayloader =
             (payload, context) -> {
                 context.enqueueWork(
@@ -109,6 +130,12 @@ public class PayloadRegister {
                         SeekerPayloads.ToggleModePayload.TYPE,
                         SeekerPayloads.ToggleModePayload.CODEC,
                         ToggleModePayloader
+                );
+                // Server-bound: writes captured spyglass target position onto the held spyglass ItemStack
+                registrar.playToServer(
+                    SeekerPayloads.SetSpyglassTargetPayload.TYPE,
+                    SeekerPayloads.SetSpyglassTargetPayload.CODEC,
+                    SetSpyglassTargetPayloader
                 );
 
                 IPayloadHandler<SeekerDistancePayloads.UpdateSeekerDistancePayload> UpdateSeekerDistancePayloader =

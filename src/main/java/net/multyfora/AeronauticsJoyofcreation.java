@@ -43,6 +43,7 @@ public class AeronauticsJoyofcreation {
         JocItems.register();
         JocMenuTypes.register();
         JocSounds.register(modEventBus);
+        JocDataComponents.register(modEventBus);
 
         // Register deferred registers with the mod event bus so NeoForge processes them
         JocBlockEntityTypes.BLOCK_ENTITY_TYPES.register(modEventBus);

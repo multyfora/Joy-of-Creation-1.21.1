@@ -30,6 +30,8 @@
   "screen.joc.portable_typewriter.click_hint": "Click a key to select it for binding",
   "screen.joc.portable_typewriter.bound_count": "%s keys bound",
 
+  "item.joc.spyglass.carried_target": "Target: %s, %s, %s",
+
   "screen.joc.seeker": "Seeker",
   "screen.joc.seeker.set": "Set Target",
   "screen.joc.seeker.current_pos": "Use Current",

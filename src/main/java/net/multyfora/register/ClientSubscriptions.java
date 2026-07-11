@@ -1,12 +1,14 @@
 package net.multyfora.register;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.client.seeker.SpyglassTargetOutlineRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
@@ -26,6 +28,7 @@ import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.EntityGrabPayloads;
+import net.multyfora.network.SeekerPayloads;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -114,6 +117,7 @@ public class ClientSubscriptions {
     @SubscribeEvent
     static void onMouseButtonPress(InputEvent.MouseButton.Pre event) {
         handleMouseButtonPress(event);
+        handleSpyglassScopedLeftClick(event);
     }
 
     @SubscribeEvent
@@ -174,6 +178,19 @@ public class ClientSubscriptions {
             PacketDistributor.sendToServer(new EntityGrabPayloads.GrabRequest(target.getId()));
             event.setCanceled(true);
         }
+    }
+
+    private static void handleSpyglassScopedLeftClick(InputEvent.MouseButton.Pre event) {
+        if (event.getAction() != 1 || event.getButton() != 0) return;
+
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) return;
+
+        BlockPos targetPos = SpyglassTargetOutlineRenderer.getScopedTargetBlock(client.player);
+        if (targetPos == null) return;
+
+        PacketDistributor.sendToServer(new SeekerPayloads.SetSpyglassTargetPayload(targetPos));
+        event.setCanceled(true);
     }
 
     static void handleMouseScroll(InputEvent.MouseScrollingEvent event) {

@@ -40,6 +40,19 @@ public final class SeekerPayloads {
         }
     }
 
+    // Client-to-server: sent when the player left-clicks while scoped with a spyglass.
+    // Server writes the captured position onto the player's held spyglass ItemStack.
+    public record SetSpyglassTargetPayload(BlockPos targetPos) implements CustomPacketPayload {
+        public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "set_spyglass_target");
+        public static final Type<SetSpyglassTargetPayload> TYPE = new Type<>(ID);
+        public static final StreamCodec<ByteBuf, SetSpyglassTargetPayload> CODEC =
+            BlockPos.STREAM_CODEC.map(SetSpyglassTargetPayload::new, SetSpyglassTargetPayload::targetPos);
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     // Client-to-server: toggles between 3D (6-sided) and 2D (XZ-plane, 4-sided) calculation modes
     public record ToggleModePayload(BlockPos pos, boolean use3D) implements CustomPacketPayload {
         public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "toggle_seeker_mode");

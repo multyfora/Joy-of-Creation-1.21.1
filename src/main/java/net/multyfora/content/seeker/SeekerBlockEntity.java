@@ -26,6 +26,7 @@ import net.multyfora.content.Pointer;
 import net.multyfora.content.SpaceUtils;
 import net.multyfora.client.seeker.SeekerDistanceMenu;
 import net.multyfora.index.JocBlockEntityTypes;
+import net.multyfora.index.JocDataComponents;
 import net.multyfora.index.JocItems;
 
 import net.neoforged.neoforge.client.model.data.ModelData;
@@ -298,6 +299,15 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (incoming == ModuleType.NONE) return false;
 
         this.module = incoming;
+
+        if (incoming == ModuleType.SPYGLASS
+            && stack.has(JocDataComponents.SEEKER_CARRIED_TARGET.get())) {
+            BlockPos carried = stack.get(JocDataComponents.SEEKER_CARRIED_TARGET.get());
+            if (carried != null) {
+                setTarget(carried.getX(), carried.getY(), carried.getZ());
+            }
+            stack.remove(JocDataComponents.SEEKER_CARRIED_TARGET.get());
+        }
 
         if (!player.getAbilities().instabuild) {
             stack.shrink(1);
