@@ -31,6 +31,7 @@ public class CreativeRegister {
                                         output.accept( JocItems.BALLOON.get() );
                                         output.accept( JocItems.SEEKER.get() );
                                         output.accept( JocItems.SHATTER_ASSEMBLER.get() );
+                                        output.accept( JocItems.GYROSCOPIC_SEAT.get() );
 
                                         for (DyeColor color : DyeColor.values()) {
                                             output.accept( JocBlocks.SYMMETRIC_CROSS_SAILS.get(color).get() );

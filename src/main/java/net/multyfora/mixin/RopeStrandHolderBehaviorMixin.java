@@ -167,7 +167,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             method = "createRope",
             at = @At("HEAD")
     )
-    private void joc$savePreCreateState(RopeStrandHolderBehavior target, CallbackInfoReturnable<Boolean> cir) {
+    private void joc$savePreCreateState(RopeStrandHolderBehavior target, boolean dropItem, CallbackInfoReturnable<Boolean> cir) {
         if( 1 < joc$maxRopeAttachments && attachedRopeID != null ) {
             joc$preExistingID = attachedRopeID;
             joc$preExistingStrand = ownedServerStrand;
@@ -190,11 +190,11 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
      **/
     @Redirect(
             method = "createRope",
-            at = @At(value = "INVOKE", target = "Ldev/simulated_team/simulated/content/blocks/rope/RopeStrandHolderBehavior;destroyRope(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/phys/Vec3;)V")
+            at = @At(value = "INVOKE", target = "Ldev/simulated_team/simulated/content/blocks/rope/RopeStrandHolderBehavior;destroyRope(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/phys/Vec3;Z)V")
     )
-    private void joc$skipDestroyForMulti(RopeStrandHolderBehavior instance, @Nullable ServerPlayer player, @Nullable Vec3 pos) {
+    private void joc$skipDestroyForMulti(RopeStrandHolderBehavior instance, @Nullable ServerPlayer player, @Nullable Vec3 pos, boolean dropItems) {
         if(joc$maxRopeAttachments <= 1) {
-            instance.destroyRope(player, pos);
+            instance.destroyRope(player, pos, dropItems);
         }
     }
 
@@ -203,7 +203,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             method = "createRope",
             at = @At("RETURN")
     )
-    private void joc$postCreateRope(RopeStrandHolderBehavior target, CallbackInfoReturnable<Boolean> cir) {
+    private void joc$postCreateRope(RopeStrandHolderBehavior target, boolean dropItem, CallbackInfoReturnable<Boolean> cir) {
         if( !cir.getReturnValue() ) {
             return;
         }
@@ -247,7 +247,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             at = @At("HEAD"),
             cancellable = true
     )
-    private void joc$interceptDestroyRope(@Nullable ServerPlayer player, @Nullable Vec3 ropeDropPos, CallbackInfo ci) {
+    private void joc$interceptDestroyRope(ServerPlayer player, Vec3 ropeDropPos, boolean returnItem, CallbackInfo ci) {
         if( joc$allAttachedIDs.size() <= 1 && joc$preExistingID == null ) {
             return; // Single rope: let the original method handle it
         }

@@ -47,6 +47,7 @@ public class AeronauticsJoyofcreation {
 
         // Register deferred registers with the mod event bus so NeoForge processes them
         JocBlockEntityTypes.BLOCK_ENTITY_TYPES.register(modEventBus);
+        JocEntityTypes.ENTITY_TYPES.register(modEventBus);
         JocMenuTypes.MENU_TYPES.register(modEventBus);
         CreativeRegister.CREATIVE_MODE_TABS.register(modEventBus);
         BLOCKS.register(modEventBus);

@@ -26,6 +26,8 @@ public class JocItems {
             "seeker", () -> JocBlocks.SEEKER.get());
     public static final DeferredItem<BlockItem> SHATTER_ASSEMBLER = ITEMS.registerSimpleBlockItem(
             "shatter_assembler", () -> JocBlocks.SHATTER_ASSEMBLER.get());
+    public static final DeferredItem<BlockItem> GYROSCOPIC_SEAT = ITEMS.registerSimpleBlockItem(
+            "gyroscopic_seat", () -> JocBlocks.GYROSCOPIC_SEAT.get());
 
     // Custom handheld items (stack size 1) with special right-click behaviours
     public static final DeferredItem<PortableTypewriterItem> PORTABLE_TYPEWRITER = ITEMS.register("portable_typewriter",

@@ -2,6 +2,7 @@ package net.multyfora.register;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.AABB;
@@ -26,9 +27,16 @@ import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocBlocks;
+import net.multyfora.index.JocEntityTypes;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.EntityGrabPayloads;
 import net.multyfora.network.SeekerPayloads;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.multyfora.content.gyroseat.GyroscopicSeatEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -49,6 +57,7 @@ public class ClientSubscriptions {
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER.get(), SeekerBlockEntityRenderer::new);
+        event.registerEntityRenderer((EntityType<GyroscopicSeatEntity>) (EntityType<?>) JocEntityTypes.GYROSCOPIC_SEAT.get(), GyroscopicSeatRenderer::new);
     }
 
     @SubscribeEvent
@@ -189,6 +198,7 @@ public class ClientSubscriptions {
         BlockPos targetPos = SpyglassTargetOutlineRenderer.getScopedTargetBlock(client.player);
         if (targetPos == null) return;
 
+        client.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.3f, 2.0f);
         PacketDistributor.sendToServer(new SeekerPayloads.SetSpyglassTargetPayload(targetPos));
         event.setCanceled(true);
     }
@@ -228,5 +238,21 @@ public class ClientSubscriptions {
         }
 
         event.setCanceled(true);
+    }
+
+    public static class GyroscopicSeatRenderer extends EntityRenderer<GyroscopicSeatEntity> {
+        public GyroscopicSeatRenderer(EntityRendererProvider.Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean shouldRender(GyroscopicSeatEntity entity, Frustum frustum, double x, double y, double z) {
+            return false;
+        }
+
+        @Override
+        public ResourceLocation getTextureLocation(GyroscopicSeatEntity entity) {
+            return null;
+        }
     }
 }

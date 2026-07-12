@@ -27,6 +27,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.index.JocDataComponents;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +60,18 @@ public class SpyglassTargetOutlineRenderer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        BlockPos pos = getScopedTargetBlock(mc.player);
-        if (pos == null) return;
+        BlockPos cursorPos = getScopedTargetBlock(mc.player);
+        BlockPos captured = getCapturedTarget(mc.player);
 
+        if (cursorPos != null) {
+            renderHighlight(event, mc, cursorPos, 1.0f, 1.0f, 1.0f, 0.35f);
+        }
+        if (captured != null) {
+            renderHighlight(event, mc, captured, 0.0f, 1.0f, 0.0f, 0.35f);
+        }
+    }
+
+    private static void renderHighlight(RenderLevelStageEvent event, Minecraft mc, BlockPos pos, float r, float g, float b, float a) {
         VoxelShape shape = mc.player.level().getBlockState(pos).getShape(mc.player.level(), pos);
         if (shape.isEmpty()) return;
 
@@ -77,8 +87,6 @@ public class SpyglassTargetOutlineRenderer {
             double x0 = aabb.minX - EXPAND, y0 = aabb.minY - EXPAND, z0 = aabb.minZ - EXPAND;
             double x1 = aabb.maxX + EXPAND, y1 = aabb.maxY + EXPAND, z1 = aabb.maxZ + EXPAND;
 
-            float r = 1.0f, g = 1.0f, b = 1.0f, a = 0.35f;
-
             renderFace(consumer, ms.last(), x0, y0, z0, x1, y0, z0, x1, y0, z1, x0, y0, z1, r, g, b, a);
             renderFace(consumer, ms.last(), x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1, r, g, b, a);
             renderFace(consumer, ms.last(), x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, r, g, b, a);
@@ -89,6 +97,22 @@ public class SpyglassTargetOutlineRenderer {
 
         ms.popPose();
         buffer.endBatch(HIGHLIGHT);
+    }
+
+    @Nullable
+    private static BlockPos getCapturedTarget(Player player) {
+        if (!(player instanceof LocalPlayer)) return null;
+
+        ItemStack mainHand = player.getMainHandItem();
+        ItemStack offHand = player.getOffhandItem();
+
+        ItemStack spyglass = mainHand.is(Items.SPYGLASS) ? mainHand
+                : offHand.is(Items.SPYGLASS) ? offHand
+                : null;
+
+        if (spyglass == null) return null;
+        if (!spyglass.has(JocDataComponents.SEEKER_CARRIED_TARGET.get())) return null;
+        return spyglass.get(JocDataComponents.SEEKER_CARRIED_TARGET.get());
     }
 
     private static void renderFace(VertexConsumer consumer, PoseStack.Pose pose,

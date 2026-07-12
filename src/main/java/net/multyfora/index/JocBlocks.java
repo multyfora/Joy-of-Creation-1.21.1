@@ -7,7 +7,15 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
+import net.multyfora.content.gyroseat.GyroscopicSeatBlock;
 import net.multyfora.content.shatter_assembler.ShatterAssemblerBlock;
 import net.neoforged.neoforge.registries.DeferredBlock;
 
@@ -31,6 +39,7 @@ public class JocBlocks {
     public static final DeferredBlock<BalloonBlock> BALLOON;
     // Seeker block: directional block that emits redstone toward a target
     public static final DeferredBlock<SeekerBlock> SEEKER;
+    public static final DeferredBlock<GyroscopicSeatBlock> GYROSCOPIC_SEAT;
 
     public static final Map<DyeColor, DeferredBlock<SymmetricCrossSailBlock>> SYMMETRIC_CROSS_SAILS = new EnumMap<>(DyeColor.class);
     public static final Map<DyeColor, DeferredItem<BlockItem>> SYMMETRIC_CROSS_SAIL_ITEMS = new EnumMap<>(DyeColor.class);
@@ -79,6 +88,17 @@ public class JocBlocks {
                         .noOcclusion()
                 );
             }
+        );
+        // Gyroscopic seat: prevents sublevel rotation for the rider
+        GYROSCOPIC_SEAT = BLOCKS.register("gyroscopic_seat",
+            () -> new GyroscopicSeatBlock(
+                BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_GRAY)
+                    .strength(0.5F)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion(),
+                DyeColor.GRAY
+            )
         );
     }
 

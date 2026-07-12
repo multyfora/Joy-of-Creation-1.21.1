@@ -13,7 +13,8 @@
   ],
   "client": [
     "physics_staff.PhysicsStaffMouseHandlerMixin",
-    "physics_staff.PhysicsStaffClientHandlerMixin"
+    "physics_staff.PhysicsStaffClientHandlerMixin",
+    "EntitySubLevelRotationHelperMixin"
   ],
   "injectors": {
     "defaultRequire": 1

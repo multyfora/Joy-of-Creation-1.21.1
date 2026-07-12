@@ -152,7 +152,7 @@ dependencies {
 
     // Simulated is jarjar'd inside create-aeronautics; extract and use for mixin compilation only
     simulatedExtracted("maven.modrinth:create-aeronautics:${create_aeronautics_version}") { transitive = false }
-    compileOnly files(layout.buildDirectory.file("tmp/simulated-jar/dev.simulated_team.simulated.simulated-neoforge-1.21.1-1.2.1.jar"))
+    compileOnly files(layout.buildDirectory.file("tmp/simulated-jar/dev.simulated_team.simulated.simulated-neoforge-1.21.1-1.3.0.jar"))
 
     // JEI
     compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")

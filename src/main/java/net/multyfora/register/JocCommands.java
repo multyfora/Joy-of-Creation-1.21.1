@@ -102,7 +102,7 @@ public class JocCommands {
             RopeStrandHolderBehavior bottomBehavior = bottomBE.getBehaviour(RopeStrandHolderBehavior.TYPE);
             RopeStrandHolderBehavior topBehavior = topBE.getBehaviour(RopeStrandHolderBehavior.TYPE);
             if (bottomBehavior != null && topBehavior != null) {
-                bottomBehavior.createRope(topBehavior);
+                bottomBehavior.createRope(topBehavior, true);
             }
         }
 
