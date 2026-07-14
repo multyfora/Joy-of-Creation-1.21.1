@@ -88,24 +88,43 @@ public class PortableThrottleItem extends Item {
             return null;
         }
         CompoundTag tag = data.copyTag();
-        if (!tag.contains(TAG_FREQ_FIRST) || !tag.contains(TAG_FREQ_SECOND)) {
-            return null;
+
+        ItemStack first = ItemStack.EMPTY;
+        if( tag.contains(TAG_FREQ_FIRST) ) {
+            first = ItemStack.parseOptional( registries, tag.getCompound(TAG_FREQ_FIRST) );
         }
-        ItemStack first = ItemStack.parseOptional(registries, tag.getCompound(TAG_FREQ_FIRST));
-        ItemStack second = ItemStack.parseOptional(registries, tag.getCompound(TAG_FREQ_SECOND));
-        if (first.isEmpty() || second.isEmpty()) {
-            return null;
+        ItemStack second = ItemStack.EMPTY;
+        if( tag.contains(TAG_FREQ_SECOND) ) {
+            second = ItemStack.parseOptional( registries, tag.getCompound(TAG_FREQ_SECOND) );
         }
-        Couple<Frequency> freq = Couple.create(Frequency.of(first), Frequency.of(second));
-        return freq;
+
+        return Couple.create( Frequency.of(first), Frequency.of(second) );
     }
 
     // Writes the frequency pair to the item's CUSTOM_DATA component for persistence
     public static void setFrequency(ItemStack stack, Couple<Frequency> freq, HolderLookup.Provider registries) {
         CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-        tag.put(TAG_FREQ_FIRST, freq.getFirst().getStack().save(registries, new CompoundTag()));
-        tag.put(TAG_FREQ_SECOND, freq.getSecond().getStack().save(registries, new CompoundTag()));
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+
+        ItemStack  firstItem = freq.getFirst() .getStack();
+        ItemStack secondItem = freq.getSecond().getStack();
+
+        if(firstItem != null && firstItem != ItemStack.EMPTY) {
+            tag.put(
+                TAG_FREQ_FIRST,
+                firstItem.save( registries, new CompoundTag() )
+            );
+        }
+        if(secondItem != null && secondItem != ItemStack.EMPTY) {
+            tag.put(
+                TAG_FREQ_SECOND,
+                secondItem.save( registries, new CompoundTag() )
+            );
+        }
+
+        stack.set(
+            DataComponents.CUSTOM_DATA,
+            CustomData.of(tag)
+        );
     }
 
     // Checks whether the item has a frequency pair stored

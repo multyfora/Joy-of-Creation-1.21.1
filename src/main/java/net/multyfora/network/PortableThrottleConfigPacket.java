@@ -9,6 +9,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.AeronauticsJoyofcreation;
@@ -49,7 +50,7 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
      * Server-side: finds the throttle item in the player's hand, deserialises the two item stacks,
      * builds a frequency pair, and writes it to the item's NBT
      **/
-    public void handle(net.minecraft.world.entity.player.Player player) {
+    public void handle(Player player) {
         ItemStack item = getItemIfValid(
             player,
             JocItems.PORTABLE_THROTTLE.asItem()

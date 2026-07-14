@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -238,18 +239,35 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     }
 
     private void save() {
-        if (firstItem.isEmpty() || secondItem.isEmpty()) return;
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        if (level == null) return;
+        if(level == null) {
+            return;
+        }
+
         HolderLookup.Provider registries = level.registryAccess();
         ItemStack held = getHeldItem();
-        if (held == null) return;
-        Couple<Frequency> freq = Couple.create(Frequency.of(firstItem), Frequency.of(secondItem));
+        if(held == null) {
+            return;
+        }
+
+        Couple<Frequency> freq = Couple.create(
+            Frequency.of(firstItem),
+            Frequency.of(secondItem)
+        );
         PortableThrottleItem.setFrequency(held, freq, registries);
-        PacketDistributor.sendToServer(new PortableThrottleConfigPacket(
-                (net.minecraft.nbt.CompoundTag)firstItem.save(registries, new net.minecraft.nbt.CompoundTag()),
-                (net.minecraft.nbt.CompoundTag)secondItem.save(registries, new net.minecraft.nbt.CompoundTag())));
+
+        CompoundTag firstTag = new CompoundTag();
+        if( !firstItem.isEmpty() ) {
+            firstTag = (CompoundTag) firstItem.save( registries, new CompoundTag() );
+        }
+        CompoundTag secondTag = new CompoundTag();
+        if( !secondItem.isEmpty() ) {
+            secondTag = (CompoundTag)secondItem.save( registries, new CompoundTag() );
+        }
+        PacketDistributor.sendToServer(
+            new PortableThrottleConfigPacket(firstTag, secondTag)
+        );
     }
 
     @Override
