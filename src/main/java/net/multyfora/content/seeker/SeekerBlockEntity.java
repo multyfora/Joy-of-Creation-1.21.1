@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
 import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 
 import net.createmod.catnip.animation.LerpedFloat;
@@ -28,6 +29,7 @@ import net.multyfora.client.seeker.SeekerDistanceMenu;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocDataComponents;
 import net.multyfora.index.JocItems;
+import net.multyfora.index.SeekerCapturedTarget;
 
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.client.model.data.ModelProperty;
@@ -88,6 +90,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     private double lastDistanceToTarget;
     private final Map<Direction, Integer> signalStrengthCache = new EnumMap<>(Direction.class);
     private SubLevel subLevel;
+    @Nullable
+    private UUID trackedSubLevel;
 
     public SeekerBlockEntity(BlockPos pos, BlockState state) {
         super(JocBlockEntityTypes.SEEKER.get(), pos, state);
@@ -131,6 +135,10 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         try {
             this.subLevel = Sable.HELPER.getContaining(this);
         } catch (Exception ignored) {}
+
+        if (trackedSubLevel != null) {
+            updateTargetFromSubLevel();
+        }
 
         if (module == ModuleType.SPYGLASS) {
             tickSpyglass();
@@ -272,6 +280,23 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         notifyUpdate();
     }
 
+    private void updateTargetFromSubLevel() {
+        if (level == null || level.isClientSide || trackedSubLevel == null) return;
+        SubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null) return;
+        SubLevel sl = container.getSubLevel(trackedSubLevel);
+        if (sl == null) return;
+
+        dev.ryanhcode.sable.companion.math.BoundingBox3dc bb = sl.boundingBox();
+        double cx = (bb.minX() + bb.maxX()) / 2.0;
+        double cy = (bb.minY() + bb.maxY()) / 2.0;
+        double cz = (bb.minZ() + bb.maxZ()) / 2.0;
+
+        if (Math.abs(targetX - cx) > 1.0e-4 || Math.abs(targetY - cy) > 1.0e-4 || Math.abs(targetZ - cz) > 1.0e-4) {
+            setTarget(cx, cy, cz);
+        }
+    }
+
     public void setTarget(double x, double y, double z) {
         this.targetX = x; this.targetY = y; this.targetZ = z;
         this.hasTarget = true;
@@ -304,6 +329,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     }
 
     public void clearTarget() {
+        this.trackedSubLevel = null;
         this.hasTarget = false;
         this.currentTarget = null;
         this.targetX = 0;
@@ -345,11 +371,17 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         this.module = incoming;
 
-        if (incoming == ModuleType.SPYGLASS
+        if ((incoming == ModuleType.SPYGLASS || incoming == ModuleType.MODULATING)
             && stack.has(JocDataComponents.SEEKER_CARRIED_TARGET.get())) {
-            BlockPos carried = stack.get(JocDataComponents.SEEKER_CARRIED_TARGET.get());
+            SeekerCapturedTarget carried = stack.get(JocDataComponents.SEEKER_CARRIED_TARGET.get());
             if (carried != null) {
-                setTarget(carried.getX(), carried.getY(), carried.getZ());
+                if (carried.subLevelId() != null && level != null) {
+                    trackedSubLevel = carried.subLevelId();
+                    updateTargetFromSubLevel();
+                } else {
+                    trackedSubLevel = null;
+                    setTarget(carried.pos().getX(), carried.pos().getY(), carried.pos().getZ());
+                }
             }
             stack.remove(JocDataComponents.SEEKER_CARRIED_TARGET.get());
         }
@@ -383,6 +415,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         trackedPlayerUUID = null;
         playerDirPowered = false;
         signalStrengthCache.clear();
+        trackedSubLevel = null;
+        clearTarget();
 
         if (!drop.isEmpty()) {
             if (!player.getInventory().add(drop)) {
@@ -597,6 +631,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (trackedPlayerUUID != null) {
             tag.putUUID("tracked_player", trackedPlayerUUID);
         }
+        if (trackedSubLevel != null) {
+            tag.putUUID("tracked_sub_level", trackedSubLevel);
+        }
 
         // Only sync the animation trigger over the network — never persist it to the save file
         if (clientPacket) {
@@ -658,6 +695,12 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             trackedPlayerUUID = tag.getUUID("tracked_player");
         } else {
             trackedPlayerUUID = null;
+        }
+
+        if (tag.hasUUID("tracked_sub_level")) {
+            trackedSubLevel = tag.getUUID("tracked_sub_level");
+        } else {
+            trackedSubLevel = null;
         }
 
         if (clientPacket && tag.contains("insert_anim_tick")) {

@@ -2,8 +2,6 @@ package net.multyfora.index;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -15,11 +13,11 @@ public class JocDataComponents {
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENTS =
         DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, AeronauticsJoyofcreation.MODID);
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<BlockPos>> SEEKER_CARRIED_TARGET =
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<SeekerCapturedTarget>> SEEKER_CARRIED_TARGET =
         DATA_COMPONENTS.register("seeker_carried_target",
-            () -> DataComponentType.<BlockPos>builder()
-                .persistent(BlockPos.CODEC)
-                .networkSynchronized(BlockPos.STREAM_CODEC)
+            () -> DataComponentType.<SeekerCapturedTarget>builder()
+                .persistent(SeekerCapturedTarget.CODEC)
+                .networkSynchronized(SeekerCapturedTarget.STREAM_CODEC)
                 .build());
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<BlockPos>> LINKED_SEEKER_POS =

@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.index.JocDataComponents;
+import net.multyfora.index.SeekerCapturedTarget;
 
 @EventBusSubscriber(modid = AeronauticsJoyofcreation.MODID, value = Dist.CLIENT)
 public class SpyglassTooltipHandler {
@@ -20,13 +21,13 @@ public class SpyglassTooltipHandler {
         var stack = event.getItemStack();
         if (!stack.is(Items.SPYGLASS)) return;
 
-        var carried = stack.get(JocDataComponents.SEEKER_CARRIED_TARGET.get());
+        SeekerCapturedTarget carried = stack.get(JocDataComponents.SEEKER_CARRIED_TARGET.get());
         if (carried == null) return;
 
         event.getToolTip().add(
             Component.translatable(
                 "item.joc.spyglass.carried_target",
-                carried.getX(), carried.getY(), carried.getZ()
+                carried.pos().getX(), carried.pos().getY(), carried.pos().getZ()
             ).withStyle(ChatFormatting.AQUA)
         );
     }

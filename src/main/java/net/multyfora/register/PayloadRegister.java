@@ -16,6 +16,7 @@ import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.index.JocDataComponents;
+import net.multyfora.index.SeekerCapturedTarget;
 import net.multyfora.network.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
@@ -65,13 +66,16 @@ public class PayloadRegister {
                     var player = context.player();
                     if (player == null) return;
 
+                    SeekerCapturedTarget target = new SeekerCapturedTarget(payload.targetPos(), payload.subLevelId(),
+                        payload.localX(), payload.localY(), payload.localZ());
+
                     ItemStack mainHand = player.getMainHandItem();
                     ItemStack offHand = player.getOffhandItem();
 
                     if (mainHand.is(Items.SPYGLASS)) {
-                        mainHand.set(JocDataComponents.SEEKER_CARRIED_TARGET.get(), payload.targetPos());
+                        mainHand.set(JocDataComponents.SEEKER_CARRIED_TARGET.get(), target);
                     } else if (offHand.is(Items.SPYGLASS)) {
-                        offHand.set(JocDataComponents.SEEKER_CARRIED_TARGET.get(), payload.targetPos());
+                        offHand.set(JocDataComponents.SEEKER_CARRIED_TARGET.get(), target);
                     }
                 });
             }

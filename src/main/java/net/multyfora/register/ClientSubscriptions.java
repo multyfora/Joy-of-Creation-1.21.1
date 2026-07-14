@@ -5,9 +5,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.UUID;
+import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.seeker.SeekerLinkedHighlightRenderer;
 import net.multyfora.client.seeker.SpyglassTargetOutlineRenderer;
@@ -29,6 +34,7 @@ import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocEntityTypes;
+import net.multyfora.index.JocDataComponents;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.EntityGrabPayloads;
 import net.multyfora.network.SeekerPayloads;
@@ -125,7 +131,7 @@ public class ClientSubscriptions {
         SeekerPartialModels.init();
     }
 
-        @SubscribeEvent
+    @SubscribeEvent
     static void onClientTick(ClientTickEvent.Pre event) {
         PortableTypewriterClientHandler.tick();
         PortableThrottleClientHandler.tick();
@@ -206,8 +212,23 @@ public class ClientSubscriptions {
         BlockPos targetPos = SpyglassTargetOutlineRenderer.getScopedTargetBlock(client.player);
         if (targetPos == null) return;
 
+        UUID subLevelId = null;
+        double localX = 0, localY = 0, localZ = 0;
+        try {
+            SubLevel sub = Sable.HELPER.getContaining(client.level, targetPos);
+            if (sub != null) {
+                subLevelId = sub.getUniqueId();
+                Vec3 worldCenter = Vec3.atCenterOf(targetPos);
+                Vec3 local = sub.logicalPose().transformPositionInverse(worldCenter);
+                localX = local.x;
+                localY = local.y;
+                localZ = local.z;
+            }
+        } catch (Exception ignored) {}
+
         client.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.3f, 2.0f);
-        PacketDistributor.sendToServer(new SeekerPayloads.SetSpyglassTargetPayload(targetPos));
+        PacketDistributor.sendToServer(new SeekerPayloads.SetSpyglassTargetPayload(targetPos, subLevelId,
+            localX, localY, localZ));
         event.setCanceled(true);
     }
 

@@ -6,7 +6,13 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.UUIDUtil;
 import net.multyfora.AeronauticsJoyofcreation;
+
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
+import java.util.UUID;
 
 public final class SeekerPayloads {
     private SeekerPayloads() {}
@@ -42,11 +48,18 @@ public final class SeekerPayloads {
 
     // Client-to-server: sent when the player left-clicks while scoped with a spyglass.
     // Server writes the captured position onto the player's held spyglass ItemStack.
-    public record SetSpyglassTargetPayload(BlockPos targetPos) implements CustomPacketPayload {
+    public record SetSpyglassTargetPayload(BlockPos targetPos, @Nullable UUID subLevelId,
+                                           double localX, double localY, double localZ) implements CustomPacketPayload {
         public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "set_spyglass_target");
         public static final Type<SetSpyglassTargetPayload> TYPE = new Type<>(ID);
-        public static final StreamCodec<ByteBuf, SetSpyglassTargetPayload> CODEC =
-            BlockPos.STREAM_CODEC.map(SetSpyglassTargetPayload::new, SetSpyglassTargetPayload::targetPos);
+        public static final StreamCodec<ByteBuf, SetSpyglassTargetPayload> CODEC = StreamCodec.composite(
+            BlockPos.STREAM_CODEC, SetSpyglassTargetPayload::targetPos,
+            ByteBufCodecs.optional(ByteBufCodecs.fromCodec(UUIDUtil.CODEC)), p -> Optional.ofNullable(p.subLevelId()),
+            ByteBufCodecs.DOUBLE, SetSpyglassTargetPayload::localX,
+            ByteBufCodecs.DOUBLE, SetSpyglassTargetPayload::localY,
+            ByteBufCodecs.DOUBLE, SetSpyglassTargetPayload::localZ,
+            (pos, uuidOpt, lx, ly, lz) -> new SetSpyglassTargetPayload(pos, uuidOpt.orElse(null), lx, ly, lz)
+        );
         @Override
         public Type<? extends CustomPacketPayload> type() {
             return TYPE;
