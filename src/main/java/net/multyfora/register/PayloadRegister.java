@@ -34,11 +34,6 @@ public class PayloadRegister {
                             return;
                         }
 
-                        int x = payload.pos().getX();
-                        int y = payload.pos().getY();
-                        int z = payload.pos().getZ();
-                        seekerBlockEntity.setTarget(x, y, z);
-
                         SeekerMenu seekerMenu = new SeekerMenu(
                             0, player.getInventory(), seekerBlockEntity
                         );
@@ -165,10 +160,6 @@ public class PayloadRegister {
                                 if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
                                     return;
                                 }
-                                int x = payload.pos().getX();
-                                int y = payload.pos().getY();
-                                int z = payload.pos().getZ();
-                                seekerBlockEntity.setTarget(x, y, z);
                                 SeekerDistanceMenu seekerDistanceMenu = new SeekerDistanceMenu(
                                     0, player.getInventory(), seekerBlockEntity
                                 );

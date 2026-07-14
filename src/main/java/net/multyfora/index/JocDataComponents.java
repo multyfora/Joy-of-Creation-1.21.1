@@ -22,6 +22,13 @@ public class JocDataComponents {
                 .networkSynchronized(BlockPos.STREAM_CODEC)
                 .build());
 
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<BlockPos>> LINKED_SEEKER_POS =
+        DATA_COMPONENTS.register("linked_seeker_pos",
+            () -> DataComponentType.<BlockPos>builder()
+                .persistent(BlockPos.CODEC)
+                .networkSynchronized(BlockPos.STREAM_CODEC)
+                .build());
+
     public static void register(IEventBus modEventBus) {
         DATA_COMPONENTS.register(modEventBus);
     }

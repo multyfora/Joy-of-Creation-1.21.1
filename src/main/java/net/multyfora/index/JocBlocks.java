@@ -86,6 +86,7 @@ public class JocBlocks {
                         .strength(3.0f)
                         .sound(SoundType.NETHERITE_BLOCK)
                         .noOcclusion()
+                        .isRedstoneConductor((state, level, pos) -> true)
                 );
             }
         );

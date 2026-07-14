@@ -32,6 +32,13 @@
 
   "item.joc.spyglass.carried_target": "Target: %s, %s, %s",
 
+  "item.joc.seeker.captured_target": "Linking from: %s, %s, %s",
+  "item.joc.seeker.captured": "Captured seeker at %s, %s, %s",
+  "item.joc.seeker.linked": "Seekers linked to %s, %s, %s",
+  "item.joc.seeker.link_self": "Cannot link a seeker to itself",
+  "item.joc.seeker.link_gone": "Target seeker no longer exists",
+  "item.joc.seeker.link_incompatible": "Target seeker has an incompatible module",
+
   "screen.joc.seeker": "Seeker",
   "screen.joc.seeker.set": "Set Target",
   "screen.joc.seeker.current_pos": "Use Current",
@@ -47,5 +54,31 @@
   "joc.configuration.creative_staff.enableCreativeStaff": "Enable creative staff entity grab/release",
   "joc.configuration.creative_staff.canPickupPlayers": "Allow grabbing other players",
   "joc.configuration.creative_staff.staffGrabRange": "Max grab range in blocks",
-  "joc.configuration.creative_staff.staffHoldDistance": "Default hold distance in blocks"
+  "joc.configuration.creative_staff.staffHoldDistance": "Default hold distance in blocks",
+
+  "joc.ponder.balloon.header": "Using Balloons",
+  "joc.ponder.balloon.text_1": "Balloons provide lift when attached to your airship structure.",
+  "joc.ponder.balloon.text_2": "Multiple balloons generate more lift. Distribute them evenly across your structure.",
+  "joc.ponder.seeker.header": "Using the Seeker",
+  "joc.ponder.seeker.text_1": "The Seeker tracks targets and emits redstone signals based on the direction to the target.",
+  "joc.ponder.seeker.text_2": "Insert a Spyglass to track specific coordinates. The Seeker will emit a redstone signal toward the target.",
+  "joc.ponder.seeker.text_3": "The nixie tubes now show the redstone signal strength, indicating the angle to the target.",
+  "joc.ponder.gyroscopic_seat.header": "Using the Gyroscopic Seat",
+  "joc.ponder.gyroscopic_seat.text_1": "The Gyroscopic Seat prevents sublevel rotation for the rider, keeping your view stable.",
+  "joc.ponder.gyroscopic_seat.text_2": "Right-click to sit. Your view remains stable even when the ship rotates around you.",
+  "joc.ponder.shatter_assembler.header": "Using the Shatter Assembler",
+  "joc.ponder.shatter_assembler.text_1": "The Shatter Assembler disassembles and reassembles ships. It must face a solid block.",
+  "joc.ponder.shatter_assembler.text_2": "Place it on a wall, floor, or ceiling. Right-click to open the interface and control assembly.",
+  "joc.ponder.cross_sail.header": "Using Symmetric Cross Sails",
+  "joc.ponder.cross_sail.text_1": "Cross Sails generate lift and drag for airship movement. They come in 16 colors.",
+  "joc.ponder.cross_sail.text_2": "Place them adjacent to form larger sail surfaces. Use dye to recolor connected sails.",
+  "joc.ponder.portable_typewriter.header": "Using the Portable Typewriter",
+  "joc.ponder.portable_typewriter.text_1": "The Portable Typewriter binds keyboard keys to Redstone Link frequencies for wireless control.",
+  "joc.ponder.portable_typewriter.text_2": "Right-click a Redstone Link while a key is selected to bind it. Press the key to activate the link.",
+  "joc.ponder.portable_throttle.header": "Using the Portable Throttle",
+  "joc.ponder.portable_throttle.text_1": "The Portable Throttle is a wireless redstone signal transmitter for controlling your airship.",
+  "joc.ponder.portable_throttle.text_2": "Right-click a Redstone Link to bind. Right-click air to configure the signal strength.",
+
+  "joc.ponder.tag.aeronautics": "Aeronautics Components",
+  "joc.ponder.tag.aeronautics.description": "Components for airships and aeronautical contraptions"
 }

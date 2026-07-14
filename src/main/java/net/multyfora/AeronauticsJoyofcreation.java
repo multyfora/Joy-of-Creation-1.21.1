@@ -1,6 +1,7 @@
 package net.multyfora;
 
 import net.multyfora.index.*;
+import net.multyfora.ponder.JocPonderPlugin;
 import net.multyfora.register.CreativeRegister;
 import org.slf4j.Logger;
 
@@ -10,13 +11,15 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent; // ADDED THIS
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 
 import net.multyfora.config.JocConfig;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock; // ADDED THIS
 
 // CREATE API IMPORTS
 import com.simibubi.create.api.contraption.BlockMovementChecks;
+import net.createmod.ponder.foundation.PonderIndex;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -57,11 +60,16 @@ public class AeronauticsJoyofcreation {
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, JocConfig.SPEC);
 
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::clientSetup);
 
         // Final Registrations
         registerCreativeModeTab();
         registerEvents();
         RegisterPayloads(modEventBus);
+    }
+
+    private void clientSetup(final FMLClientSetupEvent event) {
+        event.enqueueWork(() -> PonderIndex.addPlugin(new JocPonderPlugin()));
     }
 
     // this is for registering the cross sail to autoconnect when assembling bearings

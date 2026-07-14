@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
+import net.multyfora.content.seeker.SeekerBlockItem;
 
 /**
  * Registry holder for all custom items in the mod.
@@ -22,8 +23,8 @@ public class JocItems {
     // deadlocks against JocBlocks's own static block referencing JocItems.ITEMS.
     public static final DeferredItem<BlockItem> BALLOON = ITEMS.registerSimpleBlockItem(
             "balloon", () -> JocBlocks.BALLOON.get());
-    public static final DeferredItem<BlockItem> SEEKER = ITEMS.registerSimpleBlockItem(
-            "seeker", () -> JocBlocks.SEEKER.get());
+    public static final DeferredItem<SeekerBlockItem> SEEKER = ITEMS.register("seeker",
+            () -> new SeekerBlockItem(JocBlocks.SEEKER.get(), new Item.Properties()));
     public static final DeferredItem<BlockItem> SHATTER_ASSEMBLER = ITEMS.registerSimpleBlockItem(
             "shatter_assembler", () -> JocBlocks.SHATTER_ASSEMBLER.get());
     public static final DeferredItem<BlockItem> GYROSCOPIC_SEAT = ITEMS.registerSimpleBlockItem(

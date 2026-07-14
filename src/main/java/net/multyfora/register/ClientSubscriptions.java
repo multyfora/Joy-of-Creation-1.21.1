@@ -9,6 +9,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.client.seeker.SeekerLinkedHighlightRenderer;
 import net.multyfora.client.seeker.SpyglassTargetOutlineRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -69,6 +70,13 @@ public class ClientSubscriptions {
     static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(JocMenuTypes.TYPEWRITER_SCREEN.get(), PortableTypewriterScreen::new);
         event.register(JocMenuTypes.THROTTLE_SCREEN.get(), PortableThrottleLinkScreen::new);
+    }
+
+    @SubscribeEvent
+    static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+            SeekerLinkedHighlightRenderer.render(event);
+        }
     }
     @SubscribeEvent
     static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {

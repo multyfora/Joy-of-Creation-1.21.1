@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.multyfora.index.JocBlockEntityTypes;
@@ -32,6 +33,8 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
     public SeekerBlock(Properties properties) {
         super(properties);
     }
+
+
 
     @Override
     protected @NotNull MapCodec<? extends Block> codec() {
@@ -95,7 +98,10 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
                 boolean inserted = be.insertModule(stack, player);
                 return inserted ? ItemInteractionResult.SUCCESS : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
-            return ItemInteractionResult.SUCCESS;
+            SeekerBlockEntity.ModuleType moduleType = SeekerBlockEntity.moduleTypeForItem(stack);
+            return moduleType != SeekerBlockEntity.ModuleType.NONE
+                ? ItemInteractionResult.SUCCESS
+                : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
         if (stack.isEmpty() && be.hasModule()) {
@@ -156,6 +162,9 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
         boolean movedByPiston
     ) {
         if (!state.is(newState.getBlock())) {
+            if (level.getBlockEntity(pos) instanceof SeekerBlockEntity be) {
+                be.unlinkFromAll();
+            }
             IBE.onRemove(state, level, pos, newState);
         }
     }

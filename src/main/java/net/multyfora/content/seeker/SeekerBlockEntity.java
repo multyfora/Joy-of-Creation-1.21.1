@@ -37,8 +37,10 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider {
@@ -78,6 +80,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
     private ModuleType module = ModuleType.NONE;
 
+    private final Set<BlockPos> linkedSeekers = new HashSet<>();
+    private transient boolean isSyncingFromLink = false;
+
     private int ticks;
     private double distanceToTarget;
     private double lastDistanceToTarget;
@@ -107,9 +112,21 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             spyglassPointer.lerpedYawDegrees.tickChaser();
         }
 
-        if (isVirtual() || level.isClientSide) return;
+        if (isVirtual() || level.isClientSide) {
+            return;
+        }
 
         if (module == ModuleType.NONE) return;
+
+        // Periodic link validation: remove stale links (every 100 ticks)
+        if (level.getGameTime() % 100 == 0) {
+            linkedSeekers.removeIf(linkedPos -> {
+                if (!level.isLoaded(linkedPos)) return false;
+                if (!(level.getBlockEntity(linkedPos) instanceof SeekerBlockEntity other)) return true;
+                ModuleType otherModule = other.getModule();
+                return otherModule != ModuleType.SPYGLASS && otherModule != ModuleType.MODULATING;
+            });
+        }
 
         try {
             this.subLevel = Sable.HELPER.getContaining(this);
@@ -270,6 +287,20 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             selectivelyUpdateNeighbors();
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
+
+        if (level != null && !level.isClientSide && !isSyncingFromLink) {
+            isSyncingFromLink = true;
+            for (BlockPos linkedPos : linkedSeekers) {
+                if (level == null) break;
+                if (level.getBlockEntity(linkedPos) instanceof SeekerBlockEntity other) {
+                    ModuleType otherModule = other.getModule();
+                    if (otherModule == ModuleType.SPYGLASS || otherModule == ModuleType.MODULATING) {
+                        other.setTarget(x, y, z);
+                    }
+                }
+            }
+            isSyncingFromLink = false;
+        }
     }
 
     public void clearTarget() {
@@ -284,6 +315,20 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (level != null && !level.isClientSide) {
             selectivelyUpdateNeighbors();
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+
+        if (level != null && !level.isClientSide && !isSyncingFromLink) {
+            isSyncingFromLink = true;
+            for (BlockPos linkedPos : linkedSeekers) {
+                if (level == null) break;
+                if (level.getBlockEntity(linkedPos) instanceof SeekerBlockEntity other) {
+                    ModuleType otherModule = other.getModule();
+                    if (otherModule == ModuleType.SPYGLASS || otherModule == ModuleType.MODULATING) {
+                        other.clearTarget();
+                    }
+                }
+            }
+            isSyncingFromLink = false;
         }
     }
 
@@ -354,6 +399,41 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         return true;
     }
 
+    public void linkTo(BlockPos pos) {
+        if (linkedSeekers.add(pos)) {
+            setChanged();
+            sendData();
+        }
+    }
+
+    public void unlinkFrom(BlockPos pos) {
+        if (linkedSeekers.remove(pos)) {
+            setChanged();
+            sendData();
+        }
+    }
+
+    public void unlinkFromAll() {
+        if (level == null || level.isClientSide) {
+            linkedSeekers.clear();
+            return;
+        }
+        for (BlockPos linkedPos : linkedSeekers) {
+            if (level.getBlockEntity(linkedPos) instanceof SeekerBlockEntity other) {
+                other.linkedSeekers.remove(worldPosition);
+                other.setChanged();
+                other.sendData();
+            }
+        }
+        linkedSeekers.clear();
+        setChanged();
+        sendData();
+    }
+
+    public Set<BlockPos> getLinkedSeekers() {
+        return linkedSeekers;
+    }
+
     private void onModuleChanged() {
         setChanged();
         sendData();
@@ -364,7 +444,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         }
     }
 
-    private static ModuleType moduleTypeForItem(ItemStack stack) {
+    public static ModuleType moduleTypeForItem(ItemStack stack) {
         if (stack.is(Items.SPYGLASS)) {
             return ModuleType.SPYGLASS;
         }
@@ -522,6 +602,13 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (clientPacket) {
             tag.putLong("insert_anim_tick", insertAnimStartTick);
         }
+
+        // Persist linked seekers in server save; sync to client for highlight rendering
+        var list = new net.minecraft.nbt.ListTag();
+        for (BlockPos p : linkedSeekers) {
+            list.add(net.minecraft.nbt.NbtUtils.writeBlockPos(p));
+        }
+        tag.put("linked_seekers", list);
     }
 
     @Override
@@ -561,6 +648,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (clientPacket) {
             spyglassPointer.lerpedYawDegrees.chase(yaw,   1.0, LerpedFloat.Chaser.EXP);
             spyglassPointer.lerpedPitchDegrees.chase(pitch, 1.0, LerpedFloat.Chaser.EXP);
+        } else if (tag.contains("relative_angle")) {
+            spyglassPointer.lerpedYawDegrees.setValue(yaw);
+            spyglassPointer.lerpedPitchDegrees.setValue(pitch);
         }
 
         playerDirPowered = tag.getBoolean("player_dir_powered");
@@ -572,6 +662,16 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         if (clientPacket && tag.contains("insert_anim_tick")) {
             insertAnimStartTick = tag.getLong("insert_anim_tick");
+        }
+
+        // Restore linked seekers from both server save and client sync
+        linkedSeekers.clear();
+        if (tag.contains("linked_seekers")) {
+            var list = tag.getList("linked_seekers", net.minecraft.nbt.Tag.TAG_COMPOUND);
+            for (int i = 0; i < list.size(); i++) {
+                var entry = list.getCompound(i);
+                linkedSeekers.add(new BlockPos(entry.getInt("X"), entry.getInt("Y"), entry.getInt("Z")));
+            }
         }
 
         if (clientPacket) {
@@ -634,6 +734,20 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
             selectivelyUpdateNeighbors();
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+
+        if (level != null && !level.isClientSide && !isSyncingFromLink) {
+            isSyncingFromLink = true;
+            for (BlockPos linkedPos : linkedSeekers) {
+                if (level == null) break;
+                if (level.getBlockEntity(linkedPos) instanceof SeekerBlockEntity other) {
+                    ModuleType otherModule = other.getModule();
+                    if (otherModule == ModuleType.SPYGLASS || otherModule == ModuleType.MODULATING) {
+                        other.setUse3D(use3D);
+                    }
+                }
+            }
+            isSyncingFromLink = false;
         }
     }
 
