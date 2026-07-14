@@ -30,6 +30,9 @@ import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.SeekerPartialModels;
 import net.multyfora.client.graphics.GraphicsUtils;
+import net.multyfora.client.integration.xaeros.WaypointData;
+import net.multyfora.client.integration.xaeros.WaypointPickerScreen;
+import net.multyfora.client.integration.xaeros.XaerosCompat;
 import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.network.SeekerPayloads;
 
@@ -54,6 +57,7 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
 
     private boolean use3D;
     private boolean fieldsEdited;
+    private WaypointData pendingWaypoint;
 
     private IconButton waypointButton;
     private IconButton modeButton;
@@ -81,6 +85,12 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
 
         addFields();
         addWidgets();
+        if (pendingWaypoint != null) {
+            xField.setValue(String.valueOf(pendingWaypoint.x()));
+            yField.setValue(String.valueOf(pendingWaypoint.y()));
+            zField.setValue(String.valueOf(pendingWaypoint.z()));
+            pendingWaypoint = null;
+        }
     }
 
     @Override
@@ -392,9 +402,17 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
         } catch(NumberFormatException ignored) {}
     }
 
-    //TODO
     private void accessWayPointScreen() {
-        AeronauticsJoyofcreation.LOGGER.info("Waypoints Menu not yet implemented.");
+        Level level = Minecraft.getInstance().level;
+        if (level == null || !XaerosCompat.isLoaded()) return;
+
+        XaerosCompat.invalidateCache();
+        var waypoints = XaerosCompat.getCurrentWaypoints(level);
+        Minecraft.getInstance().setScreen(
+                new WaypointPickerScreen(this, pos, waypoints, wpd -> {
+                    pendingWaypoint = wpd;
+                })
+        );
     }
 
     // Helper to fetch the block entity from the client level

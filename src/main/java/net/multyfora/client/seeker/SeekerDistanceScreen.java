@@ -28,6 +28,9 @@ import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.SeekerPartialModels;
 import net.multyfora.client.graphics.GraphicsUtils;
+import net.multyfora.client.integration.xaeros.WaypointData;
+import net.multyfora.client.integration.xaeros.WaypointPickerScreen;
+import net.multyfora.client.integration.xaeros.XaerosCompat;
 import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.network.SeekerDistancePayloads;
 import net.multyfora.network.SeekerPayloads;
@@ -61,6 +64,8 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
     private EditBox zField;
     private boolean use3D;
     private boolean fieldsEdited;
+    private WaypointData pendingWaypoint;
+    private IconButton waypointButton;
     private IconButton modeButton;
     private ModulatingSetButton setButton;
     private int sliderMin;
@@ -85,6 +90,12 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         this.inventoryLabelX = -1000;
         addFields();
         addWidgets();
+        if (pendingWaypoint != null) {
+            xField.setValue(String.valueOf(pendingWaypoint.x()));
+            yField.setValue(String.valueOf(pendingWaypoint.y()));
+            zField.setValue(String.valueOf(pendingWaypoint.z()));
+            pendingWaypoint = null;
+        }
     }
 
     @Override
@@ -116,13 +127,13 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
                 ? Sable.HELPER.projectOutOfSubLevel(blockEntity.getLevel(), targetPos)
                 : Vec3.ZERO;
 
-        xField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 38), new Vector2i(137, 18),
+        xField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 51), new Vector2i(137, 18),
                 Component.literal("X"), (int) worldPosition.x);
         xField.setBordered(false);
-        yField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 61), new Vector2i(137, 18),
+        yField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 74), new Vector2i(137, 18),
                 Component.literal("Y"), (int) worldPosition.y);
         yField.setBordered(false);
-        zField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 84), new Vector2i(137, 18),
+        zField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 97), new Vector2i(137, 18),
                 Component.literal("Z"), (int) worldPosition.z);
         zField.setBordered(false);
         yField.setEditable(use3D);
@@ -136,8 +147,16 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         sliderMin = blockEntity != null ? blockEntity.getMinDistance() : 0;
         sliderMax = blockEntity != null ? blockEntity.getMaxDistance() : 256;
         sliderX = gui_x + 25;
-        sliderY = gui_y + 105;
+        sliderY = gui_y + 128;
         sliderWidth = 150;
+
+        waypointButton = new IconButton(
+                (width - imageWidth) / 2 + 8,
+                (height - imageHeight) / 2 + 24,
+                AllIcons.I_TARGET
+        );
+        waypointButton.withCallback(this::accessWayPointScreen);
+        addRenderableWidget(waypointButton);
 
         setButton = new ModulatingSetButton(
                 gui_x + 207, gui_y + 146, 10, 10,
@@ -225,12 +244,12 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         int gui_x = (width - imageWidth) / 2;
         int gui_y = (height - imageHeight) / 2;
 
-        guiGraphics.drawString(this.font, "X", gui_x + 39, gui_y + 38, 0xFFFFFFFF, false);
-        guiGraphics.drawString(this.font, "Y", gui_x + 39, gui_y + 61, 0xFFFFFFFF, false);
-        guiGraphics.drawString(this.font, "Z", gui_x + 39, gui_y + 84, 0xFFFFFFFF, false);
+        guiGraphics.drawString(this.font, "X", gui_x + 39, gui_y + 51, 0xFFFFFFFF, false);
+        guiGraphics.drawString(this.font, "Y", gui_x + 39, gui_y + 74, 0xFFFFFFFF, false);
+        guiGraphics.drawString(this.font, "Z", gui_x + 39, gui_y + 97, 0xFFFFFFFF, false);
 
-        guiGraphics.drawString(this.font, "Min:" + sliderMin, gui_x + 185, gui_y + 108, 0xFFAAAAAA, false);
-        guiGraphics.drawString(this.font, "Max:" + sliderMax, gui_x + 185, gui_y + 118, 0xFFAAAAAA, false);
+        guiGraphics.drawString(this.font, "Min:" + sliderMin, gui_x + 185, gui_y + 131, 0xFFAAAAAA, false);
+        guiGraphics.drawString(this.font, "Max:" + sliderMax, gui_x + 185, gui_y + 141, 0xFFAAAAAA, false);
 
         guiGraphics.drawString(this.font, "target: " + target.getString(),
                 (width - this.font.width(target)) / 2 - 30, (height - this.font.lineHeight) / 2 + 73, 0xFFFFFFFF, false);
@@ -294,6 +313,19 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
 
     @Override
     public boolean isPauseScreen() { return false; }
+
+    private void accessWayPointScreen() {
+        Level level = Minecraft.getInstance().level;
+        if (level == null || !XaerosCompat.isLoaded()) return;
+
+        XaerosCompat.invalidateCache();
+        var waypoints = XaerosCompat.getCurrentWaypoints(level);
+        Minecraft.getInstance().setScreen(
+                new WaypointPickerScreen(this, pos, waypoints, wpd -> {
+                    pendingWaypoint = wpd;
+                })
+        );
+    }
 
     private void sendUpdate(int x, int y, int z, int min, int max) {
         try {

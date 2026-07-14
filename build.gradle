@@ -33,6 +33,7 @@ repositories {
     maven { url = "https://maven.ryanhcode.dev/releases" } // Sable companion, Veil
     maven { url = "https://maven.blamejared.com" } // JEI
     maven { url = "https://maven.terraformersmc.com/releases" } // EMI
+    maven { url = "https://chocolateminecraft.com/maven" } // Xaero's World Map
 }
 
 base {
@@ -164,6 +165,18 @@ dependencies {
     compileOnly("dev.emi:emi-neoforge:${emi_version}:api")
     if (project.findProperty('enableEmi') != 'false') {
         localRuntime("dev.emi:emi-neoforge:${emi_version}")
+    }
+
+    // Xaero's Minimap (optional) — provides waypoint API
+    compileOnly("xaero.minimap:xaerominimap-neoforge-${minecraft_version}:${xaeros_minimap_version}")
+    if (project.findProperty('enableXaeros') != 'false') {
+        localRuntime("xaero.minimap:xaerominimap-neoforge-${minecraft_version}:${xaeros_minimap_version}")
+    }
+
+    // Xaero's World Map (optional) — full-screen map, bundles minimap
+    compileOnly("xaero.map:xaeroworldmap-neoforge-${minecraft_version}:${xaeros_worldmap_version}")
+    if (project.findProperty('enableXaeros') != 'false') {
+        localRuntime("xaero.map:xaeroworldmap-neoforge-${minecraft_version}:${xaeros_worldmap_version}")
     }
 }
 
