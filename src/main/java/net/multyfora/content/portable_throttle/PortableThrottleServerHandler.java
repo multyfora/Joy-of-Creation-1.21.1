@@ -8,6 +8,8 @@ import net.createmod.catnip.data.Couple;
 import net.createmod.catnip.data.Pair;
 import net.createmod.catnip.data.WorldAttached;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.LevelAccessor;
 
 import java.util.ArrayList;
@@ -33,6 +35,9 @@ public class PortableThrottleServerHandler {
     // Per-world map: player UUID -> collection of active throttle entries (different frequencies)
     public static final WorldAttached<Map<UUID, Collection<ThrottleEntry>>> receivedInputs =
         new WorldAttached<>($ -> new HashMap<>());
+
+    // Track last sync tick per player to throttle attachment writes (every 2 ticks)
+    private static final Map<UUID, Long> lastSyncTick = new HashMap<>();
 
     // Timeout in ticks: after this many ticks without a keepalive, the signal is removed
     static final int TIMEOUT = 200;
@@ -122,6 +127,11 @@ public class PortableThrottleServerHandler {
                 Create.REDSTONE_LINK_NETWORK_HANDLER.removeFromNetwork(world, existing);
                 list.remove(existing);
             }
+            if (world instanceof ServerLevel serverLevel) {
+                net.minecraft.server.level.ServerPlayer player = (net.minecraft.server.level.ServerPlayer) serverLevel.getPlayerByUUID(uniqueID);
+                if (player != null) {
+                }
+            }
             return;
         }
 
@@ -136,6 +146,17 @@ public class PortableThrottleServerHandler {
         }
 
         forceUpdateListeners(world, freq, strength);
+
+        if (world instanceof ServerLevel serverLevel) {
+            long gameTime = serverLevel.getGameTime();
+            Long lastSync = lastSyncTick.get(uniqueID);
+            if (lastSync == null || gameTime - lastSync >= 2) {
+                net.minecraft.server.level.ServerPlayer player = (net.minecraft.server.level.ServerPlayer) serverLevel.getPlayerByUUID(uniqueID);
+                if (player != null) {
+                    lastSyncTick.put(uniqueID, gameTime);
+                }
+            }
+        }
     }
 
     /**

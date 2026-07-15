@@ -111,6 +111,8 @@ public class PortableThrottleStrengthScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        PortableThrottleClientHandler.setLiveValue(value);
+        
         super.render(graphics, mouseX, mouseY, partialTick);
 
         int cx = width / 2;

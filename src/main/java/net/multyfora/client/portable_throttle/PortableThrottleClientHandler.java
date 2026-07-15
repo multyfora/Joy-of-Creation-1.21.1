@@ -17,6 +17,10 @@ import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.PortableThrottleBindPacket;
 import net.multyfora.network.PortableThrottleSignalPacket;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * Client-side handler for the Portable Throttle item.
  * Manages: bind target tracking, left-click detection to open strength screen,
@@ -34,6 +38,12 @@ public class PortableThrottleClientHandler {
     private static int keepAliveCooldown;
     // Send keepalive every N ticks
     private static final int KEEP_ALIVE_RATE = 10;
+
+    private static float liveValue;
+    private static final Map<UUID, Float> smoothedStrength = new HashMap<>();
+    private static final Map<UUID, Float> prevSmoothedStrength = new HashMap<>();
+
+    private static float gripProgress;
 
     // Records a bind target; the actual packet is sent on the next tick
     public static void startBind(BlockPos pos) {
@@ -60,6 +70,36 @@ public class PortableThrottleClientHandler {
     public static void setStrength(int strength) {
         lastStrength = strength;
         keepAliveCooldown = 0;
+    }
+
+    public static void setLiveValue(float value) {
+        liveValue = value;
+    }
+
+    public static float getLiveValue() {
+        return liveValue;
+    }
+
+    public static float getSmoothedStrength(UUID uuid) {
+        return smoothedStrength.getOrDefault(uuid, lastStrength / 15f);
+    }
+
+    public static void updateSmoothedStrength(UUID uuid, float target) {
+        float current = smoothedStrength.getOrDefault(uuid, target);
+        float smoothed = current * 0.15f + target * 0.85f;
+        prevSmoothedStrength.put(uuid, current);
+        smoothedStrength.put(uuid, smoothed);
+    }
+
+    public static void tickGrip() {
+        Minecraft mc = Minecraft.getInstance();
+        boolean open = mc.screen instanceof PortableThrottleStrengthScreen;
+        float target = open ? 1f : 0f;
+        gripProgress += (target - gripProgress) * 0.3f;
+    }
+
+    public static float getGripProgress() {
+        return gripProgress;
     }
 
     /**
@@ -90,32 +130,38 @@ public class PortableThrottleClientHandler {
             bindTarget = null;
         }
 
-        if( client.options.keyUse.isDown() ) {
+        if (client.options.keyUse.isDown()) {
             // Open the strength slider screen on the rising edge if no screen is open
-            if(client.screen == null) {
-                if( client.options.keyShift.isDown() ) {
+            if (client.screen == null) {
+                if (client.options.keyShift.isDown()) {
                     PacketDistributor.sendToServer(
-                        new PortableThrottleSignalPacket(lastStrength)
+                            new PortableThrottleSignalPacket(lastStrength)
                     );
                 } else {
                     client.setScreen(
-                        new PortableThrottleStrengthScreen()
+                            new PortableThrottleStrengthScreen()
                     );
                 }
             }
         }
 
         // Send keepalive signal while the strength screen is open and strength > 0
-        if(0 < lastStrength && client.screen == null) {
-            if(0 < keepAliveCooldown) {
+        if (0 < lastStrength && client.screen == null) {
+            if (0 < keepAliveCooldown) {
                 keepAliveCooldown--;
             } else {
                 PacketDistributor.sendToServer(
-                    new PortableThrottleSignalPacket(lastStrength)
+                        new PortableThrottleSignalPacket(lastStrength)
                 );
                 keepAliveCooldown = KEEP_ALIVE_RATE;
             }
         }
+
+        // Update grip progress for two-handed pose
+        tickGrip();
+
+        // Update smoothed strength for local player
+        updateSmoothedStrength(player.getUUID(), lastStrength / 15f);
     }
 
     /**
@@ -126,17 +172,19 @@ public class PortableThrottleClientHandler {
         Screen current = Minecraft.getInstance().screen;
         boolean hadScreen = current instanceof PortableThrottleStrengthScreen || current instanceof PortableThrottleLinkScreen;
 
-        if(hadScreen) {
+        if (hadScreen) {
             PacketDistributor.sendToServer(new PortableThrottleSignalPacket(0));
-        } else if(0 < lastStrength) {
+        } else if (0 < lastStrength) {
             PacketDistributor.sendToServer(new PortableThrottleSignalPacket(0));
         }
 
-        if(hadScreen) {
+        if (hadScreen) {
             Minecraft.getInstance().setScreen(null);
         }
         lastStrength = 0;
         keepAliveCooldown = 0;
         bindTarget = null;
+        liveValue = 0f;
+        gripProgress = 0f;
     }
 }

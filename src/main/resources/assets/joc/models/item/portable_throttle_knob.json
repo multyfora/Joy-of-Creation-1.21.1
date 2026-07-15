@@ -1,0 +1,24 @@
+{
+  "format_version": "1.9.0",
+  "credit": "Hollow-Egg, with Blockbench",
+  "texture_size": [32, 32],
+  "textures": {
+    "1": "joc:item/phone"
+  },
+  "elements": [
+    {
+      "name": "knob",
+      "from": [11.5, 9, 4],
+      "to": [13.5, 10, 5],
+      "rotation": {"angle": 0, "axis": "y", "origin": [12.5, 8, 4]},
+      "faces": {
+        "north": {"uv": [10.13334, 0, 9.06667, 1.14286], "texture": "#1"},
+        "east": {"uv": [10.13334, 1.14286, 9.06667, 2.28572], "texture": "#1"},
+        "south": {"uv": [10.13334, 1.14286, 9.06667, 2.28572], "texture": "#1"},
+        "west": {"uv": [9.06667, 0, 10.13334, 1.14286], "texture": "#1"},
+        "up": {"uv": [10.13334, 2.28572, 9.06667, 0], "texture": "#1"},
+        "down": {"uv": [9.06667, 1.14286, 10.13334, 2.28572], "texture": "#1"}
+      }
+    }
+  ]
+}

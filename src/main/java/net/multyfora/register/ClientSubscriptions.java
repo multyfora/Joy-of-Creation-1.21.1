@@ -20,6 +20,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.multyfora.client.SeekerBlockEntityRenderer;
+import net.multyfora.client.JocPartialModels;
 import net.multyfora.client.SeekerPartialModels;
 import net.multyfora.client.seeker.SeekerBakedModel;
 import net.multyfora.client.seeker.SeekerRenderer;
@@ -129,6 +130,7 @@ public class ClientSubscriptions {
 
     static {
         SeekerPartialModels.init();
+        JocPartialModels.init();
     }
 
     @SubscribeEvent

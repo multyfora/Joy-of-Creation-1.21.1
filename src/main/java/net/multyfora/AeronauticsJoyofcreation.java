@@ -13,6 +13,14 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.neoforged.neoforge.common.NeoForge;
+
+import net.multyfora.client.renderer.PortableThrottleItemRenderer;
+import net.multyfora.client.portable_throttle.PortableThrottleRenderHandler;
+import net.multyfora.content.portable_throttle.PortableThrottleItem;
+import net.multyfora.index.JocItems;
 
 import net.multyfora.config.JocConfig;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock; // ADDED THIS
@@ -20,7 +28,13 @@ import net.multyfora.content.crosssail.SymmetricCrossSailBlock; // ADDED THIS
 // CREATE API IMPORTS
 import com.simibubi.create.api.contraption.BlockMovementChecks;
 import net.createmod.ponder.foundation.PonderIndex;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -61,6 +75,7 @@ public class AeronauticsJoyofcreation {
 
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::clientSetup);
+        modEventBus.addListener(this::registerClientExtensions);
 
         // Final Registrations
         registerCreativeModeTab();
@@ -68,8 +83,27 @@ public class AeronauticsJoyofcreation {
         RegisterPayloads(modEventBus);
     }
 
-    private void clientSetup(final FMLClientSetupEvent event) {
-        event.enqueueWork(() -> PonderIndex.addPlugin(new JocPonderPlugin()));
+private void clientSetup(final FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            PonderIndex.addPlugin(new JocPonderPlugin());
+            
+            PortableThrottleRenderHandler throttleHandler = new PortableThrottleRenderHandler();
+            throttleHandler.registerListeners(NeoForge.EVENT_BUS);
+        });
+    }
+
+    private void registerClientExtensions(RegisterClientExtensionsEvent event) {
+        event.registerItem(
+            new IClientItemExtensions() {
+                @Override
+                public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                    BlockEntityRenderDispatcher dispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
+                    net.minecraft.client.model.geom.EntityModelSet modelSet = Minecraft.getInstance().getEntityModels();
+                    return new PortableThrottleItemRenderer(dispatcher, modelSet);
+                }
+            },
+            JocItems.PORTABLE_THROTTLE.get()
+        );
     }
 
     // this is for registering the cross sail to autoconnect when assembling bearings
