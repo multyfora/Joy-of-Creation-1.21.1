@@ -102,6 +102,20 @@ public class PortableThrottleClientHandler {
         return gripProgress;
     }
 
+    private static ItemStack findThrottleInInventory(LocalPlayer player) {
+        ItemStack held = player.getMainHandItem();
+        if (held.getItem() instanceof PortableThrottleItem) return held;
+
+        held = player.getOffhandItem();
+        if (held.getItem() instanceof PortableThrottleItem) return held;
+
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.getItem() instanceof PortableThrottleItem) return stack;
+        }
+
+        return null;
+    }
+
     /**
      * Called every client tick: handles bind packet sending, left-click detection,
      * strength screen opening, and keepalive signal transmission
@@ -114,14 +128,10 @@ public class PortableThrottleClientHandler {
             return;
         }
 
-        // Check if the player is holding the throttle in either hand
-        ItemStack held = player.getMainHandItem();
-        if (!(held.getItem() instanceof PortableThrottleItem)) {
-            held = player.getOffhandItem();
-            if (!(held.getItem() instanceof PortableThrottleItem)) {
-                reset();
-                return;
-            }
+        // Check if the player has a throttle anywhere in their inventory
+        if (findThrottleInInventory(player) == null) {
+            reset();
+            return;
         }
 
         // Send pending bind packet if we have a target
@@ -130,8 +140,10 @@ public class PortableThrottleClientHandler {
             bindTarget = null;
         }
 
-        if (client.options.keyUse.isDown()) {
-            // Open the strength slider screen on the rising edge if no screen is open
+        // Only open the screen / send shift-click signal when the throttle is actually held in hand
+        boolean throttleInHand = player.getMainHandItem().getItem() instanceof PortableThrottleItem
+            || player.getOffhandItem().getItem() instanceof PortableThrottleItem;
+        if (throttleInHand && client.options.keyUse.isDown()) {
             if (client.screen == null) {
                 if (client.options.keyShift.isDown()) {
                     PacketDistributor.sendToServer(

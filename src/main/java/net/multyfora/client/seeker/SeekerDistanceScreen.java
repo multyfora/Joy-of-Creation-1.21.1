@@ -46,17 +46,14 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
             );
 
     private static final int MAX_DISTANCE = 256;
-    private static final int TRACK_HEIGHT = 5;
-    private static final int HANDLE_RADIUS = 7;
-    private static final int TRACK_BG_COLOR = 0xFF2D2D2D;
-    private static final int TRACK_BORDER_COLOR = 0xFF444444;
-    private static final int FILL_COLOR = 0xFF4B9EFF;
-    private static final int FILL_BORDER_COLOR = 0xFF3A7EDE;
-    private static final int HANDLE_COLOR = 0xFFE0E0E0;
-    private static final int HANDLE_BORDER_COLOR = 0xFF888888;
-    private static final int HANDLE_HIGHLIGHT_COLOR = 0xFFFFFFFF;
-    private static final int HANDLE_SHADOW_COLOR = 0xFF555555;
-    private static final int HANDLE_ACTIVE_COLOR = 0xFFFFAA00;
+    private static final int TRACK_HEIGHT = 8;
+    private static final int HANDLE_RADIUS = 6;
+    private static final int TRACK_BORDER_COLOR = 0xFF1A1A1A;
+    private static final int DIM_OVERLAY_COLOR = 0xB0000000;
+    private static final int HANDLE_FILL_COLOR = 0xFFECECEC;
+    private static final int HANDLE_BORDER_COLOR = 0xFF303030;
+    private static final int HANDLE_ACTIVE_BORDER = 0xFFFFFFFF;
+    private static final int TRACK_INACTIVE_COLOR = 0xFF262626;
 
     private final BlockPos pos;
     private EditBox xField;
@@ -103,6 +100,22 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         super.containerTick();
         refreshTargetFields();
     }
+    private static int colorForPower(int power) {
+        float f = power / 15.0F;
+        float r = f * 0.6F + 0.4F;
+        if (power == 0) r = 0.0F;
+        float g = Math.max(0.0F, f * f * 0.7F - 0.5F);
+        float b = Math.max(0.0F, f * f * 0.6F - 0.7F);
+        int ri = (int) (r * 255.0F);
+        int gi = (int) (g * 255.0F);
+        int bi = (int) (b * 255.0F);
+        return 0xFF000000 | (ri << 16) | (gi << 8) | bi;
+    }
+
+    private static int distanceToPower(int distance) {
+        double t = 1.0 - Math.min(1.0, Math.max(0.0, (double) distance / MAX_DISTANCE));
+        return (int) Math.round(t * 15.0);
+    }
 
     private void refreshTargetFields() {
         if (fieldsEdited) return;
@@ -146,10 +159,9 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         SeekerBlockEntity blockEntity = getBlockEntity();
         sliderMin = blockEntity != null ? blockEntity.getMinDistance() : 0;
         sliderMax = blockEntity != null ? blockEntity.getMaxDistance() : 256;
-        sliderX = gui_x + 25;
-        sliderY = gui_y + 128;
-        sliderWidth = 150;
-
+        sliderX = gui_x + 51;
+        sliderY = gui_y + 108;
+        sliderWidth = imageWidth - 78;
         waypointButton = new IconButton(
                 (width - imageWidth) / 2 + 8,
                 (height - imageHeight) / 2 + 24,
@@ -193,7 +205,17 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
             PacketDistributor.sendToServer(new SeekerPayloads.ToggleModePayload(pos, use3D));
         } catch (Exception ignored) {}
     }
-
+    private static int colorForPowerF(float power) {
+        float f = power / 15.0F;
+        float r = f * 0.6F + 0.4F;
+        if (power <= 0.0F) r = 0.0F;
+        float g = Math.max(0.0F, f * f * 0.7F - 0.5F);
+        float b = Math.max(0.0F, f * f * 0.6F - 0.7F);
+        int ri = (int) (r * 255.0F);
+        int gi = (int) (g * 255.0F);
+        int bi = (int) (b * 255.0F);
+        return 0xFF000000 | (ri << 16) | (gi << 8) | bi;
+    }
     private EditBox createIntegerField(Vector2i position, Vector2i size, Component text, int initialValue) {
         EditBox field = addRenderableWidget(new EditBox(font, position.x, position.y, size.x, size.y, text));
         field.setValue(String.valueOf(initialValue));
@@ -211,22 +233,30 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         int gui_y = (height - imageHeight) / 2;
         guiGraphics.blit(GUI_TEXTURE, gui_x, gui_y + 5, 0, 0, imageWidth, imageHeight);
 
-        int cy = sliderY + 20;
+        int cy = sliderY + 10;
         int trackStart = sliderX + HANDLE_RADIUS;
         int trackEnd = sliderX + sliderWidth - HANDLE_RADIUS;
         int trackTop = cy - TRACK_HEIGHT / 2;
+        int trackBottom = trackTop + TRACK_HEIGHT;
         int minX = valueToX(sliderMin);
         int maxX = valueToX(sliderMax);
 
-        // Track background with border
-        guiGraphics.fill(trackStart - 1, trackTop - 1, trackEnd + 1, trackTop + TRACK_HEIGHT + 1, TRACK_BORDER_COLOR);
-        guiGraphics.fill(trackStart, trackTop, trackEnd, trackTop + TRACK_HEIGHT, TRACK_BG_COLOR);
+        guiGraphics.fill(trackStart - 1, trackTop - 1, trackEnd + 1, trackBottom + 1, TRACK_BORDER_COLOR);
 
-        // Active fill with border
-        if (sliderMax > sliderMin) {
-            guiGraphics.fill(minX, trackTop - 1, maxX, trackTop + TRACK_HEIGHT + 1, FILL_BORDER_COLOR);
-            guiGraphics.fill(minX + 1, trackTop, maxX - 1, trackTop + TRACK_HEIGHT, FILL_COLOR);
+        for (int x = trackStart; x < trackEnd; x++) {
+            int color;
+            if (x < minX) {
+                color = colorForPowerF(15.0F);
+            } else if (x > maxX) {
+                color = TRACK_INACTIVE_COLOR;
+            } else {
+                double t = (maxX > minX) ? (double) (x - minX) / (double) (maxX - minX) : 0.0;
+                float power = (float) ((1.0 - t) * 15.0);
+                color = colorForPowerF(power);
+            }
+            guiGraphics.fill(x, trackTop, x + 1, trackBottom, color);
         }
+
 
         drawHandle(guiGraphics, minX, cy,
                 Math.abs(mouseX - minX) <= HANDLE_RADIUS && Math.abs(mouseY - cy) <= HANDLE_RADIUS || draggingMin);
@@ -248,8 +278,16 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         guiGraphics.drawString(this.font, "Y", gui_x + 39, gui_y + 74, 0xFFFFFFFF, false);
         guiGraphics.drawString(this.font, "Z", gui_x + 39, gui_y + 97, 0xFFFFFFFF, false);
 
-        guiGraphics.drawString(this.font, "Min:" + sliderMin, gui_x + 185, gui_y + 131, 0xFFAAAAAA, false);
-        guiGraphics.drawString(this.font, "Max:" + sliderMax, gui_x + 185, gui_y + 141, 0xFFAAAAAA, false);
+        int cy = sliderY + 10;
+        int trackBottom = (cy - TRACK_HEIGHT / 2) + TRACK_HEIGHT;
+        int minX = valueToX(sliderMin);
+        int maxX = valueToX(sliderMax);
+        int labelY = trackBottom + HANDLE_RADIUS + 2;
+
+        String minText = "Min:" + sliderMin;
+        String maxText = "Max:" + sliderMax;
+        guiGraphics.drawString(this.font, minText, minX - this.font.width(minText) / 2, labelY, 0xFFAAAAAA, false);
+        guiGraphics.drawString(this.font, maxText, maxX - this.font.width(maxText) / 2, labelY, 0xFFAAAAAA, false);
 
         guiGraphics.drawString(this.font, "target: " + target.getString(),
                 (width - this.font.width(target)) / 2 - 30, (height - this.font.lineHeight) / 2 + 73, 0xFFFFFFFF, false);
@@ -354,21 +392,21 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
 
     private void drawHandle(GuiGraphics graphics, int cx, int cy, boolean active) {
         int r = HANDLE_RADIUS;
-        int color = active ? HANDLE_ACTIVE_COLOR : HANDLE_COLOR;
-        // Shadow (bottom-right)
-        graphics.fill(cx - r + 1, cy - r + 2, cx + r + 1, cy + r + 1, HANDLE_SHADOW_COLOR);
-        // Border
-        graphics.fill(cx - r, cy - r, cx + r, cy + r, HANDLE_BORDER_COLOR);
-        // Fill
-        graphics.fill(cx - r + 1, cy - r + 1, cx + r - 1, cy + r - 1, color);
-        // Highlight (top-left edge)
-        graphics.fill(cx - r + 1, cy - r + 1, cx + r - 2, cy - r + 2, HANDLE_HIGHLIGHT_COLOR);
-        graphics.fill(cx - r + 1, cy - r + 1, cx - r + 2, cy + r - 2, HANDLE_HIGHLIGHT_COLOR);
+        int border = active ? HANDLE_ACTIVE_BORDER : HANDLE_BORDER_COLOR;
+        guiGraphics_fillCircle(graphics, cx, cy, r, border);
+        guiGraphics_fillCircle(graphics, cx, cy, r - 2, HANDLE_FILL_COLOR);
+    }
+
+    private static void guiGraphics_fillCircle(GuiGraphics graphics, int cx, int cy, int r, int color) {
+        for (int y = -r; y <= r; y++) {
+            int dx = (int) Math.sqrt((double) (r * r - y * y));
+            graphics.fill(cx - dx, cy + y, cx + dx + 1, cy + y + 1, color);
+        }
     }
 
     private static class ModulatingSetButton extends AbstractWidget {
         private final OnPress onPress;
-        private static final float BASE_SCALE = 30f;
+        private static final float BASE_SCALE = 20f;
         private static final float ROTATION_SPEED = 45f;
 
         public ModulatingSetButton(int x, int y, int width, int height, OnPress onPress) {

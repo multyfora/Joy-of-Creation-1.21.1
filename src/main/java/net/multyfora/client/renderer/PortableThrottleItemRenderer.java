@@ -50,7 +50,7 @@ public class PortableThrottleItemRenderer extends BlockEntityWithoutLevelRendere
         BlockState dummyState = Blocks.AIR.defaultBlockState();
         SuperByteBuffer bodyBuffer = CachedBuffers.partial(JocPartialModels.THROTTLE_BODY, dummyState);
         if (bodyBuffer != null) {
-            bodyBuffer.light(light).renderInto(poseStack, bufferSource.getBuffer(RenderType.solid()));
+            bodyBuffer.light(light).renderInto(poseStack, bufferSource.getBuffer(RenderType.translucent()));
         }
 
         poseStack.pushPose();
@@ -59,7 +59,7 @@ public class PortableThrottleItemRenderer extends BlockEntityWithoutLevelRendere
         
         SuperByteBuffer knobBuffer = CachedBuffers.partial(JocPartialModels.THROTTLE_KNOB, dummyState);
         if (knobBuffer != null) {
-            knobBuffer.light(light).renderInto(poseStack, bufferSource.getBuffer(RenderType.solid()));
+            knobBuffer.light(light).renderInto(poseStack, bufferSource.getBuffer(RenderType.translucent()));
         }
         poseStack.popPose();
     }

@@ -15,14 +15,16 @@ public class NetworkUtils {
             return null;
         }
 
-        // Check that the used item is a PORTABLE-TYPEWRITER
+        // Check main hand, offhand, then full inventory
         ItemStack usedItem = player.getMainHandItem();
-        if( usedItem.getItem().asItem() != validItem ) {
-            usedItem = player.getOffhandItem();
-            if( usedItem.getItem().asItem() != validItem ) {
-                return null;
-            }
+        if (usedItem.getItem().asItem() == validItem) return usedItem;
+
+        usedItem = player.getOffhandItem();
+        if (usedItem.getItem().asItem() == validItem) return usedItem;
+
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.getItem().asItem() == validItem) return stack;
         }
-        return usedItem;
+        return null;
     }
 }
