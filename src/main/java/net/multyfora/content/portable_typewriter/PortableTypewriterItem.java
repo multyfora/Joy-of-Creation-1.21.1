@@ -142,8 +142,14 @@ public class PortableTypewriterItem extends Item {
         CompoundTag tag = getOrCreateBindingsTag(stack);
         CompoundTag bindings = tag.getCompound(TAG_KEY_BINDINGS);
         CompoundTag entry = new CompoundTag();
-        entry.put("first", frequencies.getFirst().getStack().save(registries, new CompoundTag()));
-        entry.put("second", frequencies.getSecond().getStack().save(registries, new CompoundTag()));
+        ItemStack first = frequencies.getFirst().getStack();
+        ItemStack second = frequencies.getSecond().getStack();
+        if (first != null && !first.isEmpty()) {
+            entry.put("first", first.save(registries, new CompoundTag()));
+        }
+        if (second != null && !second.isEmpty()) {
+            entry.put("second", second.save(registries, new CompoundTag()));
+        }
         bindings.put(String.valueOf(glfwKeyCode), entry);
         tag.put(TAG_KEY_BINDINGS, bindings);
         saveTag(stack, tag);

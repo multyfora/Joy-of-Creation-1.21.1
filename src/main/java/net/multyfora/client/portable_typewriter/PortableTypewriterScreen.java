@@ -154,6 +154,11 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
             graphics.renderItem(cursorItem, mouseX - 8, mouseY - 8);
             graphics.renderItemDecorations(font, cursorItem, mouseX - 8, mouseY - 8);
         }
+
+        ItemStack hovered = getHoveredInventoryStack(mouseX, mouseY);
+        if (hovered != null) {
+            graphics.renderTooltip(font, hovered, mouseX, mouseY);
+        }
     }
 
     @Override
@@ -188,6 +193,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
             invLeft(),
             invTopY()
         );
+        graphics.drawString(font, Component.translatable("joc.gui.inventory"), origin.x, invTopY() - 12, 0x888888);
         GraphicsUtils.renderInventory(
             graphics, font,
             origin,
@@ -214,7 +220,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
 
             if (selectedKeyCode >= 0) {
                 int cx = freqSlotsCenterX();
-                int fy = freqSlotsTop();
+                int fy = freqSlotsTop() - FREQ_SLOT_SIZE / 2;
                 int totalW = FREQ_SLOT_SIZE * 2 + 8;
                 int slotX1 = cx - totalW / 2;
                 int slotX2 = slotX1 + FREQ_SLOT_SIZE + 8;
@@ -305,7 +311,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         if (held == null || mc.level == null) return;
         var registries = mc.level.registryAccess();
 
-        if (firstFreqItem.isEmpty() || secondFreqItem.isEmpty()) {
+        if (firstFreqItem.isEmpty() && secondFreqItem.isEmpty()) {
             PortableTypewriterItem.clearKeyBinding(held, selectedKeyCode);
         } else {
             Couple<Frequency> freq = Couple.create(Frequency.of(firstFreqItem), Frequency.of(secondFreqItem));
@@ -330,7 +336,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         if (slotIndex < 0 || slotIndex > 1) return null;
         if (selectedKeyCode < 0) return null;
         int cx = freqSlotsCenterX();
-        int fy = freqSlotsTop();
+        int fy = freqSlotsTop() - FREQ_SLOT_SIZE / 2;
         int totalW = FREQ_SLOT_SIZE * 2 + 8;
         int x = cx - totalW / 2 + slotIndex * (FREQ_SLOT_SIZE + 8);
         return new Rect2i(x, fy, FREQ_SLOT_SIZE, FREQ_SLOT_SIZE);
@@ -352,6 +358,37 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         List<Rect2i> areas = new ArrayList<>();
         areas.add(new Rect2i(leftPos, topPos, imageWidth, imageHeight));
         return areas;
+    }
+
+    private ItemStack getHoveredInventoryStack(double mx, double my) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return null;
+        Inventory inv = mc.player.getInventory();
+        int startX = invLeft();
+        int startY = invTopY();
+
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                int slotIdx = 9 + row * 9 + col;
+                int x = startX + col * (INV_SLOT_SIZE - INV_SLOT_THICKNESS);
+                int y = startY + row * (INV_SLOT_SIZE - INV_SLOT_THICKNESS);
+                if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
+                    ItemStack stack = inv.getItem(slotIdx);
+                    return stack.isEmpty() ? null : stack;
+                }
+            }
+        }
+
+        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
+        for (int col = 0; col < 9; col++) {
+            int x = startX + col * (INV_SLOT_SIZE - INV_SLOT_THICKNESS);
+            if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
+                ItemStack stack = inv.getItem(col);
+                return stack.isEmpty() ? null : stack;
+            }
+        }
+
+        return null;
     }
 
     private static ItemStack getHeldItem() {

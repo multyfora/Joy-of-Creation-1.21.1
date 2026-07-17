@@ -20,6 +20,8 @@
   "block.joc.red_symmetric_cross_sail": "Red Symmetric Cross Sail",
   "block.joc.black_symmetric_cross_sail": "Black Symmetric Cross Sail",
 
+  "joc.gui.inventory": "Inventory",
+
   "item.joc.portable_typewriter": "Portable Typewriter",
   "item.joc.portable_throttle": "Portable Throttle Lever",
   "screen.joc.portable_throttle.hint": "Click an inventory item, then click a frequency slot to set it",

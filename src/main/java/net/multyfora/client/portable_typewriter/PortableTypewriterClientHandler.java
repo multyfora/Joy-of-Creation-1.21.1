@@ -7,8 +7,10 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import net.createmod.catnip.outliner.Outliner;
 import net.multyfora.client.FreqScreenMenu;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
 import net.multyfora.index.JocMenuTypes;
@@ -17,6 +19,9 @@ import net.multyfora.network.PortableTypewriterInputPacket;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
+
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Client-side handler for the Portable Typewriter item.
@@ -38,6 +43,32 @@ public class PortableTypewriterClientHandler {
     // Pending bind target position
     private static BlockPos bindTarget;
 
+    private static final Set<Integer> bindPrevPressed = new HashSet<>();
+    private static boolean bindBaselineRecorded = false;
+
+    private static final int[] BINDABLE_KEYS = {
+        GLFW.GLFW_KEY_ESCAPE,
+        GLFW.GLFW_KEY_1, GLFW.GLFW_KEY_2, GLFW.GLFW_KEY_3, GLFW.GLFW_KEY_4, GLFW.GLFW_KEY_5,
+        GLFW.GLFW_KEY_6, GLFW.GLFW_KEY_7, GLFW.GLFW_KEY_8, GLFW.GLFW_KEY_9, GLFW.GLFW_KEY_0,
+        GLFW.GLFW_KEY_MINUS, GLFW.GLFW_KEY_EQUAL, GLFW.GLFW_KEY_BACKSPACE,
+        GLFW.GLFW_KEY_TAB,
+        GLFW.GLFW_KEY_Q, GLFW.GLFW_KEY_W, GLFW.GLFW_KEY_E, GLFW.GLFW_KEY_R,
+        GLFW.GLFW_KEY_T, GLFW.GLFW_KEY_Y, GLFW.GLFW_KEY_U, GLFW.GLFW_KEY_I,
+        GLFW.GLFW_KEY_O, GLFW.GLFW_KEY_P,
+        GLFW.GLFW_KEY_LEFT_BRACKET, GLFW.GLFW_KEY_RIGHT_BRACKET, GLFW.GLFW_KEY_BACKSLASH,
+        GLFW.GLFW_KEY_CAPS_LOCK,
+        GLFW.GLFW_KEY_A, GLFW.GLFW_KEY_S, GLFW.GLFW_KEY_D, GLFW.GLFW_KEY_F,
+        GLFW.GLFW_KEY_G, GLFW.GLFW_KEY_H, GLFW.GLFW_KEY_J, GLFW.GLFW_KEY_K, GLFW.GLFW_KEY_L,
+        GLFW.GLFW_KEY_SEMICOLON, GLFW.GLFW_KEY_APOSTROPHE, GLFW.GLFW_KEY_ENTER,
+        GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_RIGHT_SHIFT,
+        GLFW.GLFW_KEY_Z, GLFW.GLFW_KEY_X, GLFW.GLFW_KEY_C, GLFW.GLFW_KEY_V,
+        GLFW.GLFW_KEY_B, GLFW.GLFW_KEY_N, GLFW.GLFW_KEY_M,
+        GLFW.GLFW_KEY_COMMA, GLFW.GLFW_KEY_PERIOD, GLFW.GLFW_KEY_SLASH,
+        GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_RIGHT_CONTROL,
+        GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_RIGHT_ALT,
+        GLFW.GLFW_KEY_SPACE
+    };
+
     // Toggles between IDLE and ACTIVE mode
     public static void toggle() {
         if (MODE == Mode.IDLE) {
@@ -48,12 +79,11 @@ public class PortableTypewriterClientHandler {
         }
     }
 
-    // Enters BIND mode when a key is selected and a redstone link is right-clicked
     public static void toggleBindMode(BlockPos target) {
-        if (selectedKey >= 0) {
-            MODE = Mode.BIND;
-            bindTarget = target;
-        }
+        MODE = Mode.BIND;
+        bindTarget = target;
+        bindBaselineRecorded = false;
+        bindPrevPressed.clear();
     }
 
     // Opens the keyboard layout GUI and clears the selected key
@@ -91,6 +121,8 @@ public class PortableTypewriterClientHandler {
     private static void onReset() {
         packetCooldown = 0;
         bindTarget = null;
+        bindPrevPressed.clear();
+        bindBaselineRecorded = false;
         if (!currentlyPressed.isEmpty()) {
             PacketDistributor.sendToServer(new PortableTypewriterInputPacket(currentlyPressed, false));
         }
@@ -133,12 +165,42 @@ public class PortableTypewriterClientHandler {
 
         long window = mc.getWindow().getWindow();
 
-        // BIND mode: send the bind packet and return to IDLE
-        if (MODE == Mode.BIND && bindTarget != null && selectedKey >= 0) {
-            PacketDistributor.sendToServer(new PortableTypewriterBindPacket(selectedKey, bindTarget));
-            MODE = Mode.IDLE;
-            bindTarget = null;
-            selectedKey = -1;
+        if (MODE == Mode.BIND && bindTarget != null) {
+            VoxelShape shape = mc.level.getBlockState(bindTarget).getShape(mc.level, bindTarget);
+            if (!shape.isEmpty()) {
+                Outliner.getInstance()
+                    .showAABB("typewriter_bind", shape.bounds().move(bindTarget))
+                    .colored(0xB74B2D)
+                    .lineWidth(1/16f);
+            }
+
+            if (!bindBaselineRecorded) {
+                bindPrevPressed.clear();
+                for (int key : BINDABLE_KEYS) {
+                    if (InputConstants.isKeyDown(window, key)) {
+                        bindPrevPressed.add(key);
+                    }
+                }
+                bindBaselineRecorded = true;
+                return;
+            }
+
+            for (int key : BINDABLE_KEYS) {
+                boolean currentlyDown = InputConstants.isKeyDown(window, key);
+                boolean wasDown = bindPrevPressed.contains(key);
+                if (currentlyDown && !wasDown) {
+                    PacketDistributor.sendToServer(new PortableTypewriterBindPacket(key, bindTarget));
+                    MODE = Mode.IDLE;
+                    bindTarget = null;
+                    bindPrevPressed.clear();
+                    bindBaselineRecorded = false;
+                    return;
+                }
+                if (wasDown != currentlyDown) {
+                    if (currentlyDown) bindPrevPressed.add(key);
+                    else bindPrevPressed.remove(key);
+                }
+            }
             return;
         }
 

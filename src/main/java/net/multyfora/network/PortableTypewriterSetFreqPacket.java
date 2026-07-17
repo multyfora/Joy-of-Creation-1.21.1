@@ -56,7 +56,7 @@ public class PortableTypewriterSetFreqPacket implements CustomPacketPayload {
         var registries = player.level().registryAccess();
         ItemStack first = ItemStack.parseOptional(registries, firstItem);
         ItemStack second = ItemStack.parseOptional(registries, secondItem);
-        if( first.isEmpty() || second.isEmpty() ) {
+        if( first.isEmpty() && second.isEmpty() ) {
             PortableTypewriterItem.clearKeyBinding(item, glfwKeyCode);
             return;
         }

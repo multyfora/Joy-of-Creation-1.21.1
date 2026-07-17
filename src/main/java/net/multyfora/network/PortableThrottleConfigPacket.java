@@ -62,9 +62,6 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
         var registries = player.level().registryAccess();
         ItemStack first = ItemStack.parseOptional(registries, firstItem);
         ItemStack second = ItemStack.parseOptional(registries, secondItem);
-        if( first.isEmpty() || second.isEmpty() ) {
-            return;
-        }
 
         Couple<Frequency> freq = Couple.create(
             Frequency.of(first),
