@@ -1,0 +1,27 @@
+{
+  "parent": "joc:set_target",
+  "criteria": {
+    "0": {
+      "trigger": "joc:seeking_nothing_builtin"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.joc.seeking_nothing.desc"
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:spyglass"
+    },
+    "title": {
+      "translate": "advancement.joc.seeking_nothing"
+    }
+  },
+  "requirements": [
+    [
+      "0"
+    ]
+  ]
+}

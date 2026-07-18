@@ -9,6 +9,7 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.advancement.JocAdvancements;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -32,5 +33,9 @@ public class JocDataGenerators {
                 new JocBlockTagsProvider(packOutput, lookupProvider, existingFileHelper));
         generator.addProvider(event.includeServer(),
                 new JocRecipeProvider(packOutput, lookupProvider));
+        generator.addProvider(event.includeServer(),
+                new JocAdvancements(packOutput, lookupProvider));
+        generator.addProvider(event.includeClient(),
+                new JocLangProvider(packOutput));
     }
 }

@@ -1,0 +1,14 @@
+{
+  "advancement.joc.all_seeing_eye": "The All Seeing Eye",
+  "advancement.joc.all_seeing_eye.desc": "Put an Eye of Ender in the Seeker",
+  "advancement.joc.inseekerption": "Inseekerption",
+  "advancement.joc.inseekerption.desc": "Complete the recursion",
+  "advancement.joc.root": "Seek the Truth",
+  "advancement.joc.root.desc": "Acquire a Seeker",
+  "advancement.joc.seeking_nothing": "Seeking Nothing",
+  "advancement.joc.seeking_nothing.desc": "Lose the target sublevel",
+  "advancement.joc.set_target": "Looking for something?",
+  "advancement.joc.set_target.desc": "Set a target in the Seeker",
+  "advancement.joc.six_eyes": "Six Eyes",
+  "advancement.joc.six_eyes.desc": "use six eyes to see everything"
+}

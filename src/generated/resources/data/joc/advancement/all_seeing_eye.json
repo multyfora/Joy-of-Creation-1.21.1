@@ -1,0 +1,26 @@
+{
+  "parent": "joc:root",
+  "criteria": {
+    "0": {
+      "trigger": "joc:all_seeing_eye_builtin"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancement.joc.all_seeing_eye.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:ender_eye"
+    },
+    "title": {
+      "translate": "advancement.joc.all_seeing_eye"
+    }
+  },
+  "requirements": [
+    [
+      "0"
+    ]
+  ]
+}

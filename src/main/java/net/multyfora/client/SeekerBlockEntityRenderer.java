@@ -39,8 +39,22 @@ public class SeekerBlockEntityRenderer extends SafeBlockEntityRenderer<SeekerBlo
             SeekerBlockEntity blockEntity, float partialTick, float insertProgress,
             PoseStack ms, MultiBufferSource buffer, int light
     ) {
-        float pitch = blockEntity.spyglassPointer.lerpedYawDegrees.getValue(partialTick) + 180.0f;
-        float yaw   = blockEntity.spyglassPointer.lerpedPitchDegrees.getValue(partialTick);
+        float lerpedPitch, lerpedYaw;
+
+        if (blockEntity.lostTarget) {
+            long t = blockEntity.getLevel() != null ? blockEntity.getLevel().getGameTime() : 0;
+            float phase = t + partialTick;
+            float yawNoise = (float) (Math.sin(phase * 0.5) * Math.sin(phase * 0.4));
+            float pitchNoise = (float) (Math.sin(phase * 0.9) * Math.sin(phase * 0.2));
+            lerpedPitch = yawNoise * 180;
+            lerpedYaw = pitchNoise * 90;
+        } else {
+            lerpedPitch = blockEntity.spyglassPointer.lerpedYawDegrees.getValue(partialTick);
+            lerpedYaw   = blockEntity.spyglassPointer.lerpedPitchDegrees.getValue(partialTick);
+        }
+
+        float pitch = lerpedPitch + 180.0f;
+        float yaw   = lerpedYaw;
 
         ms.pushPose();
         ms.translate(0.5, 0.5, 0.5);

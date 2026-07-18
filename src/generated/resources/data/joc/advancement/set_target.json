@@ -1,0 +1,26 @@
+{
+  "parent": "joc:root",
+  "criteria": {
+    "0": {
+      "trigger": "joc:set_target_builtin"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancement.joc.set_target.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:spyglass"
+    },
+    "title": {
+      "translate": "advancement.joc.set_target"
+    }
+  },
+  "requirements": [
+    [
+      "0"
+    ]
+  ]
+}

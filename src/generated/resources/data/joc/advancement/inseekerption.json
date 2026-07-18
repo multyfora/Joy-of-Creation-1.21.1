@@ -1,0 +1,27 @@
+{
+  "parent": "joc:root",
+  "criteria": {
+    "0": {
+      "trigger": "joc:inseekerption_builtin"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.joc.inseekerption.desc"
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:compass"
+    },
+    "title": {
+      "translate": "advancement.joc.inseekerption"
+    }
+  },
+  "requirements": [
+    [
+      "0"
+    ]
+  ]
+}

@@ -14,6 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
@@ -21,6 +22,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import net.multyfora.advancement.JocAdvancements;
 import net.multyfora.client.seeker.SeekerBakedModel;
 import net.multyfora.client.seeker.SeekerMenu;
 import net.multyfora.content.Pointer;
@@ -92,6 +94,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     private SubLevel subLevel;
     @Nullable
     private UUID trackedSubLevel;
+    public boolean lostTarget;
+
+    private static final java.util.Map<java.util.UUID, java.util.List<BlockPos>> EYES_ON_PLAYER = new java.util.HashMap<>();
 
     public SeekerBlockEntity(BlockPos pos, BlockState state) {
         super(JocBlockEntityTypes.SEEKER.get(), pos, state);
@@ -114,6 +119,13 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (level.isClientSide) {
             spyglassPointer.lerpedPitchDegrees.tickChaser();
             spyglassPointer.lerpedYawDegrees.tickChaser();
+
+            if (lostTarget) {
+                float randomYaw = level.random.nextFloat() * 360;
+                float randomPitch = (level.random.nextFloat() - 0.5f) * 180;
+                spyglassPointer.lerpedYawDegrees.chase(randomYaw, 200.0, LerpedFloat.Chaser.EXP);
+                spyglassPointer.lerpedPitchDegrees.chase(randomPitch, 200.0, LerpedFloat.Chaser.EXP);
+            }
         }
 
         if (isVirtual() || level.isClientSide) {
@@ -138,14 +150,29 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         if (trackedSubLevel != null) {
             updateTargetFromSubLevel();
+            if (!lostTarget) {
+                SubLevelContainer container = SubLevelContainer.getContainer(level);
+                if (container == null || container.getSubLevel(trackedSubLevel) == null) {
+                    lostTarget = true;
+                    trackedSubLevel = null;
+                    Player nearest = level.getNearestPlayer(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), 50, false);
+                    if (nearest instanceof ServerPlayer sp) {
+                        net.multyfora.advancement.JocAdvancements.SEEKING_NOTHING.awardTo(sp);
+                    }
+                    clearTarget();
+                    return;
+                }
+            }
         }
 
-        if (module == ModuleType.SPYGLASS) {
-            tickSpyglass();
-        } else if (module == ModuleType.PLAYER_DIR) {
-            tickPlayerDir();
-        } else if (module == ModuleType.MODULATING) {
-            tickModulating();
+        if (!lostTarget) {
+            if (module == ModuleType.SPYGLASS) {
+                tickSpyglass();
+            } else if (module == ModuleType.PLAYER_DIR) {
+                tickPlayerDir();
+            } else if (module == ModuleType.MODULATING) {
+                tickModulating();
+            }
         }
     }
 
@@ -253,8 +280,18 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             Quaterniond invRot = new Quaterniond(SpaceUtils.getSublevelRot(subLevel)).invert();
             playerDirLookDir = SpaceUtils.rotateQuat(lookAngle.normalize(), invRot).scale(-1);
             updatePlayerDirAngles();
+
+            EYES_ON_PLAYER.computeIfAbsent(trackedPlayerUUID, k -> new java.util.ArrayList<>()).add(worldPosition);
+
+            if (countActiveEyes(trackedPlayerUUID) >= 6) {
+                net.multyfora.advancement.JocAdvancements.SIX_EYES.awardTo((net.minecraft.server.level.ServerPlayer) player);
+            }
         } else {
             playerDirPowered = false;
+            java.util.List<BlockPos> list = EYES_ON_PLAYER.get(trackedPlayerUUID);
+            if (list != null) {
+                list.remove(worldPosition);
+            }
         }
 
         setChanged();
@@ -268,6 +305,21 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         Player player = level.getPlayerByUUID(trackedPlayerUUID);
         if (player == null || !player.isAlive() || player.isSpectator()) return null;
         return player;
+    }
+
+    private int countActiveEyes(java.util.UUID playerUUID) {
+        java.util.List<BlockPos> positions = EYES_ON_PLAYER.get(playerUUID);
+        if (positions == null || level == null) return 0;
+        int count = 0;
+        for (BlockPos pos : positions) {
+            if (level.getBlockEntity(pos) instanceof SeekerBlockEntity s
+                && s.module == ModuleType.PLAYER_DIR
+                && s.playerDirPowered
+                && playerUUID.equals(s.trackedPlayerUUID)) {
+                count++;
+            }
+        }
+        return count;
     }
 
 
@@ -301,6 +353,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         this.targetX = x; this.targetY = y; this.targetZ = z;
         this.hasTarget = true;
         this.currentTarget = new Vec3(x, y, z);
+        this.lostTarget = false;
         if (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING) {
             spyglassPointer.calculateRelativeAngle(this);
         }
@@ -311,6 +364,11 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
             selectivelyUpdateNeighbors();
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+
+            Player nearest = level.getNearestPlayer(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), 10, false);
+            if (nearest instanceof ServerPlayer sp) {
+                JocAdvancements.SET_TARGET.awardTo(sp);
+            }
         }
 
         if (level != null && !level.isClientSide && !isSyncingFromLink) {
@@ -369,6 +427,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         ModuleType incoming = moduleTypeForItem(stack);
         if (incoming == ModuleType.NONE) return false;
 
+        lostTarget = false;
         this.module = incoming;
 
         if ((incoming == ModuleType.SPYGLASS || incoming == ModuleType.MODULATING)
@@ -378,6 +437,13 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
                 if (carried.subLevelId() != null && level != null) {
                     trackedSubLevel = carried.subLevelId();
                     updateTargetFromSubLevel();
+
+                    if (player instanceof ServerPlayer sp) {
+                        SubLevel current = Sable.HELPER.getContaining(this);
+                        if (current != null && carried.subLevelId().equals(current.getUniqueId())) {
+                            net.multyfora.advancement.JocAdvancements.INSEEKERPTION.awardTo(sp);
+                        }
+                    }
                 } else {
                     trackedSubLevel = null;
                     setTarget(carried.pos().getX(), carried.pos().getY(), carried.pos().getZ());
@@ -388,6 +454,10 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         if (!player.getAbilities().instabuild) {
             stack.shrink(1);
+        }
+
+        if (incoming == ModuleType.PLAYER_DIR && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            net.multyfora.advancement.JocAdvancements.ALL_SEEING_EYE.awardTo(serverPlayer);
         }
 
         markInsertAnimation();
@@ -412,10 +482,18 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         minDistance = 0;
         maxDistance = 256;
         playerDirLookDir = Vec3.ZERO;
+        java.util.UUID oldTracked = trackedPlayerUUID;
         trackedPlayerUUID = null;
         playerDirPowered = false;
+        if (oldTracked != null) {
+            java.util.List<BlockPos> list = EYES_ON_PLAYER.get(oldTracked);
+            if (list != null) {
+                list.remove(worldPosition);
+            }
+        }
         signalStrengthCache.clear();
         trackedSubLevel = null;
+        lostTarget = false;
         clearTarget();
 
         if (!drop.isEmpty()) {
@@ -638,6 +716,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         // Only sync the animation trigger over the network — never persist it to the save file
         if (clientPacket) {
             tag.putLong("insert_anim_tick", insertAnimStartTick);
+            tag.putBoolean("lost_target", lostTarget);
         }
 
         // Persist linked seekers in server save; sync to client for highlight rendering
@@ -705,6 +784,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         if (clientPacket && tag.contains("insert_anim_tick")) {
             insertAnimStartTick = tag.getLong("insert_anim_tick");
+            lostTarget = tag.getBoolean("lost_target");
         }
 
         // Restore linked seekers from both server save and client sync

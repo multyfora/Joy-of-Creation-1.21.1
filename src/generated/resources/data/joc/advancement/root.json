@@ -1,0 +1,33 @@
+{
+  "criteria": {
+    "0": {
+      "conditions": {
+        "items": [
+          {
+            "items": "joc:seeker"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "background": "joc:textures/gui/advancements.png",
+    "description": {
+      "translate": "advancement.joc.root.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "joc:seeker"
+    },
+    "title": {
+      "translate": "advancement.joc.root"
+    }
+  },
+  "requirements": [
+    [
+      "0"
+    ]
+  ]
+}

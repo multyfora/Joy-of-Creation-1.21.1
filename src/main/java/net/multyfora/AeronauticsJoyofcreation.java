@@ -1,5 +1,7 @@
 package net.multyfora;
 
+import net.multyfora.advancement.JocAdvancements;
+import net.multyfora.advancement.criterion.JocTriggers;
 import net.multyfora.index.*;
 import net.multyfora.ponder.JocPonderPlugin;
 import net.multyfora.register.CreativeRegister;
@@ -7,15 +9,17 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.RegisterEvent;
 
 import net.multyfora.client.renderer.PortableThrottleItemRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleRenderHandler;
@@ -76,6 +80,13 @@ public class AeronauticsJoyofcreation {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::clientSetup);
         modEventBus.addListener(this::registerClientExtensions);
+
+        modEventBus.addListener(RegisterEvent.class, event -> {
+            if (event.getRegistry() == BuiltInRegistries.TRIGGER_TYPES) {
+                JocAdvancements.register();
+                JocTriggers.register();
+            }
+        });
 
         // Final Registrations
         registerCreativeModeTab();

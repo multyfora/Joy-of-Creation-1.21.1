@@ -1,0 +1,26 @@
+{
+  "parent": "joc:all_seeing_eye",
+  "criteria": {
+    "0": {
+      "trigger": "joc:six_eyes_builtin"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancement.joc.six_eyes.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:ender_eye"
+    },
+    "title": {
+      "translate": "advancement.joc.six_eyes"
+    }
+  },
+  "requirements": [
+    [
+      "0"
+    ]
+  ]
+}
