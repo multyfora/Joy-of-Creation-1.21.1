@@ -77,6 +77,13 @@ public class JocAdvancements implements DataProvider {
         .after(ALL_SEEING_EYE)
     );
 
+    public static final JocAdvancement DISMANTLE = create("dismantle", b -> b
+        .icon(Items.SHEARS)
+        .title("Dismantle")
+        .description("cut a sublevel in half using sheers")
+        .after(ROOT)
+    );
+
     public static void register() {
         Object _reg = ROOT;
         Object _reg2 = SET_TARGET;
@@ -84,6 +91,7 @@ public class JocAdvancements implements DataProvider {
         Object _reg4 = INSEEKERPTION;
         Object _reg5 = SEEKING_NOTHING;
         Object _reg6 = SIX_EYES;
+        Object _reg7 = DISMANTLE;
     }
 
     public static JocAdvancement create(String id, Function<JocAdvancement, JocAdvancement> builder) {

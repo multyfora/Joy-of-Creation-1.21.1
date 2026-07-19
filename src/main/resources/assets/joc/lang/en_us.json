@@ -97,5 +97,8 @@
   "advancement.joc.seeking_nothing": "Seeking Nothing",
   "advancement.joc.seeking_nothing.desc": "Lose the target sublevel",
   "advancement.joc.six_eyes": "Six Eyes",
-  "advancement.joc.six_eyes.desc": "use six eyes to see everything"
+  "advancement.joc.six_eyes.desc": "use six eyes to see everything",
+
+  "advancement.joc.dismantle": "Dismantle",
+  "advancement.joc.dismantle.desc": "cut a sublevel in half using sheers"
 }

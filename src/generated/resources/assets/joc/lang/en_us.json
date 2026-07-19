@@ -1,6 +1,8 @@
 {
   "advancement.joc.all_seeing_eye": "The All Seeing Eye",
   "advancement.joc.all_seeing_eye.desc": "Put an Eye of Ender in the Seeker",
+  "advancement.joc.dismantle": "Dismantle",
+  "advancement.joc.dismantle.desc": "cut a sublevel in half using sheers",
   "advancement.joc.inseekerption": "Inseekerption",
   "advancement.joc.inseekerption.desc": "Complete the recursion",
   "advancement.joc.root": "Seek the Truth",

@@ -1,0 +1,26 @@
+{
+  "parent": "joc:root",
+  "criteria": {
+    "0": {
+      "trigger": "joc:dismantle_builtin"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancement.joc.dismantle.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:shears"
+    },
+    "title": {
+      "translate": "advancement.joc.dismantle"
+    }
+  },
+  "requirements": [
+    [
+      "0"
+    ]
+  ]
+}
