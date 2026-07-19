@@ -18,13 +18,14 @@ import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.index.JocDataComponents;
 import net.multyfora.index.SeekerCapturedTarget;
 import net.multyfora.network.*;
+import net.multyfora.network.ShearsCutPayloads.ShearsCutPayload;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
 
 public class PayloadRegister {
     public static void RegisterPayloads(IEventBus modEventBus) {
         IPayloadHandler<SeekerPayloads.OpenSeekerPayload> SeekerPayloader =
-            (payload, context) -> {
+                (payload, context) -> {
                 context.enqueueWork(
                     () -> {
                         Player player = context.player();
@@ -313,6 +314,21 @@ public class PayloadRegister {
                             () -> {
                                 if( context.player() instanceof ServerPlayer sp ) {
                                     payload.handleServer(sp);
+                                }
+                            }
+                        );
+                    }
+                );
+
+                // Shears cut: client → server cut rectangle
+                registrar.playToServer(
+                    ShearsCutPayload.TYPE,
+                    ShearsCutPayload.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                if( context.player() instanceof ServerPlayer sp ) {
+                                    payload.handle(sp);
                                 }
                             }
                         );

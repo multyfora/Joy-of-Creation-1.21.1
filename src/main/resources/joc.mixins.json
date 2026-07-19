@@ -15,7 +15,8 @@
     "physics_staff.PhysicsStaffMouseHandlerMixin",
     "physics_staff.PhysicsStaffClientHandlerMixin",
     "EntitySubLevelRotationHelperMixin",
-    "KeyboardHandlerMixin"
+    "KeyboardHandlerMixin",
+    "ShearsItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1
