@@ -44,7 +44,11 @@ public class ShearsCutRenderer {
 
     private static final RandomSource RNG = RandomSource.create();
     private static final float BORDER_THICKNESS = 0.06f;
-    private static final float GLOW_MARGIN = 0.25f;
+    private static final float CORE_LINE_THICKNESS = 0.015f;
+    private static final float GLOW_MARGIN_INNER = 0.15f;
+    private static final float GLOW_MARGIN_OUTER = 0.35f;
+    private static final float GRID_SPACING = 0.5f;
+    private static final float GRID_LINE_THICKNESS = 0.008f;
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
@@ -52,6 +56,8 @@ public class ShearsCutRenderer {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
+
+        renderFlash(event, mc);
 
         if (ShearsCutState.getMode() != ShearsCutState.Mode.PLACING) return;
 
@@ -77,57 +83,116 @@ public class ShearsCutRenderer {
         Direction orientation = ShearsCutState.getOrientation();
         if (orientation == null) return;
 
-        Vec3 u = ShearsCutState.axisU(orientation);
-        Vec3 v = ShearsCutState.axisV(orientation);
-        Vec3 origin = ShearsCutState.planeOrigin(p1, orientation);
-
-        int minX = Math.min(p1.getX(), p2.getX());
-        int maxX = Math.max(p1.getX(), p2.getX()) + 1;
-        int minZ = Math.min(p1.getZ(), p2.getZ());
-        int maxZ = Math.max(p1.getZ(), p2.getZ()) + 1;
-        int minY = Math.min(p1.getY(), p2.getY());
-        int maxY = Math.max(p1.getY(), p2.getY()) + 1;
-
-        Vec3 center, u2 = u, v2 = v;
-        double hu, hv;
-        switch (orientation) {
-            case UP, DOWN -> {
-                center = new Vec3((minX + maxX) / 2.0, origin.y, (minZ + maxZ) / 2.0);
-                hu = (maxX - minX) / 2.0; hv = (maxZ - minZ) / 2.0;
-            }
-            case NORTH, SOUTH -> {
-                center = new Vec3((minX + maxX) / 2.0, (minY + maxY) / 2.0, origin.z);
-                hu = (maxX - minX) / 2.0; hv = (maxY - minY) / 2.0;
-            }
-            default -> {
-                center = new Vec3(origin.x, (minY + maxY) / 2.0, (minZ + maxZ) / 2.0);
-                hu = (maxZ - minZ) / 2.0; hv = (maxY - minY) / 2.0;
-            }
-        }
-        center = center.add(Vec3.atLowerCornerOf(orientation.getNormal()).scale(0.01));
-        double margin = 0.15;
-        hu += margin;
-        hv += margin;
+        ShearsCutState.PlaneGeometry geom = ShearsCutState.computeGeometry(p1, p2, orientation);
+        Vec3 u = geom.u();
+        Vec3 v = geom.v();
+        Vec3 center = geom.center().add(Vec3.atLowerCornerOf(orientation.getNormal()).scale(0.01));
+        double hu = geom.hu();
+        double hv = geom.hv();
 
         Vec3 camPos = event.getCamera().getPosition();
         VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(CUT_PLANE);
         PoseStack.Pose pose = event.getPoseStack().last();
 
-        float time = (System.currentTimeMillis() % 4000L) / 4000f;
+        float time = (System.currentTimeMillis() % 6000L) / 6000f;
         float pulse = 0.5f + 0.5f * (float) Math.sin(time * Math.PI * 2.0);
+        float fastPulse = 0.5f + 0.5f * (float) Math.sin(time * Math.PI * 8.0);
 
-        float glowAlpha = 0.05f + 0.03f * pulse;
-        renderRect(consumer, pose, mc, camPos, center, u, v, hu + GLOW_MARGIN, hv + GLOW_MARGIN,
-                1.0f, 0.15f, 0.1f, glowAlpha);
+        renderRect(consumer, pose, mc, camPos, center, u, v, hu + GLOW_MARGIN_OUTER, hv + GLOW_MARGIN_OUTER,
+                1.0f, 0.12f, 0.08f, 0.035f + 0.02f * pulse);
+        renderRect(consumer, pose, mc, camPos, center, u, v, hu + GLOW_MARGIN_INNER, hv + GLOW_MARGIN_INNER,
+                1.0f, 0.2f, 0.1f, 0.05f + 0.04f * pulse);
 
-        renderFrame(consumer, pose, mc, camPos, center, u, v, hu, hv, BORDER_THICKNESS,
-                0.08f, 0.02f, 0.02f, 0.85f);
+        renderRect(consumer, pose, mc, camPos, center, u, v, hu - BORDER_THICKNESS, hv - BORDER_THICKNESS,
+                0.15f, 0.02f, 0.02f, 0.08f);
+
+        renderGrid(consumer, pose, mc, camPos, center, u, v, hu - BORDER_THICKNESS, hv - BORDER_THICKNESS, time);
 
         renderShimmerRect(consumer, pose, mc, camPos, center, u, v, hu - BORDER_THICKNESS, hv - BORDER_THICKNESS, time);
+
+        renderFrame(consumer, pose, mc, camPos, center, u, v, hu, hv, BORDER_THICKNESS,
+                0.06f, 0.02f, 0.02f, 0.9f);
+        renderFrame(consumer, pose, mc, camPos, center, u, v, hu - BORDER_THICKNESS, hv - BORDER_THICKNESS, CORE_LINE_THICKNESS,
+                1.0f, 0.35f + 0.25f * fastPulse, 0.15f, 0.9f);
+
+        renderCornerBrackets(consumer, pose, mc, camPos, center, u, v, hu, hv, fastPulse);
 
         mc.renderBuffers().bufferSource().endBatch(CUT_PLANE);
 
         spawnMotes(mc, center, u, v, hu, hv);
+    }
+
+    private static void renderFlash(RenderLevelStageEvent event, Minecraft mc) {
+        float progress = ShearsCutState.getFlashProgress();
+        if (progress < 0) return;
+
+        Vec3 center = ShearsCutState.getFlashWorldCenter();
+        Vec3 u = ShearsCutState.getFlashWorldU();
+        Vec3 v = ShearsCutState.getFlashWorldV();
+        if (center == null || u == null || v == null) return;
+
+        double hu = ShearsCutState.getFlashHu();
+        double hv = ShearsCutState.getFlashHv();
+
+        Vec3 camPos = event.getCamera().getPosition();
+        VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(CUT_PLANE);
+        PoseStack.Pose pose = event.getPoseStack().last();
+
+        float meetT = 0.4f;
+        if (progress < meetT) {
+            float t = progress / meetT;
+            double curHu = hu * (1f - t);
+            double curHv = hv * (1f - t);
+            double thickness = 0.08 + 0.10 * (1f - t);
+            float alpha = 1f - t * 0.3f;
+
+            renderFlashFrame(consumer, pose, center, u, v, camPos, curHu, curHv, thickness + 0.15,
+                    1f, 0.6f, 0.45f, 0.18f * alpha);
+            renderFlashFrame(consumer, pose, center, u, v, camPos, curHu, curHv, thickness,
+                    1f, 0.8f, 0.7f, 0.8f * alpha);
+        } else {
+            float t = (progress - meetT) / (1f - meetT);
+            float alpha = (1f - t);
+            alpha = alpha * alpha;
+
+            double burstHu = Math.min(hu, hv) * 0.25 * t + 0.05;
+            double burstHv = burstHu;
+
+            Vec3 c0 = center.add(u.scale(-burstHu)).add(v.scale(-burstHv)).subtract(camPos);
+            Vec3 c1 = center.add(u.scale(burstHu)).add(v.scale(-burstHv)).subtract(camPos);
+            Vec3 c2 = center.add(u.scale(burstHu)).add(v.scale(burstHv)).subtract(camPos);
+            Vec3 c3 = center.add(u.scale(-burstHu)).add(v.scale(burstHv)).subtract(camPos);
+            quad(consumer, pose, c0, c1, c2, c3, 1f, 0.75f, 0.65f, 0.85f * alpha);
+
+            double glowHu = burstHu + 0.4 * alpha;
+            double glowHv = burstHv + 0.4 * alpha;
+            Vec3 g0 = center.add(u.scale(-glowHu)).add(v.scale(-glowHv)).subtract(camPos);
+            Vec3 g1 = center.add(u.scale(glowHu)).add(v.scale(-glowHv)).subtract(camPos);
+            Vec3 g2 = center.add(u.scale(glowHu)).add(v.scale(glowHv)).subtract(camPos);
+            Vec3 g3 = center.add(u.scale(-glowHu)).add(v.scale(glowHv)).subtract(camPos);
+            quad(consumer, pose, g0, g1, g2, g3, 1f, 0.6f, 0.45f, 0.22f * alpha);
+        }
+
+        mc.renderBuffers().bufferSource().endBatch(CUT_PLANE);
+    }
+
+    private static void renderFlashFrame(VertexConsumer consumer, PoseStack.Pose pose, Vec3 center, Vec3 u, Vec3 v, Vec3 camPos,
+                                         double hu, double hv, double thickness,
+                                         float r, float g, float b, float a) {
+        renderFlashStrip(consumer, pose, center, u, v, camPos, -hu, hu, hv - thickness, hv, r, g, b, a);
+        renderFlashStrip(consumer, pose, center, u, v, camPos, -hu, hu, -hv, -hv + thickness, r, g, b, a);
+        renderFlashStrip(consumer, pose, center, u, v, camPos, -hu, -hu + thickness, -hv, hv, r, g, b, a);
+        renderFlashStrip(consumer, pose, center, u, v, camPos, hu - thickness, hu, -hv, hv, r, g, b, a);
+    }
+
+    private static void renderFlashStrip(VertexConsumer consumer, PoseStack.Pose pose, Vec3 center, Vec3 u, Vec3 v, Vec3 camPos,
+                                         double u0, double u1, double v0, double v1,
+                                         float r, float g, float b, float a) {
+        Vec3 c0 = center.add(u.scale(u0)).add(v.scale(v0)).subtract(camPos);
+        Vec3 c1 = center.add(u.scale(u1)).add(v.scale(v0)).subtract(camPos);
+        Vec3 c2 = center.add(u.scale(u1)).add(v.scale(v1)).subtract(camPos);
+        Vec3 c3 = center.add(u.scale(u0)).add(v.scale(v1)).subtract(camPos);
+        quad(consumer, pose, c0, c1, c2, c3, r, g, b, a);
     }
 
     private static Vec3 toWorld(Minecraft mc, Vec3 camPos, Vec3 local) {
@@ -161,17 +226,32 @@ public class ShearsCutRenderer {
         Vec3 w0 = toWorld(mc, camPos, c0), w1 = toWorld(mc, camPos, c1),
                 w2 = toWorld(mc, camPos, c2), w3 = toWorld(mc, camPos, c3);
 
-        consumer.addVertex(pose, (float) w0.x, (float) w0.y, (float) w0.z).setColor(1.0f, 0.1f, 0.1f, a0);
-        consumer.addVertex(pose, (float) w1.x, (float) w1.y, (float) w1.z).setColor(1.0f, 0.15f, 0.1f, a1);
-        consumer.addVertex(pose, (float) w2.x, (float) w2.y, (float) w2.z).setColor(1.0f, 0.1f, 0.1f, a2);
-        consumer.addVertex(pose, (float) w3.x, (float) w3.y, (float) w3.z).setColor(1.0f, 0.15f, 0.1f, a3);
+        consumer.addVertex(pose, (float) w0.x, (float) w0.y, (float) w0.z).setColor(1.0f, 0.15f, 0.1f, a0);
+        consumer.addVertex(pose, (float) w1.x, (float) w1.y, (float) w1.z).setColor(1.0f, 0.2f, 0.1f, a1);
+        consumer.addVertex(pose, (float) w2.x, (float) w2.y, (float) w2.z).setColor(1.0f, 0.15f, 0.1f, a2);
+        consumer.addVertex(pose, (float) w3.x, (float) w3.y, (float) w3.z).setColor(1.0f, 0.2f, 0.1f, a3);
     }
 
     private static float shimmerAlpha(float phase, float sweep) {
         float d = Math.abs(phase - sweep);
         d = Math.min(d, 1f - d);
         float bump = Math.max(0f, 1f - d * 4f);
-        return 0.10f + 0.18f * bump;
+        return 0.08f + 0.14f * bump;
+    }
+
+    private static void renderGrid(VertexConsumer consumer, PoseStack.Pose pose, Minecraft mc, Vec3 camPos,
+                                   Vec3 center, Vec3 u, Vec3 v, double hu, double hv, float time) {
+        float scroll = (time * 0.4f) % GRID_SPACING;
+        float r = 1.0f, g = 0.3f, b = 0.15f, a = 0.10f;
+
+        for (float x = (float) -hu + scroll; x < hu; x += GRID_SPACING) {
+            renderStrip(consumer, pose, mc, camPos, center, u, v,
+                    x - GRID_LINE_THICKNESS, x + GRID_LINE_THICKNESS, -hv, hv, r, g, b, a);
+        }
+        for (float y = (float) -hv + scroll; y < hv; y += GRID_SPACING) {
+            renderStrip(consumer, pose, mc, camPos, center, u, v,
+                    -hu, hu, y - GRID_LINE_THICKNESS, y + GRID_LINE_THICKNESS, r, g, b, a);
+        }
     }
 
     private static void renderFrame(VertexConsumer consumer, PoseStack.Pose pose, Minecraft mc, Vec3 camPos,
@@ -181,6 +261,22 @@ public class ShearsCutRenderer {
         renderStrip(consumer, pose, mc, camPos, center, u, v, -hu, hu, -hv, -hv + thickness, r, g, b, a);
         renderStrip(consumer, pose, mc, camPos, center, u, v, -hu, -hu + thickness, -hv, hv, r, g, b, a);
         renderStrip(consumer, pose, mc, camPos, center, u, v, hu - thickness, hu, -hv, hv, r, g, b, a);
+    }
+
+    private static void renderCornerBrackets(VertexConsumer consumer, PoseStack.Pose pose, Minecraft mc, Vec3 camPos,
+                                             Vec3 center, Vec3 u, Vec3 v, double hu, double hv, float pulse) {
+        double armLen = Math.min(hu, hv) * 0.35;
+        double armThick = 0.03 + 0.015 * pulse;
+        float r = 1.0f, g = 0.4f + 0.3f * pulse, b = 0.2f, a = 0.95f;
+
+        double[][] corners = { {-hu, -hv, 1, 1}, {hu, -hv, -1, 1}, {hu, hv, -1, -1}, {-hu, hv, 1, -1} };
+        for (double[] c : corners) {
+            double cu = c[0], cv = c[1], su = c[2], sv = c[3];
+            renderStrip(consumer, pose, mc, camPos, center, u, v,
+                    cu, cu + su * armLen, cv, cv + sv * armThick, r, g, b, a);
+            renderStrip(consumer, pose, mc, camPos, center, u, v,
+                    cu, cu + su * armThick, cv, cv + sv * armLen, r, g, b, a);
+        }
     }
 
     private static void renderStrip(VertexConsumer consumer, PoseStack.Pose pose, Minecraft mc, Vec3 camPos,
@@ -212,9 +308,19 @@ public class ShearsCutRenderer {
         Vec3 local = center.add(u.scale(su)).add(v.scale(sv));
         Vec3 world = Sable.HELPER.projectOutOfSubLevel(mc.level, local);
 
-        boolean warm = RNG.nextBoolean();
-        Vector3f color = warm ? new Vector3f(1.0f, 0.25f, 0.15f) : new Vector3f(1.0f, 0.55f, 0.2f);
-        float scale = 0.55f + RNG.nextFloat() * 0.35f;
+        float roll = RNG.nextFloat();
+        Vector3f color;
+        float scale;
+        if (roll < 0.08f) {
+            color = new Vector3f(1.0f, 0.95f, 0.85f);
+            scale = 0.3f + RNG.nextFloat() * 0.2f;
+        } else if (roll < 0.5f) {
+            color = new Vector3f(1.0f, 0.25f, 0.15f);
+            scale = 0.55f + RNG.nextFloat() * 0.35f;
+        } else {
+            color = new Vector3f(1.0f, 0.55f, 0.2f);
+            scale = 0.5f + RNG.nextFloat() * 0.3f;
+        }
         DustParticleOptions dust = new DustParticleOptions(color, scale);
 
         mc.level.addParticle(dust, world.x, world.y, world.z,

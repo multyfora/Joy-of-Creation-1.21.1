@@ -21,6 +21,9 @@ public class JocBlockLootSubProvider extends BlockLootSubProvider {
     @Override
     protected void generate() {
         for (DyeColor color : DyeColor.values()) {
+            dropSelf(JocBlocks.BALLOONS.get(color).get());
+        }
+        for (DyeColor color : DyeColor.values()) {
             dropSelf(JocBlocks.SYMMETRIC_CROSS_SAILS.get(color).get());
         }
     }
@@ -28,6 +31,9 @@ public class JocBlockLootSubProvider extends BlockLootSubProvider {
     @Override
     protected Iterable<Block> getKnownBlocks() {
         List<Block> blocks = new ArrayList<>();
+        for (DyeColor color : DyeColor.values()) {
+            blocks.add(JocBlocks.BALLOONS.get(color).get());
+        }
         for (DyeColor color : DyeColor.values()) {
             blocks.add(JocBlocks.SYMMETRIC_CROSS_SAILS.get(color).get());
         }

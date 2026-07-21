@@ -1,5 +1,7 @@
 package net.multyfora.index;
 
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.multyfora.content.shatter_assembler.ShatterAssemblerBlockEntity;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -11,18 +13,16 @@ import net.multyfora.content.seeker.SeekerBlockEntity;
 
 import static net.minecraft.core.registries.Registries.BLOCK_ENTITY_TYPE;
 
-// Registry holder for all block entity types, linking each BE class to its corresponding block(s)
 public class JocBlockEntityTypes {
-    // DeferredRegister for block entity types, using the BLOCK_ENTITY_TYPE registry
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
         DeferredRegister.create(BLOCK_ENTITY_TYPE, AeronauticsJoyofcreation.MODID);
 
-    // Balloon block entity: empty for now
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BalloonBlockEntity>> BALLOON =
         BLOCK_ENTITY_TYPES.register(
             "balloon",
             () -> BlockEntityType.Builder.of(
-                BalloonBlockEntity::new, JocBlocks.BALLOON.get()
+                BalloonBlockEntity::new,
+                JocBlocks.BALLOONS.values().stream().map(h -> (Block) h.get()).toArray(Block[]::new)
             ).build(null)
         );
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShatterAssemblerBlockEntity>> SHATTER_ASSEMBLER =

@@ -35,8 +35,8 @@ import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.index.JocBlockEntityTypes;
 import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocEntityTypes;
-import net.multyfora.index.JocDataComponents;
 import net.multyfora.index.JocMenuTypes;
+import net.minecraft.world.item.DyeColor;
 import net.multyfora.network.EntityGrabPayloads;
 import net.multyfora.network.SeekerPayloads;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -70,7 +70,22 @@ public class ClientSubscriptions {
 
     @SubscribeEvent
     static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
-        event.register((state, level, pos, tintIndex) -> DYE_COLORS[state.getValue(BalloonBlock.COLOR)], JocBlocks.BALLOON.get());
+        for (var entry : JocBlocks.BALLOONS.entrySet()) {
+            event.register((state, level, pos, tintIndex) -> {
+                if (state.getBlock() instanceof BalloonBlock balloon) {
+                    return DYE_COLORS[balloon.getColor().ordinal()];
+                }
+                return 0xFFFFFF;
+            }, entry.getValue().get());
+        }
+    }
+
+    @SubscribeEvent
+    static void onRegisterItemColors(RegisterColorHandlersEvent.Item event) {
+        for (var entry : JocBlocks.BALLOON_ITEMS.entrySet()) {
+            DyeColor color = entry.getKey();
+            event.register((stack, tintIndex) -> DYE_COLORS[color.ordinal()], entry.getValue().get());
+        }
     }
 
     @SubscribeEvent

@@ -9,7 +9,9 @@ import net.multyfora.ponder.scenes.*;
 
 public class JocPonderScenes {
     public static void register(PonderSceneRegistrationHelper<ResourceLocation> helper) {
-        helper.forComponents(JocBlocks.BALLOON.getId())
+        helper.forComponents(JocBlocks.BALLOONS.values().stream()
+                        .map(block -> block.getId())
+                        .toArray(ResourceLocation[]::new))
                 .addStoryBoard("balloon", BalloonScenes::basic, JocPonderTags.JOC_AERONAUTICS);
 
         helper.forComponents(JocBlocks.SEEKER.getId())

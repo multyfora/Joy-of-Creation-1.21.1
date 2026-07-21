@@ -7,13 +7,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
 import net.multyfora.content.gyroseat.GyroscopicSeatBlock;
 import net.multyfora.content.shatter_assembler.ShatterAssemblerBlock;
@@ -30,14 +23,10 @@ import java.util.Map;
 import static net.multyfora.AeronauticsJoyofcreation.BLOCKS;
 import static net.multyfora.index.JocItems.ITEMS;
 
-/**
- * Registry holder for all custom blocks in the mod.
- * Blocks are registered via AeronauticsJoyofcreation.BLOCKS DeferredRegister.
- **/
 public class JocBlocks {
-    // Balloon block: a soft, non-occluding block available in 16 colors
-    public static final DeferredBlock<BalloonBlock> BALLOON;
-    // Seeker block: directional block that emits redstone toward a target
+
+    public static final Map<DyeColor, DeferredBlock<BalloonBlock>> BALLOONS = new EnumMap<>(DyeColor.class);
+    public static final Map<DyeColor, DeferredItem<BlockItem>> BALLOON_ITEMS = new EnumMap<>(DyeColor.class);
     public static final DeferredBlock<SeekerBlock> SEEKER;
     public static final DeferredBlock<GyroscopicSeatBlock> GYROSCOPIC_SEAT;
 
@@ -45,6 +34,24 @@ public class JocBlocks {
     public static final Map<DyeColor, DeferredItem<BlockItem>> SYMMETRIC_CROSS_SAIL_ITEMS = new EnumMap<>(DyeColor.class);
     public static final DeferredBlock<ShatterAssemblerBlock> SHATTER_ASSEMBLER;
     static {
+        for (DyeColor color : DyeColor.values()) {
+            String balloonName = color.getSerializedName() + "_balloon";
+            DeferredBlock<BalloonBlock> balloonBlock = BLOCKS.register(balloonName,
+                    () -> new BalloonBlock(
+                            BlockBehaviour.Properties.of()
+                                    .mapColor(MapColor.COLOR_GRAY)
+                                    .strength(0.8f)
+                                    .sound(SoundType.WOOL)
+                                    .noOcclusion()
+                                    .isViewBlocking((state, level, pos) -> false)
+                                    .isSuffocating((state, level, pos) -> false),
+                            color
+                    ));
+            BALLOONS.put(color, balloonBlock);
+            BALLOON_ITEMS.put(color, ITEMS.register(balloonName,
+                    () -> new BlockItem(BALLOONS.get(color).get(), new Item.Properties())));
+        }
+
         for (DyeColor color : DyeColor.values()) {
             String symName = color.getSerializedName() + "_symmetric_cross_sail";
             DeferredBlock<SymmetricCrossSailBlock> symBlock = BLOCKS.register(symName,
@@ -68,16 +75,6 @@ public class JocBlocks {
                         .noOcclusion()
                 )
         );
-        // Balloon: wool-like properties, transparent, no suffocation, no view blocking
-        BALLOON = BLOCKS.register("balloon",
-                () -> new BalloonBlock(BlockBehaviour.Properties.of()
-                        .mapColor(MapColor.COLOR_GRAY)
-                        .strength(0.8f)
-                        .sound(SoundType.WOOL)
-                        .noOcclusion()
-                        .isViewBlocking((state, level, pos) -> false)
-                        .isSuffocating((state, level, pos) -> false)));
-        // Seeker: metal block with no occlusion
         SEEKER = BLOCKS.register("seeker",
             () -> {
                 return new SeekerBlock(
@@ -90,7 +87,6 @@ public class JocBlocks {
                 );
             }
         );
-        // Gyroscopic seat: prevents sublevel rotation for the rider
         GYROSCOPIC_SEAT = BLOCKS.register("gyroscopic_seat",
             () -> new GyroscopicSeatBlock(
                 BlockBehaviour.Properties.of()
@@ -103,6 +99,5 @@ public class JocBlocks {
         );
     }
 
-    // Dummy method to trigger static initialisation; registers blocks via the static initializer above
     public static void register() {}
 }

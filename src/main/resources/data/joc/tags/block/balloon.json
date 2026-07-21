@@ -1,5 +1,20 @@
 {
   "values": [
-    "joc:balloon"
+    "joc:white_balloon",
+    "joc:orange_balloon",
+    "joc:magenta_balloon",
+    "joc:light_blue_balloon",
+    "joc:yellow_balloon",
+    "joc:lime_balloon",
+    "joc:pink_balloon",
+    "joc:gray_balloon",
+    "joc:light_gray_balloon",
+    "joc:cyan_balloon",
+    "joc:purple_balloon",
+    "joc:blue_balloon",
+    "joc:brown_balloon",
+    "joc:green_balloon",
+    "joc:red_balloon",
+    "joc:black_balloon"
   ]
 }

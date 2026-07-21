@@ -6,6 +6,7 @@ import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.index.JocBlocks;
 
 public class JocItemModelProvider extends ItemModelProvider {
 
@@ -15,6 +16,11 @@ public class JocItemModelProvider extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
+        for (DyeColor color : DyeColor.values()) {
+            String colorName = color.getSerializedName();
+            withExistingParent(colorName + "_balloon", modLoc("block/balloon"));
+        }
+
         for (DyeColor color : DyeColor.values()) {
             String colorName = color.getSerializedName();
             withExistingParent(colorName + "_symmetric_cross_sail", modLoc("block/" + colorName + "_symmetric_cross_sail"));

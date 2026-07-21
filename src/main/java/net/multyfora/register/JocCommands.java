@@ -29,6 +29,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirectionalBlock;
@@ -37,7 +38,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.multyfora.content.shears_cut.SubLevelCutter;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
-import net.multyfora.content.balloon.BalloonBlock;
 import net.multyfora.index.JocBlocks;
 
 import java.util.ArrayList;
@@ -115,8 +115,8 @@ public class JocCommands {
                 .setValue(DirectionalBlock.FACING, Direction.UP);
         BlockState topConnectorState = ropeConnectorBlock.defaultBlockState()
                 .setValue(DirectionalBlock.FACING, Direction.DOWN);
-        BlockState balloonState = JocBlocks.BALLOON.get().defaultBlockState()
-                .setValue(BalloonBlock.COLOR, color);
+        DyeColor dyeColor = DyeColor.byId(color);
+        BlockState balloonState = JocBlocks.BALLOONS.get(dyeColor).get().defaultBlockState();
 
         boolean placedBottom = level.setBlock(connectorBottom, bottomConnectorState, Block.UPDATE_ALL);
         boolean placedTop = level.setBlock(connectorTop, topConnectorState, Block.UPDATE_ALL);

@@ -21,6 +21,14 @@ public class JocBlockStateProvider extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
+        ModelFile balloonModel = models().getExistingFile(modLoc("block/balloon"));
+
+        for (DyeColor color : DyeColor.values()) {
+            String colorName = color.getSerializedName();
+            getVariantBuilder(JocBlocks.BALLOONS.get(color).get())
+                    .partialState().addModels(new ConfiguredModel(balloonModel));
+        }
+
         for (DyeColor color : DyeColor.values()) {
             registerSymmetricCrossSail(JocBlocks.SYMMETRIC_CROSS_SAILS.get(color).get(), color);
         }

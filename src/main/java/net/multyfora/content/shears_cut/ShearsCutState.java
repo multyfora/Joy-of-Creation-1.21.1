@@ -15,6 +15,13 @@ public class ShearsCutState {
     private static BlockPos point1;
     private static Direction orientation;
 
+    public static final long FLASH_DURATION_MS = 800;
+    private static long flashStartMs = -1;
+    private static Vec3 flashWorldCenter, flashWorldU, flashWorldV;
+    private static double flashHu, flashHv;
+
+    public record PlaneGeometry(Vec3 center, Vec3 u, Vec3 v, double hu, double hv) {}
+
     public static void startCut(BlockPos pos, Direction face) {
         point1 = pos;
         orientation = face;
@@ -26,6 +33,22 @@ public class ShearsCutState {
             reset();
             return;
         }
+
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null) {
+            PlaneGeometry geom = computeGeometry(point1, point2, orientation);
+            Vec3 localCenter = geom.center().add(Vec3.atLowerCornerOf(orientation.getNormal()).scale(0.01));
+            Vec3 worldCenter = Sable.HELPER.projectOutOfSubLevel(mc.level, localCenter);
+            Vec3 worldU = Sable.HELPER.projectOutOfSubLevel(mc.level, localCenter.add(geom.u())).subtract(worldCenter);
+            Vec3 worldV = Sable.HELPER.projectOutOfSubLevel(mc.level, localCenter.add(geom.v())).subtract(worldCenter);
+            flashWorldCenter = worldCenter;
+            flashWorldU = worldU;
+            flashWorldV = worldV;
+            flashHu = geom.hu();
+            flashHv = geom.hv();
+            flashStartMs = System.currentTimeMillis();
+        }
+
         PacketDistributor.sendToServer(new ShearsCutPayloads.ShearsCutPayload(point1, point2, orientation));
         reset();
     }
@@ -77,6 +100,57 @@ public class ShearsCutState {
             default -> new Vec3(plane, p1.getY(), p1.getZ());
         };
     }
+
+    /** Computes the plane's center + in-plane basis + half-extents (with margin)
+     *  in sub-level-local space, from the two selected corners and the face orientation.
+     *  Shared by the renderer (live preview) and finishCut (flash geometry). */
+    public static PlaneGeometry computeGeometry(BlockPos p1, BlockPos p2, Direction orientation) {
+        Vec3 u = axisU(orientation);
+        Vec3 v = axisV(orientation);
+        Vec3 origin = planeOrigin(p1, orientation);
+
+        int minX = Math.min(p1.getX(), p2.getX());
+        int maxX = Math.max(p1.getX(), p2.getX()) + 1;
+        int minZ = Math.min(p1.getZ(), p2.getZ());
+        int maxZ = Math.max(p1.getZ(), p2.getZ()) + 1;
+        int minY = Math.min(p1.getY(), p2.getY());
+        int maxY = Math.max(p1.getY(), p2.getY()) + 1;
+
+        Vec3 center;
+        double hu, hv;
+        switch (orientation) {
+            case UP, DOWN -> {
+                center = new Vec3((minX + maxX) / 2.0, origin.y, (minZ + maxZ) / 2.0);
+                hu = (maxX - minX) / 2.0; hv = (maxZ - minZ) / 2.0;
+            }
+            case NORTH, SOUTH -> {
+                center = new Vec3((minX + maxX) / 2.0, (minY + maxY) / 2.0, origin.z);
+                hu = (maxX - minX) / 2.0; hv = (maxY - minY) / 2.0;
+            }
+            default -> {
+                center = new Vec3(origin.x, (minY + maxY) / 2.0, (minZ + maxZ) / 2.0);
+                hu = (maxZ - minZ) / 2.0; hv = (maxY - minY) / 2.0;
+            }
+        }
+        double margin = 0.15;
+        return new PlaneGeometry(center, u, v, hu + margin, hv + margin);
+    }
+
+    public static float getFlashProgress() {
+        if (flashStartMs < 0) return -1f;
+        long elapsed = System.currentTimeMillis() - flashStartMs;
+        if (elapsed > FLASH_DURATION_MS) {
+            flashStartMs = -1;
+            return -1f;
+        }
+        return elapsed / (float) FLASH_DURATION_MS;
+    }
+
+    public static Vec3 getFlashWorldCenter() { return flashWorldCenter; }
+    public static Vec3 getFlashWorldU() { return flashWorldU; }
+    public static Vec3 getFlashWorldV() { return flashWorldV; }
+    public static double getFlashHu() { return flashHu; }
+    public static double getFlashHv() { return flashHv; }
 
     public static BlockPos getCursorPos() {
         var mc = net.minecraft.client.Minecraft.getInstance();
