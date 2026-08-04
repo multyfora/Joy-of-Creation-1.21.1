@@ -23,7 +23,6 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 
 import net.multyfora.client.renderer.PortableThrottleItemRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleRenderHandler;
-import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.index.JocItems;
 
 import net.multyfora.config.JocConfig;
@@ -32,13 +31,9 @@ import net.multyfora.content.crosssail.SymmetricCrossSailBlock; // ADDED THIS
 // CREATE API IMPORTS
 import com.simibubi.create.api.contraption.BlockMovementChecks;
 import net.createmod.ponder.foundation.PonderIndex;
-import net.neoforged.fml.loading.FMLEnvironment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.core.Direction;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 

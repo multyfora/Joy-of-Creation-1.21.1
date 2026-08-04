@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "joc_deflated_balloon",
+  "ingredients": [
+    {
+      "item": "minecraft:dried_kelp"
+    },
+    {
+      "item": "minecraft:string"
+    },
+    {
+      "item": "minecraft:gray_dye"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "joc:deflated_balloon_gray"
+  }
+}

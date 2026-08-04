@@ -12,6 +12,7 @@ import com.simibubi.create.AllBlocks;
 
 import net.minecraft.world.item.Items;
 import net.multyfora.index.JocBlocks;
+import net.multyfora.index.JocItems;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -54,5 +55,16 @@ public class JocRecipeProvider extends RecipeProvider {
                 .pattern("imi")
                 .unlockedBy("has_brass", has(AllItems.BRASS_INGOT.get()))
                 .save(output);
+
+        for (DyeColor color : DyeColor.values()) {
+            ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
+                            JocItems.DEFLATED_BALLOONS.get(color).get())
+                    .requires(Items.DRIED_KELP)
+                    .requires(Items.STRING)
+                    .requires(DyeItem.byColor(color))
+                    .group("joc_deflated_balloon")
+                    .unlockedBy("has_dried_kelp", has(Items.DRIED_KELP))
+                    .save(output);
+        }
     }
 }

@@ -6,5 +6,13 @@
   "seeker_item_out": {
     "category": "block",
     "sounds": [ "joc:seeker_item_out" ]
+  },
+  "balloon_blow": {
+    "category": "player",
+    "sounds": [ "joc:balloon_blow" ]
+  },
+  "balloon_pop": {
+    "category": "player",
+    "sounds": [ "joc:balloon_pop" ]
   }
 }
