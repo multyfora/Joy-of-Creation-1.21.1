@@ -11,6 +11,7 @@ import net.multyfora.AeronauticsJoyofcreation;
 public class EntityGrabPayloads {
     public static final ResourceLocation START_ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "entity_grab_start");
     public static final ResourceLocation STOP_ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "entity_grab_stop");
+    public static final ResourceLocation END_ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "entity_grab_end");
     public static final ResourceLocation GRAB_REQUEST_ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "grab_request");
     public static final ResourceLocation SET_HOLD_DISTANCE_ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "set_hold_distance");
 
@@ -31,6 +32,16 @@ public class EntityGrabPayloads {
     public record Stop() implements CustomPacketPayload {
         public static final Type<Stop> TYPE = new Type<>(STOP_ID);
         public static final StreamCodec<ByteBuf, Stop> CODEC = StreamCodec.unit(new Stop());
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public record End() implements CustomPacketPayload {
+        public static final Type<End> TYPE = new Type<>(END_ID);
+        public static final StreamCodec<ByteBuf, End> CODEC = StreamCodec.unit(new End());
 
         @Override
         public Type<? extends CustomPacketPayload> type() {

@@ -14,7 +14,9 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import dev.simulated_team.simulated.content.physics_staff.PhysicsStaffServerHandler;
 import dev.simulated_team.simulated.index.SimSoundEvents;
+import net.multyfora.mixin.physics_staff.PhysicsStaffServerHandlerMixin;
 
 import java.util.*;
 
@@ -32,6 +34,10 @@ public class CreativeStaffCaptureHandler {
 
         Player player = event.getEntity();
         if (!isHoldingStaff(player)) return;
+        if (isDraggingContraption(player)) {
+            stopContraptionDrag(player);
+            return;
+        }
 
         Entity target = event.getTarget();
         if (target instanceof Player && !JocConfig.CAN_PICKUP_PLAYERS.get()) return;
@@ -71,6 +77,10 @@ public class CreativeStaffCaptureHandler {
     public static void onEntityGrabRequestC2S(EntityGrabPayloads.GrabRequest payload, ServerPlayer player) {
         if (!JocConfig.ENABLE_CREATIVE_STAFF.get()) return;
         if (!isHoldingStaff(player)) return;
+        if (isDraggingContraption(player)) {
+            stopContraptionDrag(player);
+            return;
+        }
 
         ServerLevel level = player.serverLevel();
         Entity target = level.getEntity(payload.entityId());
@@ -144,9 +154,12 @@ public class CreativeStaffCaptureHandler {
             EntityGrabSession session = entry.getValue();
 
             Player player = session.level.getPlayerByUUID(playerId);
-            if (player == null || !player.isAlive() || !isHoldingStaff(player)) {
+            if (player == null || !player.isAlive() || !isHoldingStaff(player) || !JocConfig.ENABLE_CREATIVE_STAFF.get()) {
                 cleanup(session);
                 it.remove();
+                if (player instanceof ServerPlayer sp) {
+                    PacketDistributor.sendToPlayer(sp, new EntityGrabPayloads.End());
+                }
                 continue;
             }
 
@@ -184,6 +197,9 @@ public class CreativeStaffCaptureHandler {
         if (session != null) {
             cleanup(session);
             fling(session, player);
+            if (player instanceof ServerPlayer sp) {
+                PacketDistributor.sendToPlayer(sp, new EntityGrabPayloads.End());
+            }
         }
     }
 
@@ -219,6 +235,15 @@ public class CreativeStaffCaptureHandler {
             if (session.grabbedEntityId == entityId) return true;
         }
         return false;
+    }
+
+    private static boolean isDraggingContraption(Player player) {
+        PhysicsStaffServerHandler handler = PhysicsStaffServerHandler.get((ServerLevel) player.level());
+        return ((PhysicsStaffServerHandlerMixin) handler).joc$getDraggingSessions().containsKey(player.getUUID());
+    }
+
+    private static void stopContraptionDrag(Player player) {
+        PhysicsStaffServerHandler.get((ServerLevel) player.level()).stopDragging(player.getUUID());
     }
 
     private static class EntityGrabSession {

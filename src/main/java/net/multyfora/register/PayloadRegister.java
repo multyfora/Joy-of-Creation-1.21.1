@@ -290,6 +290,19 @@ public class PayloadRegister {
                     }
                 );
 
+                // Entity grab: server → client end
+                registrar.playToClient(
+                    EntityGrabPayloads.End.TYPE,
+                    EntityGrabPayloads.End.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                EntityGrabClientState.grabbedEntityId = 0;
+                            }
+                        );
+                    }
+                );
+
                 // Entity grab: client → server set hold distance
                 registrar.playToServer(
                     EntityGrabPayloads.SetHoldDistance.TYPE,

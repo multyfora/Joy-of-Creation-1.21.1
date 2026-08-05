@@ -88,7 +88,9 @@ public class PhysicsStaffClientHandlerMixin {
         assert client.level != null;
         Entity target = client.level.getEntity(EntityGrabClientState.grabbedEntityId);
 
-        assert target != null;
+        if (target == null) {
+            return;
+        }
         Vec3 center = target.position().add(0, target.getBbHeight() / 2, 0);
 
         assert client.player != null;
@@ -125,7 +127,9 @@ public class PhysicsStaffClientHandlerMixin {
 
         // Ensure beam exists in the handler's map (first-frame fallback)
         PhysicsStaffClientHandler handler = SimulatedClient.PHYSICS_STAFF_CLIENT_HANDLER;
-        assert target != null;
+        if (target == null) {
+            return;
+        }
         Vec3 renderEnd = target.getPosition(partial_ticks).add(0, target.getBbHeight() / 2, 0);
 
         // Check if beam exists in handler's map
@@ -213,9 +217,15 @@ public class PhysicsStaffClientHandlerMixin {
 
         Vec3 focusPos = PhysicsStaffClientHandler.getStaffFocusPos(client.player, true, partialTicks);
         if( focusPos.equals(Vec3.ZERO) ) {
+            EntityGrabClientState.grabbedEntityId = 0;
             return false;
         }
 
-        return client.player.getMainHandItem().getItem().asItem() == SimItems.PHYSICS_STAFF.asItem();
+        if (client.player.getMainHandItem().getItem().asItem() != SimItems.PHYSICS_STAFF.asItem()) {
+            EntityGrabClientState.grabbedEntityId = 0;
+            return false;
+        }
+
+        return true;
     }
 }

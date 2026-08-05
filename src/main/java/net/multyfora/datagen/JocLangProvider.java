@@ -57,6 +57,9 @@ public class JocLangProvider extends LanguageProvider {
         add("item.joc.portable_throttle", "Portable Throttle Lever");
         add("subtitles.joc.balloon_blow", "Balloon being blown");
         add("subtitles.joc.balloon_pop", "Balloon pops");
+        add("joc.recipe.balloon_blowing", "Balloon Blowing");
+        add("joc.recipe.balloon_blowing.tooltip", "Hold to use for 2 seconds");
+        add("emi.category.joc.balloon_blowing", "Balloon Blowing");
         add("screen.joc.portable_throttle.hint", "Click an inventory item, then click a frequency slot to set it");
         add("screen.joc.portable_throttle.saved", "\u00a7aSaved");
         add("screen.joc.portable_throttle.bound_strength", "Sending signal strength %s");

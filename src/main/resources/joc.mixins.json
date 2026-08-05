@@ -9,7 +9,8 @@
     "RopeItemMixin",
     "RopeConnectorBlockEntityMixin",
     "RopeConnectorRendererMixin",
-    "ClientboundRopeDataPacketMixin"
+    "ClientboundRopeDataPacketMixin",
+    "physics_staff.PhysicsStaffServerHandlerMixin"
   ],
   "client": [
     "physics_staff.PhysicsStaffMouseHandlerMixin",

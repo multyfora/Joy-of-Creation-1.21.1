@@ -5,12 +5,15 @@ import dev.simulated_team.simulated.index.SimBlocks;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.*;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 
 import com.simibubi.create.AllBlocks;
 
 import net.minecraft.world.item.Items;
+import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.content.balloon.BalloonBlowingRecipe;
 import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocItems;
 
@@ -65,6 +68,12 @@ public class JocRecipeProvider extends RecipeProvider {
                     .group("joc_deflated_balloon")
                     .unlockedBy("has_dried_kelp", has(Items.DRIED_KELP))
                     .save(output);
+        }
+
+        for (DyeColor color : DyeColor.values()) {
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID,
+                    "balloon_blowing/" + color.getSerializedName());
+            output.accept(id, new BalloonBlowingRecipe(color), null);
         }
     }
 }

@@ -3,11 +3,6 @@ package net.multyfora.register;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
@@ -156,7 +151,6 @@ public class ClientSubscriptions {
 
     @SubscribeEvent
     static void onMouseButtonPress(InputEvent.MouseButton.Pre event) {
-        handleMouseButtonPress(event);
         handleSpyglassScopedLeftClick(event);
     }
 
@@ -166,59 +160,6 @@ public class ClientSubscriptions {
     }
 
     // Longer Implementations
-
-    private static void handleMouseButtonPress(InputEvent.MouseButton.Pre event) {
-        if(
-               event.getAction() != 1
-            || event.getButton() != 1
-            || !JocConfig.ENABLE_CREATIVE_STAFF.get()
-        ) {
-            return;
-        }
-
-        Minecraft client = Minecraft.getInstance();
-        if(
-            client.player == null || client.level == null
-            || !CreativeStaffCaptureHandler.isHoldingStaff(client.player)
-        ) {
-            return;
-        }
-
-        Entity target = null;
-        if(client.crosshairPickEntity != null) {
-            target = client.crosshairPickEntity;
-        } else {
-            Entity viewer = client.getCameraEntity() != null ? client.getCameraEntity() : client.player;
-            if (viewer == null) {
-                return;
-            }
-
-            float range = 64.0f;
-            Vec3 start = viewer.getEyePosition();
-            Vec3 look = viewer.getLookAngle();
-            Vec3 end = start.add( look.scale(range) );
-            AABB aabb = viewer
-                .getBoundingBox()
-                .expandTowards( look.scale(range) )
-                .inflate(1.0, 1.0, 1.0)
-            ;
-
-            EntityHitResult result = ProjectileUtil.getEntityHitResult(
-                viewer, start, end, aabb,
-                (entity) -> { return !entity.isSpectator() && entity.isPickable(); },
-                range * range
-            );
-
-            if (result != null) {
-                target = result.getEntity();
-            }
-        }
-
-        if (target != null) {
-            PacketDistributor.sendToServer(new EntityGrabPayloads.GrabRequest(target.getId()));
-            event.setCanceled(true);
-        }
-    }
 
     private static void handleSpyglassScopedLeftClick(InputEvent.MouseButton.Pre event) {
         if (event.getAction() != 1 || event.getButton() != 0) return;
