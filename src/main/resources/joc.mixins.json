@@ -16,7 +16,9 @@
     "physics_staff.PhysicsStaffClientHandlerMixin",
     "EntitySubLevelRotationHelperMixin",
     "KeyboardHandlerMixin",
-    "ShearsItemMixin"
+    "ShearsItemMixin",
+    "ModListScreenMixin",
+    "InfoPanelMixin"
   ],
   "injectors": {
     "defaultRequire": 1
