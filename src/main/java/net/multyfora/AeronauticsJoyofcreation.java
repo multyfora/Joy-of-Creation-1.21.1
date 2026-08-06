@@ -27,6 +27,7 @@ import net.multyfora.index.JocItems;
 
 import net.multyfora.config.JocConfig;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock; // ADDED THIS
+import net.multyfora.register.JocTooltips;
 
 // CREATE API IMPORTS
 import com.simibubi.create.api.contraption.BlockMovementChecks;
@@ -91,10 +92,13 @@ public class AeronauticsJoyofcreation {
         RegisterPayloads(modEventBus);
     }
 
-private void clientSetup(final FMLClientSetupEvent event) {
+    private void clientSetup(final FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             PonderIndex.addPlugin(new JocPonderPlugin());
-            
+
+            JocTooltips.register();
+            NeoForge.EVENT_BUS.register(JocTooltips.class);
+
             PortableThrottleRenderHandler throttleHandler = new PortableThrottleRenderHandler();
             throttleHandler.registerListeners(NeoForge.EVENT_BUS);
         });

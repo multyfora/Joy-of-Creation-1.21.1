@@ -203,7 +203,7 @@ public class SymmetricCrossSailBlock extends RotatedPillarBlock implements IWren
 
     @Override
     public void sable$contributeLiftAndDrag(
-            LiftProviderContext ctx, ServerSubLevel subLevel, @NotNull Pose3d localPose,
+            LiftProviderContext ctx, ServerSubLevel subLevel, Pose3d localPose,
             double timeStep, Vector3dc linearVelocity, Vector3dc angularVelocity,
             Vector3d linearImpulse, Vector3d angularImpulse, @Nullable LiftProviderGroup group
     ) {

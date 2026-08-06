@@ -70,6 +70,18 @@ public class JocRecipeProvider extends RecipeProvider {
                     .save(output);
         }
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE,
+                JocItems.PORTABLE_THROTTLE.get())
+                .define('r', Items.REDSTONE)
+                .define('t', AllItems.TRANSMITTER)
+                .define('b', Items.STONE_BUTTON)
+                .define('l', SimBlocks.THROTTLE_LEVER)
+                .define('e', AllItems.ELECTRON_TUBE)
+                .pattern("ter")
+                .pattern("rlb")
+                .unlockedBy("has_throttle_lever", has(SimBlocks.THROTTLE_LEVER.get()))
+                .save(output);
+
         for (DyeColor color : DyeColor.values()) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID,
                     "balloon_blowing/" + color.getSerializedName());
