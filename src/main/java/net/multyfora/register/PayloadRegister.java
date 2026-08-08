@@ -1,17 +1,11 @@
 package net.multyfora.register;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.multyfora.client.seeker.SeekerDistanceMenu;
-import net.multyfora.client.seeker.SeekerDistanceScreen;
-import net.multyfora.client.seeker.SeekerMenu;
-import net.multyfora.client.seeker.SeekerScreen;
+import net.multyfora.client.ClientPayloadHandlers;
 import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
@@ -24,28 +18,6 @@ import net.neoforged.neoforge.network.handling.IPayloadHandler;
 
 public class PayloadRegister {
     public static void RegisterPayloads(IEventBus modEventBus) {
-        IPayloadHandler<SeekerPayloads.OpenSeekerPayload> SeekerPayloader =
-                (payload, context) -> {
-                context.enqueueWork(
-                    () -> {
-                        Player player = context.player();
-                        Level level = player.level();
-                        BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
-
-                        if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
-                            return;
-                        }
-
-                        SeekerMenu seekerMenu = new SeekerMenu(
-                            0, player.getInventory(), seekerBlockEntity
-                        );
-                        Minecraft.getInstance().setScreen(
-                            new SeekerScreen( seekerMenu, player.getInventory() )
-                        );
-                    }
-                );
-            }
-        ;
         IPayloadHandler<SeekerPayloads.ToggleModePayload> ToggleModePayloader =
                 (payload, context) -> {
                     context.enqueueWork(
@@ -117,7 +89,9 @@ public class PayloadRegister {
                 registrar.playToClient(
                     SeekerPayloads.OpenSeekerPayload.TYPE,
                     SeekerPayloads.OpenSeekerPayload.CODEC,
-                    SeekerPayloader
+                    (payload, context) -> context.enqueueWork(
+                        () -> ClientPayloadHandlers.handleOpenSeeker(payload, context)
+                    )
                 );
                 // Server-bound: updates the SeekerBlockEntity's target coordinates from the GUI
                 registrar.playToServer(
@@ -155,30 +129,12 @@ public class PayloadRegister {
                         );
                     }
                 ;
-                IPayloadHandler<SeekerDistancePayloads.OpenSeekerDistancePayload> OpenSeekerDistancePayloader =
-                    (payload, context) -> {
-                        context.enqueueWork(
-                            () -> {
-                                Player player = context.player();
-                                Level level = player.level();
-                                BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
-                                if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
-                                    return;
-                                }
-                                SeekerDistanceMenu seekerDistanceMenu = new SeekerDistanceMenu(
-                                    0, player.getInventory(), seekerBlockEntity
-                                );
-                                Minecraft.getInstance().setScreen(
-                                    new SeekerDistanceScreen( seekerDistanceMenu, player.getInventory() )
-                                );
-                            }
-                        );
-                    }
-                ;
                 registrar.playToClient(
                     SeekerDistancePayloads.OpenSeekerDistancePayload.TYPE,
                     SeekerDistancePayloads.OpenSeekerDistancePayload.CODEC,
-                    OpenSeekerDistancePayloader
+                    (payload, context) -> context.enqueueWork(
+                        () -> ClientPayloadHandlers.handleOpenSeekerDistance(payload, context)
+                    )
                 );
                 registrar.playToServer(
                     SeekerDistancePayloads.UpdateSeekerDistancePayload.TYPE,

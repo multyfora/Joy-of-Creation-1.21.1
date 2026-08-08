@@ -5,19 +5,14 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "joc.refmap.json",
   "mixins": [
-    "RopeStrandHolderBehaviorMixin",
-    "RopeItemMixin",
-    "RopeConnectorBlockEntityMixin",
-    "RopeConnectorRendererMixin",
-    "ClientboundRopeDataPacketMixin",
-    "physics_staff.PhysicsStaffServerHandlerMixin"
+    "physics_staff.PhysicsStaffServerHandlerMixin",
+    "ShearsItemMixin"
   ],
   "client": [
     "physics_staff.PhysicsStaffMouseHandlerMixin",
     "physics_staff.PhysicsStaffClientHandlerMixin",
     "EntitySubLevelRotationHelperMixin",
     "KeyboardHandlerMixin",
-    "ShearsItemMixin",
     "ModListScreenMixin",
     "InfoPanelMixin"
   ],
