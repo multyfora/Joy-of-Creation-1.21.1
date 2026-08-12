@@ -34,7 +34,7 @@ public class ShearsItemMixin {
         SubLevel sub = Sable.HELPER.getContaining(level, pos);
         if (sub == null || sub.isRemoved()) {
             if (level.isClientSide() && ShearsCutState.getMode() == ShearsCutState.Mode.PLACING) {
-                ShearsCutState.reset();
+                ShearsCutState.abortCut();
             }
             return;
         }
@@ -67,7 +67,7 @@ public class ShearsItemMixin {
             if (cursorPos != null) {
                 ShearsCutState.finishCut(cursorPos);
             } else {
-                ShearsCutState.reset();
+                ShearsCutState.abortCut();
             }
             cir.setReturnValue(InteractionResultHolder.success(stack));
             cir.cancel();

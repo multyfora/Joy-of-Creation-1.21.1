@@ -7,12 +7,15 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.multyfora.client.ClientPayloadHandlers;
 import net.multyfora.content.seeker.SeekerBlockEntity;
+import net.multyfora.content.shears_cut.ShearsCutRemoteState;
+import net.multyfora.content.shears_cut.ShearsPreviewServerHandler;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.index.JocDataComponents;
 import net.multyfora.index.SeekerCapturedTarget;
 import net.multyfora.network.*;
 import net.multyfora.network.ShearsCutPayloads.ShearsCutPayload;
+import net.multyfora.network.ShearsCutPayloads.ShearsPreviewPayload;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
 
@@ -298,6 +301,25 @@ public class PayloadRegister {
                             () -> {
                                 if( context.player() instanceof ServerPlayer sp ) {
                                     payload.handle(sp);
+                                }
+                            }
+                        );
+                    }
+                );
+
+                // Shears preview: bidirectional relay
+                registrar.playBidirectional(
+                    ShearsPreviewPayload.TYPE,
+                    ShearsPreviewPayload.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                if (context.flow().isServerbound()) {
+                                    if (context.player() instanceof ServerPlayer sp) {
+                                        ShearsPreviewServerHandler.handle(payload, sp);
+                                    }
+                                } else {
+                                    ShearsCutRemoteState.handle(payload);
                                 }
                             }
                         );

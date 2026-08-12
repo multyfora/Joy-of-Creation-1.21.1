@@ -22,6 +22,20 @@ public final class SubLevelCutter {
 
     public record Result(int pieceCount, int largestSize) {}
 
+    /** The real coordinate of a block's face along its perpendicular axis.
+     *  UP/SOUTH/EAST faces sit at pos+1 on their axis; DOWN/NORTH/WEST sit at pos. */
+    public static int planeCoord(BlockPos pos, Direction face) {
+        return switch (face) {
+            case UP -> pos.getY() + 1;
+            case DOWN -> pos.getY();
+            case NORTH -> pos.getZ();
+            case SOUTH -> pos.getZ() + 1;
+            case WEST -> pos.getX();
+            case EAST -> pos.getX() + 1;
+            default -> pos.getY();
+        };
+    }
+
     /** Cuts a sub-level along a plane, limited to the rectangle spanning point1..point2.
      *  Blocks still connected to the rest of the structure around the plane's extent are
      *  left untouched; disconnected groups become their own new sub-levels, with the
@@ -29,6 +43,7 @@ public final class SubLevelCutter {
     public static Result cut(ServerLevel level, ServerSubLevel subLevel,
                              BlockPos point1, BlockPos point2, Direction.Axis axis, int planeCoord) {
         LevelPlot plot = subLevel.getPlot();
+        if (plot == null || plot.getBoundingBox() == null) return null;
 
         int rMinX = Math.min(point1.getX(), point2.getX());
         int rMaxX = Math.max(point1.getX(), point2.getX());

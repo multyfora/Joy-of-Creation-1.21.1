@@ -24,14 +24,13 @@ import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 import net.multyfora.client.portable_typewriter.PortableTypewriterClientHandler;
 import net.multyfora.client.portable_typewriter.PortableTypewriterScreen;
 import net.multyfora.config.JocConfig;
-import net.multyfora.content.balloon.BalloonBlock;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
+import net.multyfora.content.shears_cut.ShearsCutRemoteState;
+import net.multyfora.content.shears_cut.ShearsCutState;
 import net.multyfora.index.JocBlockEntityTypes;
-import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocEntityTypes;
 import net.multyfora.index.JocMenuTypes;
-import net.minecraft.world.item.DyeColor;
 import net.multyfora.network.EntityGrabPayloads;
 import net.multyfora.network.SeekerPayloads;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -50,37 +49,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class ClientSubscriptions {
 
     // Subscriptions
-    private static final int[] DYE_COLORS = {
-        0xF9FFFE, 0xF9801D, 0xC74EBD, 0x3AB3DA,
-        0xFED83D, 0x80C71F, 0xF38BAA, 0x474F52,
-        0x9D9D97, 0x169C9C, 0x8932B8, 0x3C44AA,
-        0x835432, 0x5E7C16, 0xB02E26, 0x1D1D21
-    };
 
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER.get(), SeekerBlockEntityRenderer::new);
         event.registerEntityRenderer((EntityType<GyroscopicSeatEntity>) (EntityType<?>) JocEntityTypes.GYROSCOPIC_SEAT.get(), GyroscopicSeatRenderer::new);
-    }
-
-    @SubscribeEvent
-    static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
-        for (var entry : JocBlocks.BALLOONS.entrySet()) {
-            event.register((state, level, pos, tintIndex) -> {
-                if (state.getBlock() instanceof BalloonBlock balloon) {
-                    return DYE_COLORS[balloon.getColor().ordinal()];
-                }
-                return 0xFFFFFF;
-            }, entry.getValue().get());
-        }
-    }
-
-    @SubscribeEvent
-    static void onRegisterItemColors(RegisterColorHandlersEvent.Item event) {
-        for (var entry : JocBlocks.BALLOON_ITEMS.entrySet()) {
-            DyeColor color = entry.getKey();
-            event.register((stack, tintIndex) -> DYE_COLORS[color.ordinal()], entry.getValue().get());
-        }
     }
 
     @SubscribeEvent
@@ -147,6 +120,8 @@ public class ClientSubscriptions {
     static void onClientTick(ClientTickEvent.Pre event) {
         PortableTypewriterClientHandler.tick();
         PortableThrottleClientHandler.tick();
+        ShearsCutState.tick();
+        ShearsCutRemoteState.tick();
     }
 
     @SubscribeEvent

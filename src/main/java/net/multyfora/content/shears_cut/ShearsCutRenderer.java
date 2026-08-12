@@ -58,24 +58,21 @@ public class ShearsCutRenderer {
         if (mc.player == null || mc.level == null) return;
 
         renderFlash(event, mc);
+        renderRemoteFlashes(event, mc);
 
-        if (ShearsCutState.getMode() != ShearsCutState.Mode.PLACING) return;
-
-        boolean holdingShears = mc.player.getMainHandItem().is(net.minecraft.world.item.Items.SHEARS)
-                || mc.player.getOffhandItem().is(net.minecraft.world.item.Items.SHEARS);
-        if (!holdingShears) {
-            ShearsCutState.reset();
-            return;
+        if (ShearsCutState.getMode() == ShearsCutState.Mode.PLACING) {
+            renderLocalPlane(event, mc);
         }
 
+        renderRemotePlanes(event, mc);
+    }
+
+    private static void renderLocalPlane(RenderLevelStageEvent event, Minecraft mc) {
         BlockPos p1 = ShearsCutState.getPoint1();
         if (p1 == null) return;
 
         SubLevel sub = Sable.HELPER.getContaining(mc.level, p1);
-        if (sub == null || sub.isRemoved()) {
-            ShearsCutState.reset();
-            return;
-        }
+        if (sub == null || sub.isRemoved()) return;
 
         BlockPos p2 = ShearsCutState.getCursorPos();
         if (p2 == null) return;
@@ -94,6 +91,15 @@ public class ShearsCutRenderer {
         VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(CUT_PLANE);
         PoseStack.Pose pose = event.getPoseStack().last();
 
+        drawPlane(consumer, pose, mc, camPos, center, u, v, hu, hv);
+
+        mc.renderBuffers().bufferSource().endBatch(CUT_PLANE);
+
+        spawnMotes(mc, center, u, v, hu, hv);
+    }
+
+    private static void drawPlane(VertexConsumer consumer, PoseStack.Pose pose, Minecraft mc, Vec3 camPos,
+                                  Vec3 center, Vec3 u, Vec3 v, double hu, double hv) {
         float time = (System.currentTimeMillis() % 6000L) / 6000f;
         float pulse = 0.5f + 0.5f * (float) Math.sin(time * Math.PI * 2.0);
         float fastPulse = 0.5f + 0.5f * (float) Math.sin(time * Math.PI * 8.0);
@@ -116,10 +122,47 @@ public class ShearsCutRenderer {
                 1.0f, 0.35f + 0.25f * fastPulse, 0.15f, 0.9f);
 
         renderCornerBrackets(consumer, pose, mc, camPos, center, u, v, hu, hv, fastPulse);
+    }
+
+    private static void renderRemotePlanes(RenderLevelStageEvent event, Minecraft mc) {
+        if (ShearsCutRemoteState.getPreviews().isEmpty()) return;
+
+        Vec3 camPos = event.getCamera().getPosition();
+        VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(CUT_PLANE);
+        PoseStack.Pose pose = event.getPoseStack().last();
+
+        for (ShearsCutRemoteState.RemotePreview preview : ShearsCutRemoteState.getPreviews().values()) {
+            SubLevel sub = Sable.HELPER.getContaining(mc.level, preview.point1());
+            if (sub == null || sub.isRemoved()) continue;
+
+            ShearsCutState.PlaneGeometry geom = ShearsCutState.computeGeometry(preview.point1(), preview.point2(), preview.orientation());
+            Vec3 center = geom.center().add(Vec3.atLowerCornerOf(preview.orientation().getNormal()).scale(0.01));
+            drawPlane(consumer, pose, mc, camPos, center, geom.u(), geom.v(), geom.hu(), geom.hv());
+        }
 
         mc.renderBuffers().bufferSource().endBatch(CUT_PLANE);
+    }
 
-        spawnMotes(mc, center, u, v, hu, hv);
+    private static void renderRemoteFlashes(RenderLevelStageEvent event, Minecraft mc) {
+        if (ShearsCutRemoteState.getFlashes().isEmpty()) return;
+
+        for (ShearsCutRemoteState.RemoteFlash flash : ShearsCutRemoteState.getFlashes().values()) {
+            long elapsed = System.currentTimeMillis() - flash.startMs();
+            if (elapsed < 0 || elapsed >= ShearsCutRemoteState.FLASH_DURATION_MS) continue;
+
+            SubLevel sub = Sable.HELPER.getContaining(mc.level, flash.point1());
+            if (sub == null || sub.isRemoved()) continue;
+
+            ShearsCutState.PlaneGeometry geom = ShearsCutState.computeGeometry(flash.point1(), flash.point2(), flash.orientation());
+            Vec3 localCenter = geom.center().add(Vec3.atLowerCornerOf(flash.orientation().getNormal()).scale(0.01));
+            Vec3 worldCenter = Sable.HELPER.projectOutOfSubLevel(mc.level, localCenter);
+            Vec3 worldU = Sable.HELPER.projectOutOfSubLevel(mc.level, localCenter.add(geom.u())).subtract(worldCenter);
+            Vec3 worldV = Sable.HELPER.projectOutOfSubLevel(mc.level, localCenter.add(geom.v())).subtract(worldCenter);
+            if (!finite(worldCenter) || !finite(worldU) || !finite(worldV)) continue;
+
+            drawFlashGeom(event, mc, elapsed / (float) ShearsCutRemoteState.FLASH_DURATION_MS,
+                    worldCenter, worldU, worldV, geom.hu(), geom.hv());
+        }
     }
 
     private static void renderFlash(RenderLevelStageEvent event, Minecraft mc) {
@@ -129,11 +172,14 @@ public class ShearsCutRenderer {
         Vec3 center = ShearsCutState.getFlashWorldCenter();
         Vec3 u = ShearsCutState.getFlashWorldU();
         Vec3 v = ShearsCutState.getFlashWorldV();
-        if (center == null || u == null || v == null) return;
+        if (!finite(center) || !finite(u) || !finite(v)) return;
 
-        double hu = ShearsCutState.getFlashHu();
-        double hv = ShearsCutState.getFlashHv();
+        drawFlashGeom(event, mc, progress, center, u, v,
+                ShearsCutState.getFlashHu(), ShearsCutState.getFlashHv());
+    }
 
+    private static void drawFlashGeom(RenderLevelStageEvent event, Minecraft mc, float progress,
+                                      Vec3 center, Vec3 u, Vec3 v, double hu, double hv) {
         Vec3 camPos = event.getCamera().getPosition();
         VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(CUT_PLANE);
         PoseStack.Pose pose = event.getPoseStack().last();
@@ -197,7 +243,12 @@ public class ShearsCutRenderer {
 
     private static Vec3 toWorld(Minecraft mc, Vec3 camPos, Vec3 local) {
         Vec3 world = Sable.HELPER.projectOutOfSubLevel(mc.level, local);
+        if (!finite(world)) world = local;
         return world.subtract(camPos);
+    }
+
+    private static boolean finite(Vec3 v) {
+        return v != null && Double.isFinite(v.x) && Double.isFinite(v.y) && Double.isFinite(v.z);
     }
 
     private static void renderRect(VertexConsumer consumer, PoseStack.Pose pose, Minecraft mc, Vec3 camPos,
@@ -307,6 +358,7 @@ public class ShearsCutRenderer {
         double sv = (RNG.nextDouble() * 2 - 1) * hv;
         Vec3 local = center.add(u.scale(su)).add(v.scale(sv));
         Vec3 world = Sable.HELPER.projectOutOfSubLevel(mc.level, local);
+        if (!finite(world)) return;
 
         float roll = RNG.nextFloat();
         Vector3f color;

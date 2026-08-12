@@ -18,7 +18,7 @@ public class JocItemModelProvider extends ItemModelProvider {
     protected void registerModels() {
         for (DyeColor color : DyeColor.values()) {
             String colorName = color.getSerializedName();
-            withExistingParent(colorName + "_balloon", modLoc("block/balloon"));
+            withExistingParent(colorName + "_balloon", modLoc("block/balloon_" + colorName));
         }
 
         for (DyeColor color : DyeColor.values()) {

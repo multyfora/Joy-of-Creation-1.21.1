@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "joc:block/balloon"
+      "model": "joc:block/balloon_black"
     }
   }
 }

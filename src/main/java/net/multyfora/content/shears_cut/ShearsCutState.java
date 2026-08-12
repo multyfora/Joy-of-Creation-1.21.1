@@ -1,13 +1,18 @@
 package net.multyfora.content.shears_cut;
 
 import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.sublevel.SubLevel;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.multyfora.network.ShearsCutPayloads;
 import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.util.UUID;
 
 public class ShearsCutState {
     public enum Mode { IDLE, PLACING }
@@ -20,12 +25,18 @@ public class ShearsCutState {
     private static Vec3 flashWorldCenter, flashWorldU, flashWorldV;
     private static double flashHu, flashHv;
 
+    private static BlockPos lastSentPoint2;
+    private static boolean previewActive;
+
     public record PlaneGeometry(Vec3 center, Vec3 u, Vec3 v, double hu, double hv) {}
 
     public static void startCut(BlockPos pos, Direction face) {
         point1 = pos;
         orientation = face;
         mode = Mode.PLACING;
+        lastSentPoint2 = null;
+        previewActive = true;
+        sendPreview(ShearsCutPayloads.PreviewPhase.PLACING, pos, pos);
     }
 
     public static void finishCut(BlockPos point2) {
@@ -49,14 +60,72 @@ public class ShearsCutState {
             flashStartMs = System.currentTimeMillis();
         }
 
-        PacketDistributor.sendToServer(new ShearsCutPayloads.ShearsCutPayload(point1, point2, orientation));
+        SubLevel sub = mc.level != null ? Sable.HELPER.getContaining(mc.level, point1) : null;
+        UUID subLevelId = sub == null || sub.isRemoved() ? null : sub.getUniqueId();
+        if (subLevelId == null) {
+            abortCut();
+            return;
+        }
+
+        PacketDistributor.sendToServer(new ShearsCutPayloads.ShearsCutPayload(subLevelId, point1, point2, orientation));
+        previewActive = false;
         reset();
+    }
+
+    /** Logic-layer tick: sends preview updates and cancels a pending cut when it can no longer be completed. */
+    public static void tick() {
+        if (mode != Mode.PLACING) return;
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player == null || mc.level == null || point1 == null) {
+            abortCut();
+            return;
+        }
+        boolean holdingShears = mc.player.getMainHandItem().is(Items.SHEARS)
+                || mc.player.getOffhandItem().is(Items.SHEARS);
+        if (!holdingShears) {
+            abortCut();
+            return;
+        }
+        SubLevel sub = Sable.HELPER.getContaining(mc.level, point1);
+        if (sub == null || sub.isRemoved()) {
+            abortCut();
+            return;
+        }
+
+        BlockPos cursorPos = getCursorPos();
+        if (cursorPos != null && !cursorPos.equals(lastSentPoint2)) {
+            lastSentPoint2 = cursorPos;
+            sendPreview(ShearsCutPayloads.PreviewPhase.PLACING, point1, cursorPos);
+        }
+    }
+
+    /** Cancels the pending cut and notifies other players that the preview is gone. */
+    public static void abortCut() {
+        if (previewActive) {
+            sendPreview(ShearsCutPayloads.PreviewPhase.CANCEL, point1, lastSentPoint2 != null ? lastSentPoint2 : point1);
+        }
+        previewActive = false;
+        reset();
+    }
+
+    private static void sendPreview(ShearsCutPayloads.PreviewPhase phase, BlockPos p1, BlockPos p2) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null || p1 == null || p2 == null || orientation == null) return;
+        SubLevel sub = Sable.HELPER.getContaining(mc.level, p1);
+        if (sub == null || sub.isRemoved()) return;
+        UUID subLevelId = sub.getUniqueId();
+        if (subLevelId == null) return;
+
+        PacketDistributor.sendToServer(new ShearsCutPayloads.ShearsPreviewPayload(
+                mc.player.getUUID(), subLevelId, p1, p2, orientation, phase
+        ));
     }
 
     public static void reset() {
         point1 = null;
         orientation = null;
         mode = Mode.IDLE;
+        lastSentPoint2 = null;
     }
 
     public static Mode getMode() { return mode; }

@@ -1,0 +1,7 @@
+{
+  "parent": "joc:block/balloon",
+  "textures": {
+    "0": "joc:block/balloon_brown",
+    "particle": "joc:block/balloon_brown"
+  }
+}

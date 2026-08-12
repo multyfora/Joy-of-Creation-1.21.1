@@ -21,10 +21,13 @@ public class JocBlockStateProvider extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        ModelFile balloonModel = models().getExistingFile(modLoc("block/balloon"));
-
         for (DyeColor color : DyeColor.values()) {
             String colorName = color.getSerializedName();
+            ModelFile balloonModel = models()
+                    .withExistingParent("block/balloon_" + colorName, modLoc("block/balloon"))
+                    .texture("0", modLoc("block/balloon_" + colorName))
+                    .texture("particle", modLoc("block/balloon_" + colorName));
+
             getVariantBuilder(JocBlocks.BALLOONS.get(color).get())
                     .partialState().addModels(new ConfiguredModel(balloonModel));
         }
