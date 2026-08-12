@@ -1,10 +1,13 @@
 package net.multyfora.content.shears_cut;
 
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import java.util.LinkedHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
@@ -42,6 +45,10 @@ public class ShearsCutRenderer {
                     .createCompositeState(false)
     );
 
+    private static final ByteBufferBuilder CUT_BUFFER = new ByteBufferBuilder(262144);
+    private static final MultiBufferSource.BufferSource CUT_SOURCE =
+            new MultiBufferSource.BufferSource(CUT_BUFFER, new LinkedHashMap<>()) {};
+
     private static final RandomSource RNG = RandomSource.create();
     private static final float BORDER_THICKNESS = 0.06f;
     private static final float CORE_LINE_THICKNESS = 0.015f;
@@ -65,6 +72,8 @@ public class ShearsCutRenderer {
         }
 
         renderRemotePlanes(event, mc);
+
+        CUT_BUFFER.discard();
     }
 
     private static void renderLocalPlane(RenderLevelStageEvent event, Minecraft mc) {
@@ -88,12 +97,12 @@ public class ShearsCutRenderer {
         double hv = geom.hv();
 
         Vec3 camPos = event.getCamera().getPosition();
-        VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(CUT_PLANE);
+        VertexConsumer consumer = CUT_SOURCE.getBuffer(CUT_PLANE);
         PoseStack.Pose pose = event.getPoseStack().last();
 
         drawPlane(consumer, pose, mc, camPos, center, u, v, hu, hv);
 
-        mc.renderBuffers().bufferSource().endBatch(CUT_PLANE);
+        CUT_SOURCE.endBatch(CUT_PLANE);
 
         spawnMotes(mc, center, u, v, hu, hv);
     }
@@ -128,7 +137,7 @@ public class ShearsCutRenderer {
         if (ShearsCutRemoteState.getPreviews().isEmpty()) return;
 
         Vec3 camPos = event.getCamera().getPosition();
-        VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(CUT_PLANE);
+        VertexConsumer consumer = CUT_SOURCE.getBuffer(CUT_PLANE);
         PoseStack.Pose pose = event.getPoseStack().last();
 
         for (ShearsCutRemoteState.RemotePreview preview : ShearsCutRemoteState.getPreviews().values()) {
@@ -140,7 +149,7 @@ public class ShearsCutRenderer {
             drawPlane(consumer, pose, mc, camPos, center, geom.u(), geom.v(), geom.hu(), geom.hv());
         }
 
-        mc.renderBuffers().bufferSource().endBatch(CUT_PLANE);
+        CUT_SOURCE.endBatch(CUT_PLANE);
     }
 
     private static void renderRemoteFlashes(RenderLevelStageEvent event, Minecraft mc) {
@@ -181,7 +190,7 @@ public class ShearsCutRenderer {
     private static void drawFlashGeom(RenderLevelStageEvent event, Minecraft mc, float progress,
                                       Vec3 center, Vec3 u, Vec3 v, double hu, double hv) {
         Vec3 camPos = event.getCamera().getPosition();
-        VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(CUT_PLANE);
+        VertexConsumer consumer = CUT_SOURCE.getBuffer(CUT_PLANE);
         PoseStack.Pose pose = event.getPoseStack().last();
 
         float meetT = 0.4f;
@@ -219,7 +228,7 @@ public class ShearsCutRenderer {
             quad(consumer, pose, g0, g1, g2, g3, 1f, 0.6f, 0.45f, 0.22f * alpha);
         }
 
-        mc.renderBuffers().bufferSource().endBatch(CUT_PLANE);
+        CUT_SOURCE.endBatch(CUT_PLANE);
     }
 
     private static void renderFlashFrame(VertexConsumer consumer, PoseStack.Pose pose, Vec3 center, Vec3 u, Vec3 v, Vec3 camPos,
