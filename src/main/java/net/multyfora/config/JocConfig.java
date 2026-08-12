@@ -8,6 +8,8 @@ public class JocConfig {
     public static final ModConfigSpec.BooleanValue ENABLE_CREATIVE_STAFF;
     public static final ModConfigSpec.BooleanValue CAN_PICKUP_PLAYERS;
 
+    public static final ModConfigSpec.DoubleValue LIFT_PER_BALLOON;
+
     public static final ModConfigSpec SPEC;
 
     static {
@@ -24,6 +26,16 @@ public class JocConfig {
         ;
 
         BUILDER.pop();
+
+        BUILDER.push("balloon");
+
+        LIFT_PER_BALLOON = BUILDER
+            .comment("Number of blocks' worth of mass each balloon supports at full air pressure; lift scales linearly with air pressure as aeronautics envelopes do, so balloons decelerate as they climb and stop where the air is too thin")
+            .defineInRange("liftPerBalloon", 1.5, 0.0, 100.0)
+        ;
+
+        BUILDER.pop();
+
         SPEC = BUILDER.build();
     }
 }
