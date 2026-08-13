@@ -6,7 +6,13 @@
   "refmap": "joc.refmap.json",
   "mixins": [
     "physics_staff.PhysicsStaffServerHandlerMixin",
-    "ShearsItemMixin"
+    "ShearsItemMixin",
+    "RopeStrandHolderBehaviorMixin",
+    "RopeItemMixin",
+    "RopeConnectorBlockEntityMixin",
+    "RopeBreakPacketMixin",
+    "ServerRopeTrackingSystemMixin",
+    "RopeStrandHolderBlockEntityMixin"
   ],
   "client": [
     "physics_staff.PhysicsStaffMouseHandlerMixin",
@@ -14,7 +20,11 @@
     "EntitySubLevelRotationHelperMixin",
     "KeyboardHandlerMixin",
     "ModListScreenMixin",
-    "InfoPanelMixin"
+    "InfoPanelMixin",
+    "RopeConnectorRendererMixin",
+    "ClientRopeItemHandlerMixin",
+    "ClientboundRopeDataPacketMixin",
+    "ClientboundRopeStoppedPacketMixin"
   ],
   "injectors": {
     "defaultRequire": 1
