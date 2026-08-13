@@ -589,7 +589,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
 
             // Validate end attachment: if the target block no longer has a rope holder, destroy the strand
             RopeAttachment endAttach = strand.getAttachment(RopeAttachmentPoint.END);
-            if(endAttach != null) {
+            if (endAttach != null && endAttach.subLevelID() == null && strand.areAttachmentsLoaded(serverLevel)) {
                 BlockPos targetPos = endAttach.blockAttachment();
                 if(targetPos != null) {
                     BlockEntity be = serverLevel.getBlockEntity(targetPos);

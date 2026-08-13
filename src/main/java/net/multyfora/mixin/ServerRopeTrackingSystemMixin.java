@@ -1,12 +1,19 @@
 package net.multyfora.mixin;
 
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.sublevel.system.SubLevelTrackingSystem;
 import dev.simulated_team.simulated.content.blocks.rope.RopeStrandHolderBehavior;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.RopeAttachment;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.RopeAttachmentPoint;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerRopeStrand;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerRopeTrackingSystem;
+import dev.simulated_team.simulated.network.packets.rope.ClientboundRopeDataPacket;
 
+import foundry.veil.api.network.VeilPacketManager;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import net.minecraft.core.BlockPos;
@@ -17,12 +24,15 @@ import net.multyfora.IMultiRopeBehavior;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -87,6 +97,48 @@ public abstract class ServerRopeTrackingSystemMixin {
         cir.setReturnValue(players);
     }
 
+    @Unique
+    private void joc$resyncNewTrackers(ServerRopeStrand strand, RopeStrandHolderBehavior holder) {
+        Set<UUID> tracked = strand.getTrackingPlayers();
+        List<ServerPlayer> current = holder.getStrandTrackingPlayers();
+
+        Iterator<UUID> iter = tracked.iterator();
+        while (iter.hasNext()) {
+            UUID id = iter.next();
+            ServerPlayer player = (ServerPlayer) this.level.getPlayerByUUID(id);
+            if (player == null || !current.contains(player)) {
+                iter.remove();
+            }
+        }
+
+        List<ServerPlayer> newlyAdded = new ArrayList<>();
+        for (ServerPlayer player : current) {
+            if (tracked.add(player.getUUID())) {
+                newlyAdded.add(player);
+            }
+        }
+        if (newlyAdded.isEmpty()) {
+            return;
+        }
+
+        strand.updatePose();
+        RopeAttachment start = strand.getAttachment(RopeAttachmentPoint.START);
+        RopeAttachment end = strand.getAttachment(RopeAttachmentPoint.END);
+        ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(this.level);
+        SubLevelTrackingSystem trackingSystem = container.trackingSystem();
+        ClientboundRopeDataPacket packet = new ClientboundRopeDataPacket(
+                trackingSystem.getInterpolationTick(),
+                holder.blockEntity.getBlockPos(),
+                strand.getUUID(),
+                new ObjectArrayList<>(strand.getPoints()),
+                start != null ? start.blockAttachment() : null,
+                end != null ? end.blockAttachment() : null
+        );
+        for (ServerPlayer player : newlyAdded) {
+            VeilPacketManager.player(player).sendPacket(packet);
+        }
+    }
+
     @Inject(method = "sendTrackingData", at = @At("HEAD"), cancellable = true)
     private void joc$sendTrackingData(int interpolationTick, CallbackInfo ci) {
         final ServerLevelRopeManager ropeManager = this.getRopeManager();
@@ -101,6 +153,7 @@ public abstract class ServerRopeTrackingSystemMixin {
             if (holder == null) continue;
 
             if (joc$isExtraOfMulti(strand)) {
+                joc$resyncNewTrackers(strand, holder);
                 if (!strand.needsSync() && !strand.networkingStopped) {
                     strand.networkingStopped = true;
                     holder.getStrandPacketSink().sendPacket(holder.makeStopPacket());
