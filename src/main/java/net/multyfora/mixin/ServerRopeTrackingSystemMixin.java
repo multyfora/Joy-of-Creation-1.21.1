@@ -20,8 +20,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
+import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.IMultiRopeBehavior;
 
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -59,7 +61,8 @@ public abstract class ServerRopeTrackingSystemMixin {
         BlockPos block = attachment.blockAttachment();
         RopeStrandHolderBehavior holder = RopeStrandHolderBehavior.get(this.level.getBlockEntity(block), RopeStrandHolderBehavior.TYPE);
         if (holder == null) return false;
-        return holder instanceof IMultiRopeBehavior && strand != holder.getOwnedStrand();
+        if (!(holder instanceof IMultiRopeBehavior multi)) return false;
+        return multi.joc$getMaxRopeAttachments() > 1 && strand != holder.getOwnedStrand();
     }
 
     @Inject(method = "neededPlayers", at = @At("HEAD"), cancellable = true)
@@ -139,6 +142,23 @@ public abstract class ServerRopeTrackingSystemMixin {
         }
     }
 
+    @Unique
+    private @Nullable ClientboundRopeDataPacket joc$buildPacketFor(ServerRopeStrand strand, BlockPos ownerPos) {
+        RopeAttachment start = strand.getAttachment(RopeAttachmentPoint.START);
+        RopeAttachment end = strand.getAttachment(RopeAttachmentPoint.END);
+        ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(this.level);
+        if (container == null) return null;
+        SubLevelTrackingSystem trackingSystem = container.trackingSystem();
+        return new ClientboundRopeDataPacket(
+                trackingSystem.getInterpolationTick(),
+                ownerPos,
+                strand.getUUID(),
+                new ObjectArrayList<>(strand.getPoints()),
+                start != null ? start.blockAttachment() : null,
+                end != null ? end.blockAttachment() : null
+        );
+    }
+
     @Inject(method = "sendTrackingData", at = @At("HEAD"), cancellable = true)
     private void joc$sendTrackingData(int interpolationTick, CallbackInfo ci) {
         final ServerLevelRopeManager ropeManager = this.getRopeManager();
@@ -153,6 +173,9 @@ public abstract class ServerRopeTrackingSystemMixin {
             if (holder == null) continue;
 
             if (joc$isExtraOfMulti(strand)) {
+                AeronauticsJoyofcreation.LOGGER.info("[JOC-SEND] extra strand={} start={} holder={} max={} sync={} stopper={}",
+                        strand.getUUID(), block, holder.getClass().getSimpleName(), ((IMultiRopeBehavior) holder).joc$getMaxRopeAttachments(),
+                        strand.needsSync(), strand.networkingStopped);
                 joc$resyncNewTrackers(strand, holder);
                 if (!strand.needsSync() && !strand.networkingStopped) {
                     strand.networkingStopped = true;
@@ -161,9 +184,16 @@ public abstract class ServerRopeTrackingSystemMixin {
                 continue;
             }
 
+            AeronauticsJoyofcreation.LOGGER.info("[JOC-SEND] strand={} start={} holder={} isMulti={} sync={} stopped={} sinkPlayers={}",
+                    strand.getUUID(), block, holder.getClass().getSimpleName(), holder instanceof IMultiRopeBehavior,
+                    strand.needsSync(), strand.networkingStopped, holder.getStrandTrackingPlayers().size());
+
             if (strand.needsSync()) {
                 strand.networkingStopped = false;
-                holder.getStrandPacketSink().sendPacket(holder.makeUpdatePacket());
+                ClientboundRopeDataPacket packet = joc$buildPacketFor(strand, block);
+                if (packet != null) {
+                    holder.getStrandPacketSink().sendPacket(packet);
+                }
                 strand.justSynced();
             } else if (!strand.networkingStopped) {
                 strand.networkingStopped = true;

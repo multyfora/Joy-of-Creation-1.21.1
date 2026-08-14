@@ -47,6 +47,8 @@ public abstract class RopeBreakPacketMixin {
         RopeStrandHolderBehavior holder = smartBlockEntity.getBehaviour(RopeStrandHolderBehavior.TYPE);
         if (!(holder instanceof IMultiRopeBehavior multi)) return;
 
+        if (multi.joc$getMaxRopeAttachments() <= 1) return;
+
         if (multi.joc$destroyRopeByUUID(self.uuid(), player, !player.hasInfiniteMaterials())) {
             ci.cancel();
         }

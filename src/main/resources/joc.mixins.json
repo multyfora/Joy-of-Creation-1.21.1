@@ -3,6 +3,7 @@
   "minVersion": "0.8",
   "package": "net.multyfora.mixin",
   "compatibilityLevel": "JAVA_21",
+  "priority": 2000,
   "refmap": "joc.refmap.json",
   "mixins": [
     "physics_staff.PhysicsStaffServerHandlerMixin",

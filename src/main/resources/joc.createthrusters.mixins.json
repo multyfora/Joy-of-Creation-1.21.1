@@ -1,0 +1,16 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "net.multyfora.compat.createthrusters.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "joc.refmap.json",
+  "plugin": "net.multyfora.compat.createthrusters.CreatethrustersMixinConfigPlugin",
+  "mixins": [
+    "SimulatedRopeCompatMixin",
+    "PoweredZiplineRopeConnectorMixin",
+    "RopeKnotRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -53,6 +53,10 @@ A collection of features that need to be in Aeronautics.
 [[mixins]]
 config="${mod_id}.mixins.json"
 
+# Optional mixin config for Create Aeronautics: Gadgets & Gizmos (disabled by plugin when absent)
+[[mixins]]
+config="${mod_id}.createthrusters.mixins.json"
+
 # The [[accessTransformers]] block allows you to declare where your AT file is.
 # If this block is omitted, a fallback attempt will be made to load an AT from META-INF/accesstransformer.cfg
 #[[accessTransformers]]
@@ -113,6 +117,13 @@ config="${mod_id}.mixins.json"
     modId="sable"
     type="required"
     versionRange="[1.2.0,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="createthrusters"
+    type="optional"
+    versionRange="[1.0.0,)"
     ordering="NONE"
     side="BOTH"
 
