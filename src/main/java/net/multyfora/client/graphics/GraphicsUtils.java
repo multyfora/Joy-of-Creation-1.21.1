@@ -108,7 +108,6 @@ public class GraphicsUtils {
         graphics.pose().pushPose();
         graphics.pose().scale(SCALE, SCALE, 1.0f);
 
-        // first (red)
         Vector2i adjustedFirstPosition = new Vector2i(
             (int)( (double)(firstStart.x) / SCALE ),
             (int)( (double)(firstStart.y) / SCALE )
@@ -120,7 +119,6 @@ public class GraphicsUtils {
             FREQUENCY_SLOT_SIZE, FREQUENCY_SLOT_SIZE
         );
 
-        // second (blue)
         Vector2i adjustedSecondPosition = new Vector2i(
             (int)( (double)(secondStart.x) / SCALE ),
             (int)( (double)(secondStart.y) / SCALE )
@@ -134,7 +132,6 @@ public class GraphicsUtils {
 
         graphics.pose().popPose();
 
-        // Items
         Vector2i firstItemPosition = new Vector2i(
             firstStart.x + size/2,
             firstStart.y + size/2
@@ -155,7 +152,6 @@ public class GraphicsUtils {
             0
         );
 
-        // Hover
         if(!allowHover) {
             return;
         }
@@ -202,7 +198,6 @@ public class GraphicsUtils {
         }
         Inventory inventory = mc.player.getInventory();
 
-        // Inventory
         Vector2i start, end;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -220,7 +215,6 @@ public class GraphicsUtils {
             }
         }
 
-        // Hotbar
         int hotbarY = origin.y + 3*size + gap;
         for (int col = 0; col < 9; col++) {
             int x = origin.x + col * (size-thickness/2);

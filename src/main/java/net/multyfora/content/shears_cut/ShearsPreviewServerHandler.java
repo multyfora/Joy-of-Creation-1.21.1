@@ -12,7 +12,6 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 
-/** Relays a player's cut preview to everyone within render distance (excluding the cutter). */
 public final class ShearsPreviewServerHandler {
 
     private ShearsPreviewServerHandler() {}

@@ -17,10 +17,6 @@ import net.multyfora.index.JocItems;
 
 import static net.multyfora.network.NetworkUtils.getItemIfValid;
 
-/**
- * Client-to-server packet: sends the current throttle signal strength to the server.
- * The server then updates the redstone link network with the new power level.
- **/
 public class PortableThrottleSignalPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "throttle_signal");
@@ -41,10 +37,6 @@ public class PortableThrottleSignalPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    /**
-     * Server-side handling: validates the player has a throttle item, reads its frequency,
-     * and forwards the signal to the server handler
-     **/
     public void handle(net.minecraft.world.entity.player.Player player) {
         ItemStack item = getItemIfValid(
             player,

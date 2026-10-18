@@ -21,17 +21,8 @@ public interface IMultiRopeBehavior {
     boolean joc$destroyRopeByUUID(UUID ropeID, @Nullable ServerPlayer player, boolean returnItem);
     List<UUID> joc$getAllAttachedRopeIDs();
 
-    /**
-     * Registers a rope strand that was created outside the vanilla createRope flow
-     * (e.g. by another mode's compat shim) on this holder. The owner end gets the
-     * vanilla owner fields plus full JOC bookkeeping; the attached end only adds its
-     * rope ID when the holder is JOC-managed, so its own owned strands are preserved.
-     **/
     void joc$installExternalRope(UUID ropeID, boolean owner, @Nullable ServerRopeStrand strand);
 
-    /**
-     * Undoes joc$installExternalRope (used when the new strand cannot be registered).
-     **/
     void joc$removeExternalRope(UUID ropeID, boolean owner, @Nullable ServerRopeStrand strand);
 
     @Nullable Map<UUID, ClientRopeStrand> joc$getAllClientStrands();

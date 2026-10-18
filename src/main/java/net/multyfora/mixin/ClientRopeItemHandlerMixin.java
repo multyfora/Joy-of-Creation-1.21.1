@@ -19,11 +19,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-/**
- * Client-side validity for the rope placement preview (the green/orange outliner line):
- * a connector that is already connected to the first rope attachment point is not a valid
- * target.
- */
 @Mixin(value = ClientRopeItemHandler.class, remap = false)
 public class ClientRopeItemHandlerMixin {
 
@@ -56,7 +51,6 @@ public class ClientRopeItemHandlerMixin {
         return valid;
     }
 
-    // True if any rope already connects posA and posB (in either direction)
     @Unique
     private static boolean joc$hasDirectRope(Level level, BlockPos posA, BlockPos posB) {
         for (ClientRopeStrand strand : ClientLevelRopeManager.getOrCreate(level).getAllStrands()) {

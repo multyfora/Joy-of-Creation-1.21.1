@@ -26,10 +26,9 @@ import net.multyfora.client.portable_throttle.PortableThrottleRenderHandler;
 import net.multyfora.index.JocItems;
 
 import net.multyfora.config.JocConfig;
-import net.multyfora.content.crosssail.SymmetricCrossSailBlock; // ADDED THIS
+import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
 import net.multyfora.register.JocTooltips;
 
-// CREATE API IMPORTS
 import com.simibubi.create.api.contraption.BlockMovementChecks;
 import net.createmod.ponder.foundation.PonderIndex;
 import net.minecraft.client.Minecraft;
@@ -50,21 +49,16 @@ public class AeronauticsJoyofcreation {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
 
-    /**
-     * Constructor: registers all mod content (blocks, items, block entity types, creative tab)
-     * and sets up network packet handlers and tick listeners
-     **/
     public AeronauticsJoyofcreation(IEventBus modEventBus, ModContainer modContainer) {
-        // Register all content classes to trigger static initializers and populate deferred registers
         JocBlocks.register();
         JocItems.register();
         JocMenuTypes.register();
+        JocClickInteractions.register();
         JocSounds.register(modEventBus);
         JocDataComponents.register(modEventBus);
         JocRecipeTypes.RECIPE_TYPES.register(modEventBus);
         JocRecipeTypes.RECIPE_SERIALIZERS.register(modEventBus);
 
-        // Register deferred registers with the mod event bus so NeoForge processes them
         JocBlockEntityTypes.BLOCK_ENTITY_TYPES.register(modEventBus);
         JocEntityTypes.ENTITY_TYPES.register(modEventBus);
         JocMenuTypes.MENU_TYPES.register(modEventBus);
@@ -72,7 +66,6 @@ public class AeronauticsJoyofcreation {
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
 
-        // Register common config
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, JocConfig.SPEC);
 
         modEventBus.addListener(this::commonSetup);
@@ -86,7 +79,6 @@ public class AeronauticsJoyofcreation {
             }
         });
 
-        // Final Registrations
         registerCreativeModeTab();
         registerEvents();
         RegisterPayloads(modEventBus);
@@ -118,7 +110,6 @@ public class AeronauticsJoyofcreation {
         );
     }
 
-    // this is for registering the cross sail to autoconnect when assembling bearings
     private void commonSetup(final FMLCommonSetupEvent event) {
         BlockMovementChecks.registerMovementNecessaryCheck((state, world, pos) -> {
             if (state.getBlock() instanceof SymmetricCrossSailBlock) {

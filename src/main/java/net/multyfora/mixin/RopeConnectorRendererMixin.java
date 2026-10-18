@@ -37,12 +37,15 @@ public abstract class RopeConnectorRendererMixin {
         ClientRopeStrand owned = multi.joc$getOwnedClientStrand();
         boolean originalOwner = multi.joc$isStrandOwner();
         multi.joc$setStrandOwner(true);
-        for (ClientRopeStrand strand : extras.values()) {
-            if (strand == owned) continue;
-            multi.joc$setOwnedClientStrand(strand);
-            RopeStrandRenderer.render(be, holder, partialTicks, ms, buffer);
+        try {
+            for (ClientRopeStrand strand : extras.values()) {
+                if (strand == owned) continue;
+                multi.joc$setOwnedClientStrand(strand);
+                RopeStrandRenderer.render(be, holder, partialTicks, ms, buffer);
+            }
+        } finally {
+            multi.joc$setOwnedClientStrand(owned);
+            multi.joc$setStrandOwner(originalOwner);
         }
-        multi.joc$setOwnedClientStrand(owned);
-        multi.joc$setStrandOwner(originalOwner);
     }
 }

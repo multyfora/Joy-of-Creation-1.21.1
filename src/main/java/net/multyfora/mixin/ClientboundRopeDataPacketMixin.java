@@ -42,29 +42,28 @@ public abstract class ClientboundRopeDataPacketMixin {
         Level level = player.level();
         BlockEntity blockEntity = level.getBlockEntity(self.ownerPos());
         if (!(blockEntity instanceof SmartBlockEntity smartBlockEntity)) {
-            AeronauticsJoyofcreation.LOGGER.info("[JOC-RECV] packet uuid={} pos={} be={} -> dropped (not SmartBlockEntity)", self.uuid(), self.ownerPos(), blockEntity == null ? "null" : blockEntity.getClass().getSimpleName());
+            AeronauticsJoyofcreation.LOGGER.debug("[JOC-RECV] packet uuid={} pos={} be={} -> dropped (not SmartBlockEntity)", self.uuid(), self.ownerPos(), blockEntity == null ? "null" : blockEntity.getClass().getSimpleName());
             return;
         }
 
         RopeStrandHolderBehavior ropeHolder = smartBlockEntity.getBehaviour(RopeStrandHolderBehavior.TYPE);
         if (ropeHolder == null) {
-            AeronauticsJoyofcreation.LOGGER.info("[JOC-RECV] packet uuid={} pos={} be={} -> dropped (no rope holder behavior)", self.uuid(), self.ownerPos(), smartBlockEntity.getClass().getSimpleName());
+            AeronauticsJoyofcreation.LOGGER.debug("[JOC-RECV] packet uuid={} pos={} be={} -> dropped (no rope holder behavior)", self.uuid(), self.ownerPos(), smartBlockEntity.getClass().getSimpleName());
             return;
         }
         if (!(ropeHolder instanceof IMultiRopeBehavior multi)) {
-            AeronauticsJoyofcreation.LOGGER.info("[JOC-RECV] packet uuid={} pos={} be={} -> passthrough vanilla (not multi)", self.uuid(), self.ownerPos(), smartBlockEntity.getClass().getSimpleName());
+            AeronauticsJoyofcreation.LOGGER.debug("[JOC-RECV] packet uuid={} pos={} be={} -> passthrough vanilla (not multi)", self.uuid(), self.ownerPos(), smartBlockEntity.getClass().getSimpleName());
             return;
         }
 
 
         if (multi.joc$getMaxRopeAttachments() <= 1) {
-            AeronauticsJoyofcreation.LOGGER.info("[JOC-RECV] packet uuid={} pos={} be={} max={} -> passthrough vanilla (single rope)", self.uuid(), self.ownerPos(), smartBlockEntity.getClass().getSimpleName(), multi.joc$getMaxRopeAttachments());
+            AeronauticsJoyofcreation.LOGGER.debug("[JOC-RECV] packet uuid={} pos={} be={} max={} -> passthrough vanilla (single rope)", self.uuid(), self.ownerPos(), smartBlockEntity.getClass().getSimpleName(), multi.joc$getMaxRopeAttachments());
             return;
         }
 
-        AeronauticsJoyofcreation.LOGGER.info("[JOC-RECV] packet uuid={} pos={} be={} max={} -> routed by JOC", self.uuid(), self.ownerPos(), smartBlockEntity.getClass().getSimpleName(), multi.joc$getMaxRopeAttachments());
+        AeronauticsJoyofcreation.LOGGER.debug("[JOC-RECV] packet uuid={} pos={} be={} max={} -> routed by JOC", self.uuid(), self.ownerPos(), smartBlockEntity.getClass().getSimpleName(), multi.joc$getMaxRopeAttachments());
 
-        // Always cancel for multi-rope holders — handle everything ourselves
         ci.cancel();
 
         var allClientStrands = multi.joc$getAllClientStrands();

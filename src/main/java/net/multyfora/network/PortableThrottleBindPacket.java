@@ -18,10 +18,6 @@ import net.multyfora.index.JocItems;
 
 import static net.multyfora.network.NetworkUtils.getItemIfValid;
 
-/**
- * Client-to-server packet: binds the Portable Throttle to a Redstone Link block's frequency.
- * Sent when the player right-clicks a Redstone Link with the throttle item.
- **/
 public class PortableThrottleBindPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "throttle_bind");
@@ -31,7 +27,6 @@ public class PortableThrottleBindPacket implements CustomPacketPayload {
         PortableThrottleBindPacket::new
     );
 
-    // Position of the Redstone Link block being bound to
     private final BlockPos linkPos;
 
     public PortableThrottleBindPacket(BlockPos linkPos) {
@@ -43,10 +38,6 @@ public class PortableThrottleBindPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    /**
-     * Server-side: verifies the player can build, finds the throttle item, reads the
-     * Redstone Link's frequency from its LinkBehaviour, and writes it to the throttle item
-     **/
     public void handle(net.minecraft.world.entity.player.Player player) {
         ItemStack item = getItemIfValid(
             player,

@@ -55,14 +55,11 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
     }
 
     private static final VoxelShape SHAPE = net.multyfora.content.VoxelUtils.combineVoxelShapes(
-        //MAGNETS
         Block.box(3, 0,    3, 16-3, 16,  16-3),
-        //POLES
         Block.box(0,    0, 0,    2,    16, 2 ),
         Block.box(16-2, 0, 0,    16,   16, 2 ),
         Block.box(0,    0, 16-2, 2,    16, 16),
         Block.box(16-2, 0, 16-2, 16,   16, 16),
-        //PADS
         Block.box(0,    8-2, 0,    4-2, 8+2, 4-1),
         Block.box(0,    8-2, 16-2, 3,   8+2, 16 ),
         Block.box(0,    8-2, 16-3, 2,   8+2, 16 ),

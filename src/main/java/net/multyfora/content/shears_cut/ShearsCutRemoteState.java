@@ -4,12 +4,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.multyfora.network.ShearsCutPayloads;
 
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-/** Client-side state for cut previews initiated by other players. */
 public final class ShearsCutRemoteState {
 
     public static final long PREVIEW_TTL_MS = 10_000;
@@ -19,8 +17,8 @@ public final class ShearsCutRemoteState {
 
     public record RemoteFlash(BlockPos point1, BlockPos point2, Direction orientation, long startMs) {}
 
-    private static final Map<UUID, RemotePreview> PREVIEWS = new HashMap<>();
-    private static final Map<UUID, RemoteFlash> FLASHES = new HashMap<>();
+    private static final Map<UUID, RemotePreview> PREVIEWS = new ConcurrentHashMap<>();
+    private static final Map<UUID, RemoteFlash> FLASHES = new ConcurrentHashMap<>();
 
     private ShearsCutRemoteState() {}
 
@@ -42,21 +40,16 @@ public final class ShearsCutRemoteState {
     }
 
     public static Map<UUID, RemotePreview> getPreviews() {
-        return PREVIEWS;
+        return Map.copyOf(PREVIEWS);
     }
 
     public static Map<UUID, RemoteFlash> getFlashes() {
-        return FLASHES;
+        return Map.copyOf(FLASHES);
     }
 
-    /** Removes stale previews/flashes so a dropped cutter (or a lost CANCEL) never lingers forever. */
     public static void tick() {
         long now = System.currentTimeMillis();
-        for (Iterator<RemotePreview> it = PREVIEWS.values().iterator(); it.hasNext(); ) {
-            if (now - it.next().lastSeenAt() > PREVIEW_TTL_MS) it.remove();
-        }
-        for (Iterator<RemoteFlash> it = FLASHES.values().iterator(); it.hasNext(); ) {
-            if (now - it.next().startMs() > FLASH_DURATION_MS) it.remove();
-        }
+        PREVIEWS.entrySet().removeIf(e -> now - e.getValue().lastSeenAt() > PREVIEW_TTL_MS);
+        FLASHES.entrySet().removeIf(e -> now - e.getValue().startMs() > FLASH_DURATION_MS);
     }
 }

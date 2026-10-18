@@ -19,11 +19,6 @@ import org.joml.Vector2i;
 
 import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
 
-/**
- * Vertical slider screen for adjusting the Portable Throttle's output signal strength (0-15).
- * Features an animated bar with a cursor that follows the mouse. Strength changes are
- * sent to the server immediately. The screen has no background overlay for a minimal UI.
- **/
 public class PortableThrottleStrengthScreen extends Screen {
     public static final ResourceLocation GUI_TEXTURE =
         ResourceLocation.fromNamespaceAndPath(
@@ -32,7 +27,6 @@ public class PortableThrottleStrengthScreen extends Screen {
         )
     ;
 
-    // Layout constants
     private static final int
         BAR_W = 16,
         BAR_H = 100
@@ -43,13 +37,10 @@ public class PortableThrottleStrengthScreen extends Screen {
         FREQUENCY_GAP = 8
     ;
 
-    // Current value (0.0-1.0), animated value, and last frame's animated value for smooth interpolation
     private float value;
     private float animatedValue;
     private float lastAnimatedValue;
-    // Integer strength (0-15)
     private int strength;
-    // Display string showing the frequency the throttle is bound to
     private Component freqInfo = Component.empty();
 
     protected PortableThrottleStrengthScreen() {
@@ -70,7 +61,6 @@ public class PortableThrottleStrengthScreen extends Screen {
         return height / 2 - BAR_H / 2;
     }
 
-    // Converts mouse Y position to a strength value and sends it to the server
     private void setFromMouseY(double mouseY) {
         int by = barY();
         double pixelFromBottom = by + BAR_H - mouseY;
@@ -101,7 +91,6 @@ public class PortableThrottleStrengthScreen extends Screen {
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
-    // Animate the bar value with exponential smoothing
     @Override
     public void tick() {
         super.tick();
@@ -112,7 +101,7 @@ public class PortableThrottleStrengthScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         PortableThrottleClientHandler.setLiveValue(value);
-        
+
         super.render(graphics, mouseX, mouseY, partialTick);
 
         int cx = width / 2;
@@ -120,10 +109,8 @@ public class PortableThrottleStrengthScreen extends Screen {
         int by = barY();
 
         graphics.drawCenteredString(font, title, cx, by - 25, 0xFFFFFF);
-        // Show the bound frequency info below the bar
         graphics.drawCenteredString(font, freqInfo, cx, by + BAR_H + 18, 0x888888);
 
-        // Draw bar background with border
         final float SCALE = 0.5f;
         final int SLIDER_WIDTH = 36;
         final int SLIDER_HEIGHT = 232;
@@ -138,7 +125,6 @@ public class PortableThrottleStrengthScreen extends Screen {
             SLIDER_WIDTH, SLIDER_HEIGHT
         );
 
-        // Draw the filled portion of the bar with color interpolated for animation
         float renderValue = (1-partialTick) * lastAnimatedValue + animatedValue * partialTick;
         final int CUT_OFF = SLIDER_HEIGHT - (int)(renderValue * (float)SLIDER_HEIGHT);
         graphics.blit(
@@ -148,7 +134,6 @@ public class PortableThrottleStrengthScreen extends Screen {
             SLIDER_WIDTH, SLIDER_HEIGHT - CUT_OFF
         );
 
-        // Draw the cursor (horizontal bar showing current strength)
         final int HANDLE_WIDTH = 2*SLIDER_WIDTH;
         final int HANDLE_HEIGHT = 16;
 
@@ -162,7 +147,6 @@ public class PortableThrottleStrengthScreen extends Screen {
 
         graphics.pose().popPose();
 
-        // Strength number label next to cursor
         String text = String.valueOf(strength);
         int color_strength = 0x00FE0000 / 15;
         graphics.drawString(
@@ -171,7 +155,6 @@ public class PortableThrottleStrengthScreen extends Screen {
             0xFF000000 + (strength*color_strength & 0x00FF0000), true
         );
 
-        // Frequency Information
         Couple<Frequency> frequencies = null; {
             Minecraft client = Minecraft.getInstance();
             ItemStack held = getHeldItem();
@@ -196,7 +179,6 @@ public class PortableThrottleStrengthScreen extends Screen {
         );
     }
 
-    // No background overlay so the game world is visible behind the slider
     @Override
     public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
@@ -216,7 +198,6 @@ public class PortableThrottleStrengthScreen extends Screen {
         return width / 2 - BAR_W / 2;
     }
 
-    // Sends a signal strength packet directly to the server
     private static void forceSignal(int s) {
         PacketDistributor.sendToServer(new PortableThrottleSignalPacket(s));
     }

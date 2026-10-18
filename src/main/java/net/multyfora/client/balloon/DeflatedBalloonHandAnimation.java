@@ -47,7 +47,6 @@ public class DeflatedBalloonHandAnimation {
         poseStack.translate(-0.5f, 0.30f * approach, -0.25f * approach);
         poseStack.mulPose(Axis.ZP.rotationDegrees(-90f));
         poseStack.mulPose(Axis.XP.rotationDegrees(90f * approach));
-//        poseStack.scale(scale, scale, scale);
     }
 
     private static float smoothstep(float t) {

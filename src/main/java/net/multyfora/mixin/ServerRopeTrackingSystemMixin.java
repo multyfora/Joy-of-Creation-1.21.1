@@ -39,13 +39,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * The base tracking system builds update packets from the holder's primary strand only,
- * so it corrupts extra strands' client data. Non-primary strands are now synced by
- * RopeStrandHolderBehavior's own tick; this keeps them out of the base sync path while
- * still managing their stop transition (the stop packet is position-based and stops
- * every client strand at that position).
- **/
 @Mixin(value = ServerRopeTrackingSystem.class, remap = false)
 public abstract class ServerRopeTrackingSystemMixin {
 
@@ -108,8 +101,9 @@ public abstract class ServerRopeTrackingSystemMixin {
         Iterator<UUID> iter = tracked.iterator();
         while (iter.hasNext()) {
             UUID id = iter.next();
-            ServerPlayer player = (ServerPlayer) this.level.getPlayerByUUID(id);
-            if (player == null || !current.contains(player)) {
+            if (!(this.level.getPlayerByUUID(id) instanceof ServerPlayer)) {
+                iter.remove();
+            } else if (!current.contains(this.level.getPlayerByUUID(id))) {
                 iter.remove();
             }
         }
@@ -127,7 +121,7 @@ public abstract class ServerRopeTrackingSystemMixin {
         strand.updatePose();
         RopeAttachment start = strand.getAttachment(RopeAttachmentPoint.START);
         RopeAttachment end = strand.getAttachment(RopeAttachmentPoint.END);
-        ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(this.level);
+        if (!(SubLevelContainer.getContainer(this.level) instanceof ServerSubLevelContainer container)) return;
         SubLevelTrackingSystem trackingSystem = container.trackingSystem();
         ClientboundRopeDataPacket packet = new ClientboundRopeDataPacket(
                 trackingSystem.getInterpolationTick(),
@@ -146,8 +140,7 @@ public abstract class ServerRopeTrackingSystemMixin {
     private @Nullable ClientboundRopeDataPacket joc$buildPacketFor(ServerRopeStrand strand, BlockPos ownerPos) {
         RopeAttachment start = strand.getAttachment(RopeAttachmentPoint.START);
         RopeAttachment end = strand.getAttachment(RopeAttachmentPoint.END);
-        ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(this.level);
-        if (container == null) return null;
+        if (!(SubLevelContainer.getContainer(this.level) instanceof ServerSubLevelContainer container)) return null;
         SubLevelTrackingSystem trackingSystem = container.trackingSystem();
         return new ClientboundRopeDataPacket(
                 trackingSystem.getInterpolationTick(),
@@ -173,7 +166,7 @@ public abstract class ServerRopeTrackingSystemMixin {
             if (holder == null) continue;
 
             if (joc$isExtraOfMulti(strand)) {
-                AeronauticsJoyofcreation.LOGGER.info("[JOC-SEND] extra strand={} start={} holder={} max={} sync={} stopper={}",
+                AeronauticsJoyofcreation.LOGGER.debug("[JOC-SEND] extra strand={} start={} holder={} max={} sync={} stopper={}",
                         strand.getUUID(), block, holder.getClass().getSimpleName(), ((IMultiRopeBehavior) holder).joc$getMaxRopeAttachments(),
                         strand.needsSync(), strand.networkingStopped);
                 joc$resyncNewTrackers(strand, holder);
@@ -184,7 +177,7 @@ public abstract class ServerRopeTrackingSystemMixin {
                 continue;
             }
 
-            AeronauticsJoyofcreation.LOGGER.info("[JOC-SEND] strand={} start={} holder={} isMulti={} sync={} stopped={} sinkPlayers={}",
+            AeronauticsJoyofcreation.LOGGER.debug("[JOC-SEND] strand={} start={} holder={} isMulti={} sync={} stopped={} sinkPlayers={}",
                     strand.getUUID(), block, holder.getClass().getSimpleName(), holder instanceof IMultiRopeBehavior,
                     strand.needsSync(), strand.networkingStopped, holder.getStrandTrackingPlayers().size());
 

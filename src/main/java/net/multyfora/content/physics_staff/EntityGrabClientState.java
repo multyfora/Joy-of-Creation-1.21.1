@@ -1,10 +1,15 @@
 package net.multyfora.content.physics_staff;
 
-/**
- * Client-side only: tracks which entity is currently being grabbed by the staff.
- * Set by S→C packet handler, read by the client-side beam mixin.
- */
 public class EntityGrabClientState {
-    public static int grabbedEntityId = 0;
-    public static double holdDistance = 5.0;
+    public static volatile int grabbedEntityId = 0;
+    public static volatile double holdDistance = 5.0;
+    public static volatile net.minecraft.world.phys.Vec3 grabTargetPos = null;
+    public static volatile long lastGrabPacketTime = 0L;
+
+    public static void reset() {
+        grabbedEntityId = 0;
+        holdDistance = 5.0;
+        grabTargetPos = null;
+        lastGrabPacketTime = 0L;
+    }
 }

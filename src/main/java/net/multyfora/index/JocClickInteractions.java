@@ -10,4 +10,6 @@ public class JocClickInteractions {
         SHATTER_ASSEMBLER_MANAGER = new ShatterAssemblerGUIHandler();
         SimClickInteractions.CLICK_INTERACTION_ENTRIES.add(SHATTER_ASSEMBLER_MANAGER);
     }
+
+    public static void register() {}
 }

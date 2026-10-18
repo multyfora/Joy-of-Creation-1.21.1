@@ -18,7 +18,6 @@ public class SeekerMenu extends AbstractContainerMenu {
     public final SeekerBlockEntity blockEntity;
     private final Level level;
 
-    // Server-side / direct construction
     public SeekerMenu(
             int containerId, Inventory inventory,
             BlockEntity blockEntity
@@ -28,7 +27,6 @@ public class SeekerMenu extends AbstractContainerMenu {
         this.level = inventory.player.level();
     }
 
-    // Client-side network constructor, required by IMenuTypeExtension.create
     public SeekerMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf buf) {
         this(containerId, inventory, resolveBlockEntity(inventory, buf));
     }

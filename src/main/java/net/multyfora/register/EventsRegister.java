@@ -11,10 +11,6 @@ public class EventsRegister {
     public static void registerEvents() {
         NeoForge.EVENT_BUS.addListener(RegisterCommandsEvent.class, JocCommands::register);
 
-        /**
-         * Server tick listener: ticks the PortableTypewriter and PortableThrottle server handlers
-         * each level tick to manage timeouts and signal decay
-         **/
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (!event.getLevel().isClientSide()) {
                 PortableTypewriterServerHandler.tick(event.getLevel());
@@ -22,7 +18,6 @@ public class EventsRegister {
             }
         });
 
-        // Creative staff entity grab/release handlers
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, CreativeStaffCaptureHandler::onServerTick);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, CreativeStaffCaptureHandler::onEntityInteract);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickEmpty.class, CreativeStaffCaptureHandler::onRightClickEmpty);

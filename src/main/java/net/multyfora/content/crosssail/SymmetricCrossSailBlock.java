@@ -90,7 +90,6 @@ public class SymmetricCrossSailBlock extends RotatedPillarBlock implements IWren
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        // Dye handling takes priority over placement helpers
         DyeColor clickedColor = DyeColor.getColor(stack);
         if (clickedColor != null) {
             if (!level.isClientSide) {
@@ -104,19 +103,19 @@ public class SymmetricCrossSailBlock extends RotatedPillarBlock implements IWren
         if (!player.isShiftKeyDown() && player.mayBuild()) {
 
             IPlacementHelper stackHelper = PlacementHelpers.get(placementHelperId);
-            if (stackHelper.matchesItem(stack)) {
+            if (stackHelper.matchesItem(stack) && stack.getItem() instanceof BlockItem stackBlockItem) {
                 PlacementOffset offset = stackHelper.getOffset(player, level, state, pos, hitResult);
                 if (offset.isSuccessful()) {
-                    offset.placeInWorld(level, (BlockItem) stack.getItem(), player, hand, hitResult);
+                    offset.placeInWorld(level, stackBlockItem, player, hand, hitResult);
                     return ItemInteractionResult.SUCCESS;
                 }
             }
 
             IPlacementHelper sideHelper = PlacementHelpers.get(sidePlacementHelperId);
-            if (sideHelper.matchesItem(stack)) {
+            if (sideHelper.matchesItem(stack) && stack.getItem() instanceof BlockItem sideBlockItem) {
                 PlacementOffset offset = sideHelper.getOffset(player, level, state, pos, hitResult);
                 if (offset.isSuccessful()) {
-                    offset.placeInWorld(level, (BlockItem) stack.getItem(), player, hand, hitResult);
+                    offset.placeInWorld(level, sideBlockItem, player, hand, hitResult);
                     return ItemInteractionResult.SUCCESS;
                 }
             }
@@ -124,14 +123,6 @@ public class SymmetricCrossSailBlock extends RotatedPillarBlock implements IWren
         return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
-    /**
-     * Recolors this sail, or spreads the new color through the connected cluster of
-     * same-axis symmetric cross sails, mirroring SymmetricSailBlock's algorithm:
-     * 1. Try recoloring this exact block.
-     * 2. Otherwise, find the nearest same-axis neighbor (by click position) with a
-     *    different color and recolor just that one.
-     * 3. Otherwise, flood-fill through all connected same-axis sails and recolor them all.
-     **/
     public void applyDye(BlockState state, Level world, BlockPos pos, Vec3 hit, DyeColor color) {
         BlockState newState = JocBlocks.SYMMETRIC_CROSS_SAILS.get(color).get().defaultBlockState();
         newState = BlockHelper.copyProperties(state, newState);
@@ -252,8 +243,6 @@ public class SymmetricCrossSailBlock extends RotatedPillarBlock implements IWren
     }
 
 
-    //THIS SHIT WAS SO PAINFUL TO DO! please kill me asap
-    //and NEVER ask me to fix or change ts
     @MethodsReturnNonnullByDefault
     private static class PlacementHelper implements IPlacementHelper {
         @Override

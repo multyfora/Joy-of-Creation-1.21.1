@@ -25,6 +25,9 @@ public class PayloadRegister {
                 (payload, context) -> {
                     context.enqueueWork(
                             () -> {
+                                if (!(context.player() instanceof ServerPlayer sp) || sp.isSpectator()) return;
+                                if (!sp.serverLevel().isLoaded(payload.pos())) return;
+                                if (sp.distanceToSqr(payload.pos().getX() + 0.5, payload.pos().getY() + 0.5, payload.pos().getZ() + 0.5) > 256.0) return;
                                 Level level = context.player().level();
                                 BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
                                 if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
@@ -60,6 +63,10 @@ public class PayloadRegister {
             (payload, context) -> {
                 context.enqueueWork(
                     () -> {
+                        if (!(context.player() instanceof ServerPlayer sp) || sp.isSpectator()) return;
+                        if (!sp.serverLevel().isLoaded(payload.pos())) return;
+                        if (sp.distanceToSqr(payload.pos().getX() + 0.5, payload.pos().getY() + 0.5, payload.pos().getZ() + 0.5) > 256.0) return;
+                        if (!Double.isFinite(payload.x()) || !Double.isFinite(payload.y()) || !Double.isFinite(payload.z())) return;
                         Level level = context.player().level();
                         BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
                         if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
@@ -83,32 +90,25 @@ public class PayloadRegister {
             }
         ;
 
-        // Register all custom network payloads (play-to-client and play-to-server)
         modEventBus.addListener(
             net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent.class,
             (event) -> {
                 var registrar = event.registrar("1.0.0");
-                // Client-bound: opens the SeekerScreen GUI when the server tells the client to
                 registrar.playToClient(
                     SeekerPayloads.OpenSeekerPayload.TYPE,
                     SeekerPayloads.OpenSeekerPayload.CODEC,
-                    (payload, context) -> context.enqueueWork(
-                        () -> ClientPayloadHandlers.handleOpenSeeker(payload, context)
-                    )
+                    ClientPayloadHandlers::handleOpenSeeker
                 );
-                // Server-bound: updates the SeekerBlockEntity's target coordinates from the GUI
                 registrar.playToServer(
                     SeekerPayloads.UpdateSeekerPayload.TYPE,
                     SeekerPayloads.UpdateSeekerPayload.CODEC,
                     UpdateSeekerPayloader
                 );
-                // Server-bound: toggles 2D/3D calculation mode for the Seeker
                 registrar.playToServer(
                         SeekerPayloads.ToggleModePayload.TYPE,
                         SeekerPayloads.ToggleModePayload.CODEC,
                         ToggleModePayloader
                 );
-                // Server-bound: writes captured spyglass target position onto the held spyglass ItemStack
                 registrar.playToServer(
                     SeekerPayloads.SetSpyglassTargetPayload.TYPE,
                     SeekerPayloads.SetSpyglassTargetPayload.CODEC,
@@ -119,6 +119,11 @@ public class PayloadRegister {
                     (payload, context) -> {
                         context.enqueueWork(
                             () -> {
+                                if (!(context.player() instanceof ServerPlayer sp2) || sp2.isSpectator()) return;
+                                if (!sp2.serverLevel().isLoaded(payload.pos())) return;
+                                if (sp2.distanceToSqr(payload.pos().getX() + 0.5, payload.pos().getY() + 0.5, payload.pos().getZ() + 0.5) > 256.0) return;
+                                if (!Double.isFinite(payload.x()) || !Double.isFinite(payload.y()) || !Double.isFinite(payload.z())) return;
+                                if (!Double.isFinite(payload.minDistance()) || !Double.isFinite(payload.maxDistance())) return;
                                 Level level = context.player().level();
                                 BlockEntity blockEntity = level.getBlockEntity( payload.pos() );
                                 if( !(blockEntity instanceof SeekerBlockEntity seekerBlockEntity) ) {
@@ -135,16 +140,13 @@ public class PayloadRegister {
                 registrar.playToClient(
                     SeekerDistancePayloads.OpenSeekerDistancePayload.TYPE,
                     SeekerDistancePayloads.OpenSeekerDistancePayload.CODEC,
-                    (payload, context) -> context.enqueueWork(
-                        () -> ClientPayloadHandlers.handleOpenSeekerDistance(payload, context)
-                    )
+                    ClientPayloadHandlers::handleOpenSeekerDistance
                 );
                 registrar.playToServer(
                     SeekerDistancePayloads.UpdateSeekerDistancePayload.TYPE,
                     SeekerDistancePayloads.UpdateSeekerDistancePayload.CODEC,
                     UpdateSeekerDistancePayloader
                 );
-                // Server-bound: handles typewriter key press/release input
                 registrar.playToServer(
                     PortableTypewriterInputPacket.TYPE,
                     PortableTypewriterInputPacket.CODEC,
@@ -154,7 +156,6 @@ public class PayloadRegister {
                         );
                     }
                 );
-                // Server-bound: binds a keyboard key to a redstone link frequency for the typewriter
                 registrar.playToServer(
                     PortableTypewriterBindPacket.TYPE,
                     PortableTypewriterBindPacket.CODEC,
@@ -164,7 +165,6 @@ public class PayloadRegister {
                         );
                     }
                 );
-                // Server-bound: binds the throttle item to a redstone link's frequency
                 registrar.playToServer(
                     PortableThrottleBindPacket.TYPE,
                     PortableThrottleBindPacket.CODEC,
@@ -174,7 +174,6 @@ public class PayloadRegister {
                         );
                     }
                 );
-                // Server-bound: configures the throttle's frequency items
                 registrar.playToServer(
                     PortableThrottleConfigPacket.TYPE,
                     PortableThrottleConfigPacket.CODEC,
@@ -184,7 +183,6 @@ public class PayloadRegister {
                         );
                     }
                 );
-                // Server-bound: sends throttle signal strength to the server
                 registrar.playToServer(
                     PortableThrottleSignalPacket.TYPE,
                     PortableThrottleSignalPacket.CODEC,
@@ -194,7 +192,6 @@ public class PayloadRegister {
                         );
                     }
                 );
-                // Server-bound: sets frequency items for a typewriter key binding directly
                 registrar.playToServer(
                     PortableTypewriterSetFreqPacket.TYPE,
                     PortableTypewriterSetFreqPacket.CODEC,
@@ -205,7 +202,6 @@ public class PayloadRegister {
                     }
                 );
 
-                // Entity grab: client → server stop
                 registrar.playToServer(
                     EntityGrabPayloads.Stop.TYPE,
                     EntityGrabPayloads.Stop.CODEC,
@@ -220,7 +216,6 @@ public class PayloadRegister {
                     }
                 );
 
-                // Entity grab: client → server grab request (long-range entity pick)
                 registrar.playToServer(
                     EntityGrabPayloads.GrabRequest.TYPE,
                     EntityGrabPayloads.GrabRequest.CODEC,
@@ -235,7 +230,6 @@ public class PayloadRegister {
                     }
                 );
 
-                // Entity grab: server → client start
                 registrar.playToClient(
                     EntityGrabPayloads.Start.TYPE,
                     EntityGrabPayloads.Start.CODEC,
@@ -249,7 +243,6 @@ public class PayloadRegister {
                     }
                 );
 
-                // Entity grab: server → client end
                 registrar.playToClient(
                     EntityGrabPayloads.End.TYPE,
                     EntityGrabPayloads.End.CODEC,
@@ -262,7 +255,6 @@ public class PayloadRegister {
                     }
                 );
 
-                // Entity grab: client → server set hold distance
                 registrar.playToServer(
                     EntityGrabPayloads.SetHoldDistance.TYPE,
                     EntityGrabPayloads.SetHoldDistance.CODEC,
@@ -277,7 +269,6 @@ public class PayloadRegister {
                     }
                 );
 
-                // Shatter assembler: client → server assemble
                 registrar.playToServer(
                     ShatterAssemblePacket.TYPE,
                     ShatterAssemblePacket.STREAM_CODEC,
@@ -292,7 +283,6 @@ public class PayloadRegister {
                     }
                 );
 
-                // Shears cut: client → server cut rectangle
                 registrar.playToServer(
                     ShearsCutPayload.TYPE,
                     ShearsCutPayload.CODEC,
@@ -307,7 +297,6 @@ public class PayloadRegister {
                     }
                 );
 
-                // Shears preview: bidirectional relay
                 registrar.playBidirectional(
                     ShearsPreviewPayload.TYPE,
                     ShearsPreviewPayload.CODEC,

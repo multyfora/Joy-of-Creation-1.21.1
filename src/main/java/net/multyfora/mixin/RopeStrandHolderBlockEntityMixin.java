@@ -25,11 +25,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * The base dependency provider only considers the primary attached strand, so the
- * cross-sublevel constraints of extra strands wouldn't be held as connection
- * dependencies. Merge in all extra strands' attachment sublevels.
- **/
 @Mixin(value = RopeStrandHolderBlockEntity.class, remap = false)
 public interface RopeStrandHolderBlockEntityMixin extends RopeStrandHolderBlockEntity {
 

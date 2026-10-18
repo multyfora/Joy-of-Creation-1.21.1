@@ -15,7 +15,6 @@ public class NetworkUtils {
             return null;
         }
 
-        // Check main hand, offhand, then full inventory
         ItemStack usedItem = player.getMainHandItem();
         if (usedItem.getItem().asItem() == validItem) return usedItem;
 

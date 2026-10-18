@@ -30,7 +30,6 @@ public class SeekerBlockItem extends BlockItem {
             return InteractionResult.PASS;
         }
 
-        // Sneaking -> normal placement, don't intercept
         if (player.isShiftKeyDown()) {
             return InteractionResult.PASS;
         }
@@ -92,7 +91,6 @@ public class SeekerBlockItem extends BlockItem {
         be.linkTo(storedPos);
         other.linkTo(pos);
 
-        // Copy target + use3D from the captured seeker to the new one
         if (other.hasTarget()) {
             be.setTarget(other.getTargetX(), other.getTargetY(), other.getTargetZ());
             be.setUse3D(other.isUse3D());

@@ -89,7 +89,27 @@ public class JocLangProvider extends LanguageProvider {
 
         add("screen.joc.seeker", "Seeker");
         add("screen.joc.seeker.set", "Set Target");
-        add("screen.joc.seeker.current_pos", "Use Current");
+        add("joc.goggles.seeker.module", "Module: ");
+        add("joc.goggles.seeker.module.none", "Empty");
+        add("joc.goggles.seeker.module.spyglass", "Spyglass");
+        add("joc.goggles.seeker.module.player_dir", "Eye of Ender");
+        add("joc.goggles.seeker.module.modulating", "Modulating Receiver");
+        add("joc.goggles.seeker.mode", "Mode: ");
+        add("joc.goggles.seeker.mode.3d", "3D");
+        add("joc.goggles.seeker.mode.2d", "2D");
+        add("joc.goggles.seeker.mode.detail_3d", " (6-sided)");
+        add("joc.goggles.seeker.mode.detail_2d", " (XZ-plane)");
+        add("joc.goggles.seeker.target", "Target: ");
+        add("joc.goggles.seeker.no_target", "No target");
+        add("joc.goggles.seeker.distance", "Distance: ");
+        add("joc.goggles.seeker.distance_unit", " blocks");
+        add("joc.goggles.seeker.range", "Range: ");
+        add("joc.goggles.seeker.tracking", "Tracking player");
+        add("joc.goggles.seeker.idle", "Idle");
+        add("joc.goggles.seeker.linked", "Linked seekers: ");
+        add("joc.goggles.seeker.linked_pos", "• %s, %s, %s");
+        add("joc.goggles.seeker.linked_more", "• …and %s more");
+        add("joc.goggles.seeker.lost", "Target lost");        add("screen.joc.seeker.current_pos", "Use Current");
         add("screen.joc.seeker.waypoint_picker", "Select Waypoint");
         add("screen.joc.seeker.no_waypoints", "No waypoints found in Xaero's World Map");
         add("screen.joc.seeker_distance", "Seeker - Distance");

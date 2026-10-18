@@ -24,7 +24,7 @@ import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.network.EntityGrabPayloads;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-@Mixin(targets = "dev.simulated_team.simulated.content.physics_staff.PhysicsStaffClientHandler$PhysicsStaffMouseHandler")
+@Mixin(targets = "dev.simulated_team.simulated.content.physics_staff.PhysicsStaffClientHandler$PhysicsStaffMouseHandler", remap = false)
 public class PhysicsStaffMouseHandlerMixin {
     @Inject(
         method = "onUse",

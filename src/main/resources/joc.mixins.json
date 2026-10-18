@@ -18,6 +18,7 @@
   "client": [
     "physics_staff.PhysicsStaffMouseHandlerMixin",
     "physics_staff.PhysicsStaffClientHandlerMixin",
+    "physics_staff.LocalPlayerGrabMixin",
     "EntitySubLevelRotationHelperMixin",
     "KeyboardHandlerMixin",
     "ModListScreenMixin",

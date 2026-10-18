@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-//fucked up class, ill fix this later idk
 public final class XaerosCompat {
     public static final String MINIMAP_MOD_ID = "xaerominimap";
     public static final String WORLD_MAP_MOD_ID = "xaeroworldmap";
@@ -454,7 +453,6 @@ public final class XaerosCompat {
                     if (!line.startsWith("waypoint:")) continue;
 
                     String[] parts = line.split(":", -1);
-                    // waypoint:name:initials:x:y:z:color:disabled:type:set:rotate_on_tp:tp_yaw:visibility_type:destination
                     if (parts.length < 7) continue;
                     String name = parts[1];
                     String initials = parts[2];

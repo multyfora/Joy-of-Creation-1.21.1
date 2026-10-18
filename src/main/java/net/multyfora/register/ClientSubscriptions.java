@@ -45,10 +45,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-@EventBusSubscriber(modid = AeronauticsJoyofcreation.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = AeronauticsJoyofcreation.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class ClientSubscriptions {
 
-    // Subscriptions
 
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -62,12 +61,6 @@ public class ClientSubscriptions {
         event.register(JocMenuTypes.THROTTLE_SCREEN.get(), PortableThrottleLinkScreen::new);
     }
 
-    @SubscribeEvent
-    static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
-            SeekerLinkedHighlightRenderer.render(event);
-        }
-    }
     @SubscribeEvent
     static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
         event.register(ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("joc", "block/seeker")));
@@ -116,25 +109,34 @@ public class ClientSubscriptions {
         JocPartialModels.init();
     }
 
-    @SubscribeEvent
-    static void onClientTick(ClientTickEvent.Pre event) {
-        PortableTypewriterClientHandler.tick();
-        PortableThrottleClientHandler.tick();
-        ShearsCutState.tick();
-        ShearsCutRemoteState.tick();
+    @EventBusSubscriber(modid = AeronauticsJoyofcreation.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+    public static class Game {
+        @SubscribeEvent
+        static void onRenderLevelStage(RenderLevelStageEvent event) {
+            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+                SeekerLinkedHighlightRenderer.render(event);
+            }
+        }
+
+        @SubscribeEvent
+        static void onClientTick(ClientTickEvent.Pre event) {
+            PortableTypewriterClientHandler.tick();
+            PortableThrottleClientHandler.tick();
+            ShearsCutState.tick();
+            ShearsCutRemoteState.tick();
+        }
+
+        @SubscribeEvent
+        static void onMouseButtonPress(InputEvent.MouseButton.Pre event) {
+            handleSpyglassScopedLeftClick(event);
+        }
+
+        @SubscribeEvent
+        static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
+            handleMouseScroll(event);
+        }
     }
 
-    @SubscribeEvent
-    static void onMouseButtonPress(InputEvent.MouseButton.Pre event) {
-        handleSpyglassScopedLeftClick(event);
-    }
-
-    @SubscribeEvent
-    static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
-        handleMouseScroll(event);
-    }
-
-    // Longer Implementations
 
     private static void handleSpyglassScopedLeftClick(InputEvent.MouseButton.Pre event) {
         if (event.getAction() != 1 || event.getButton() != 0) return;
@@ -214,7 +216,7 @@ public class ClientSubscriptions {
 
         @Override
         public ResourceLocation getTextureLocation(GyroscopicSeatEntity entity) {
-            return null;
+            return ResourceLocation.withDefaultNamespace("textures/entity/minecart.png");
         }
     }
 }

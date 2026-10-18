@@ -14,10 +14,10 @@ public class AnimatedGifTexture extends DynamicTexture implements Tickable {
     private int ticksUntilNext;
 
     public AnimatedGifTexture(List<NativeImage> frames, int frameDurationTicks) {
-        super(frames.get(0));
-        this.frames = frames;
-        this.frameDurationTicks = frameDurationTicks;
-        this.ticksUntilNext = frameDurationTicks;
+        super(frames == null || frames.isEmpty() ? new NativeImage(1, 1, false) : frames.get(0));
+        this.frames = frames == null ? List.of() : List.copyOf(frames);
+        this.frameDurationTicks = Math.max(1, frameDurationTicks);
+        this.ticksUntilNext = this.frameDurationTicks;
     }
 
     @Override
@@ -39,5 +39,8 @@ public class AnimatedGifTexture extends DynamicTexture implements Tickable {
     @Override
     public void close() {
         this.releaseId();
+        for (int i = 1; i < frames.size(); i++) {
+            try { frames.get(i).close(); } catch (Exception ignored) {}
+        }
     }
 }

@@ -13,7 +13,6 @@ import net.multyfora.content.SpaceUtils;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 
-// Based on dev.simulated_team.simulated.content.blocks.nav_table.navigation_target.NavigationTarget
 public class SeekTarget {
     static final float DEADZONE = 2.0F;
     static final float MAX_RANGE = 200.0F;
@@ -74,7 +73,7 @@ public class SeekTarget {
             differenceVec = SimMathUtils.rotateQuat(differenceVec, worldshellRot);
             Vec3 projectedPos = getPlaneProjectedPos(differenceVec, normal);
             double distance = projectedPos.length();
-            if(/*0.0F < MAX_RANGE &&*/ (double)MAX_RANGE - 1.0E-4 < distance) {
+            if(  (double)MAX_RANGE - 1.0E-4 < distance) {
                 return 0;
             } else if (distance < (double)DEADZONE - 1.0E-4) {
                 return 0;

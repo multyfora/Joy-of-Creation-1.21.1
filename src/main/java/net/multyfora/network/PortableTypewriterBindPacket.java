@@ -20,10 +20,6 @@ import net.multyfora.index.JocItems;
 
 import static net.multyfora.network.NetworkUtils.getItemIfValid;
 
-/**
- * Client-to-server packet: binds a selected keyboard key to a Redstone Link block's frequency.
- * Sent when the player right-clicks a Redstone Link while having a key selected in the typewriter GUI.
- **/
 public class PortableTypewriterBindPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "pt_bind");
@@ -34,7 +30,6 @@ public class PortableTypewriterBindPacket implements CustomPacketPayload {
         PortableTypewriterBindPacket::new
     );
 
-    // The GLFW key code to bind, and the position of the Redstone Link to bind to
     private final int glfwKeyCode;
     private final BlockPos linkPos;
 
@@ -48,10 +43,6 @@ public class PortableTypewriterBindPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    /**
-     * Server-side: validates the player, finds the typewriter, reads the Redstone Link's
-     * frequency from its LinkBehaviour, and writes the binding on the typewriter item
-     **/
     public void handle(Player player) {
         ItemStack item = getItemIfValid(
             player,

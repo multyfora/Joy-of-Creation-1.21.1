@@ -19,14 +19,12 @@ public class Pointer {
     }
 
     public void calculateRelativeAngle(SeekerBlockEntity parent) {
-        Vec3 rawTarget = parent.getTargetPosition(true);
-        if (rawTarget == null) {
+        Vec3 targetWorld = parent.getTargetCenter();
+        if (targetWorld == null) {
             yaw = 0;
             pitch = 0;
             return;
         }
-
-        Vec3 targetWorld = rawTarget.add(new Vec3(0.5, 0.5, 0.5));
 
         Vec3 selfPos = SpaceUtils.getProjectedSelfPos(
             parent.getSubLevel(),

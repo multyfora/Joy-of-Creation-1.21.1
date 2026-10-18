@@ -20,17 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Mixin to RopeConnectorBlockEntity: sets the maximum rope attachments to unlimited
- * so that rope connectors can accept multiple simultaneous rope connections.
- **/
 @Mixin(value = RopeConnectorBlockEntity.class, remap = false)
 public class RopeConnectorBlockEntityMixin {
 
-    /**
-     * After behaviours are added to the connector, find the RopeStrandHolderBehavior
-     * and set its max attachments to Integer.MAX_VALUE
-     **/
     @Inject(method = "addBehaviours", at = @At("TAIL"))
     private void joc$setConnectorMultiRope(List<BlockEntityBehaviour> behaviours, CallbackInfo ci) {
         for(BlockEntityBehaviour behaviour : behaviours) {
@@ -43,10 +35,6 @@ public class RopeConnectorBlockEntityMixin {
         }
     }
 
-    /**
-     * The base bounding box only covers the primary strand, so extra strands pointing
-     * away from it get culled. Inflate across every client strand instead.
-     **/
     @Inject(method = "getRenderBoundingBox", at = @At("HEAD"), cancellable = true)
     private void joc$inflateForAllStrands(CallbackInfoReturnable<AABB> cir) {
         RopeStrandHolderBehavior holder = ((RopeConnectorBlockEntity) (Object) this).getRopeHolder();

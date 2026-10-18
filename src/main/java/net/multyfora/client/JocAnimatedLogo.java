@@ -30,11 +30,13 @@ public class JocAnimatedLogo {
 
     public static void install(TextureManager tm, ResourceLocation targetLocation) {
         try {
-            if (cachedFrames == null)
+            if (cachedFrames == null || cachedFrames.isEmpty())
                 cachedFrames = loadFrames();
+            if (cachedFrames.isEmpty()) return;
 
             tm.register(targetLocation, new AnimatedGifTexture(cachedFrames, FRAME_DURATION_TICKS));
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            net.multyfora.AeronauticsJoyofcreation.LOGGER.warn("Failed to load animated logo frames", e);
         }
     }
 

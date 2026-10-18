@@ -1,7 +1,5 @@
 package net.multyfora.compat.createthrusters.mixin;
 
-import com.rieno.gadgetsandgizmos.compat.simulated.SimulatedRopeCompat;
-
 import dev.simulated_team.simulated.content.blocks.rope.RopeStrandHolderBehavior;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.RopeAttachment;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.RopeAttachmentPoint;
@@ -28,17 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Replaces SimulatedRopeCompat.createRopeWithAttachments (used by the EntityLauncher
- * anchoring path) when either endpoint is a JOC multi-rope holder. The base
- * implementation rejects any already-attached target, destroys the start side's
- * existing ropes, and writes holder state through reflection, bypassing JOC's
- * extended bookkeeping. This JOC-aware version allows JOC holders with remaining
- * capacity, preserves their existing strands, and registers the new strand through
- * IMultiRopeBehavior so destruction/tracking stay consistent. All other cases pass
- * through to the untouched original implementation.
- **/
-@Mixin(value = SimulatedRopeCompat.class, remap = false)
+@Mixin(targets = "com.rieno.gadgetsandgizmos.compat.simulated.SimulatedRopeCompat", remap = false)
 public abstract class SimulatedRopeCompatMixin {
 
     @Inject(
@@ -47,7 +35,7 @@ public abstract class SimulatedRopeCompatMixin {
             remap = false
     )
     private static void joc$logCreateRope(RopeStrandHolderBehavior a, RopeStrandHolderBehavior b, boolean dropItem, CallbackInfoReturnable<Boolean> cir) {
-        AeronauticsJoyofcreation.LOGGER.info("[JOC-COMPAT] createRope a={} b={} drop={}",
+        AeronauticsJoyofcreation.LOGGER.debug("[JOC-COMPAT] createRope a={} b={} drop={}",
                 a != null ? a.blockEntity.getBlockPos() : "null",
                 b != null ? b.blockEntity.getBlockPos() : "null",
                 dropItem);
@@ -114,10 +102,8 @@ public abstract class SimulatedRopeCompatMixin {
         double maxRange = (Double) SimConfigService.INSTANCE.server().blocks.maxRopeRange.get();
         if (distance > maxRange) return false;
 
-        // The base implementation destroys the start side's ropes first; JOC multi
-        // holders keep their existing strands and add alongside them instead.
         if (multiA == null && holderA.isAttached()) {
-            SimulatedRopeCompat.destroyRope(holderA, null, vecA, dropItem);
+            holderA.destroyRope(null, vecA, dropItem);
         }
 
         if (multiA != null ? !multiA.joc$canAcceptAnotherRope() : holderA.isAttached()) return false;

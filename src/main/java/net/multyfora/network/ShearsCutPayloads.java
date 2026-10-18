@@ -43,10 +43,25 @@ public class ShearsCutPayloads {
         }
 
         public void handle(ServerPlayer player) {
+            if (player.isSpectator()) return;
             ServerLevel level = player.serverLevel();
 
             try {
-                SubLevel containing = SubLevelContainer.getContainer(level).getSubLevel(subLevelId);
+                var container = SubLevelContainer.getContainer(level);
+                if (container == null) {
+                    AeronauticsJoyofcreation.LOGGER.warn("Shears cut rejected: no sublevel container for {}", player.getName().getString());
+                    player.sendSystemMessage(Component.literal("No sublevel found for that cut"));
+                    return;
+                }
+                long volume = (long) (Math.abs(point1.getX() - point2.getX()) + 1)
+                        * (Math.abs(point1.getY() - point2.getY()) + 1)
+                        * (Math.abs(point1.getZ() - point2.getZ()) + 1);
+                if (volume > 262144L) {
+                    AeronauticsJoyofcreation.LOGGER.warn("Shears cut rejected: oversized volume {} for {}", volume, player.getName().getString());
+                    player.sendSystemMessage(Component.literal("Cut area too large"));
+                    return;
+                }
+                SubLevel containing = container.getSubLevel(subLevelId);
                 if (!(containing instanceof ServerSubLevel subLevel) || subLevel.isRemoved()) {
                     AeronauticsJoyofcreation.LOGGER.warn("Shears cut rejected: no sublevel {} found for {}", subLevelId, player.getName().getString());
                     player.sendSystemMessage(Component.literal("No sublevel found for that cut"));
@@ -95,7 +110,12 @@ public class ShearsCutPayloads {
 
         private static final StreamCodec<RegistryFriendlyByteBuf, PreviewPhase> PHASE_STREAM_CODEC = StreamCodec.of(
                 (buf, phase) -> buf.writeByte(phase.ordinal()),
-                buf -> PreviewPhase.values()[buf.readByte()]
+                buf -> {
+                    int ordinal = buf.readByte();
+                    PreviewPhase[] values = PreviewPhase.values();
+                    if (ordinal < 0 || ordinal >= values.length) return PreviewPhase.CANCEL;
+                    return values[ordinal];
+                }
         );
 
         public static final StreamCodec<RegistryFriendlyByteBuf, ShearsPreviewPayload> CODEC =

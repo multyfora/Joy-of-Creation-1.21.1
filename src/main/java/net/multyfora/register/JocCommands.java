@@ -103,7 +103,6 @@ public class JocCommands {
             return 0;
         }
 
-        // Check all three positions are air or replaceable
         for (BlockPos pos : new BlockPos[]{connectorBottom, connectorTop, balloonPos}) {
             if (!level.getBlockState(pos).isAir()) {
                 source.sendFailure(Component.literal("Cannot place block at " + pos.toShortString() + " — block obstructed"));
@@ -123,7 +122,6 @@ public class JocCommands {
         boolean placedBalloon = level.setBlock(balloonPos, balloonState, Block.UPDATE_ALL);
 
         if (!(placedBottom && placedTop && placedBalloon)) {
-            // Rollback any successful placements
             if (placedBottom) level.setBlock(connectorBottom, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             if (placedTop) level.setBlock(connectorTop, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             if (placedBalloon) level.setBlock(balloonPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
@@ -131,7 +129,6 @@ public class JocCommands {
             return 0;
         }
 
-        // Create rope between the two connectors
         if (level.getBlockEntity(connectorBottom) instanceof SmartBlockEntity bottomBE
                 && level.getBlockEntity(connectorTop) instanceof SmartBlockEntity topBE) {
             RopeStrandHolderBehavior bottomBehavior = bottomBE.getBehaviour(RopeStrandHolderBehavior.TYPE);

@@ -1,5 +1,6 @@
 package net.multyfora.content.seeker;
 
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
@@ -8,8 +9,10 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 
 import net.createmod.catnip.animation.LerpedFloat;
+import net.createmod.catnip.lang.Lang;
 
 import net.minecraft.core.*;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
@@ -47,7 +50,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider {
+public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider, IHaveGoggleInformation {
 
     public enum ModuleType {
         NONE,
@@ -77,8 +80,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
     private boolean playerDirPowered = false;
     private static final double PLAYER_DIR_EPSILON = 1.0e-6;
 
-    //anim stuff
-    private static final float INSERT_ANIM_DURATION_TICKS = 12f; // 0.6s at 20 TPS
+    private static final float INSERT_ANIM_DURATION_TICKS = 12f;
     private long insertAnimStartTick = Long.MIN_VALUE;
 
 
@@ -134,7 +136,6 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         if (module == ModuleType.NONE) return;
 
-        // Periodic link validation: remove stale links (every 100 ticks)
         if (level.getGameTime() % 100 == 0) {
             linkedSeekers.removeIf(linkedPos -> {
                 if (!level.isLoaded(linkedPos)) return false;
@@ -182,7 +183,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         if (targetLocal != null) {
             distanceToTarget = SpaceUtils
                     .getProjectedSelfPos(subLevel, worldPosition)
-                    .distanceTo(getTargetPosition(true));
+                    .distanceTo(getTargetCenter());
             if (distanceToTarget >= 5000) {
                 lastDistanceToTarget = distanceToTarget;
             }
@@ -202,7 +203,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
                 lastDistanceToTarget = distanceToTarget;
                 distanceToTarget = SpaceUtils
                         .getProjectedSelfPos(subLevel, worldPosition)
-                        .distanceTo(getTargetPosition(true));
+                        .distanceTo(getTargetCenter());
             }
         }
     }
@@ -247,7 +248,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             } catch (Exception ignored) {}
         }
         Vec3 selfPos = SpaceUtils.getProjectedSelfPos(subLevel, worldPosition);
-        Vec3 targetWorld = getTargetPosition(true);
+        Vec3 targetWorld = getTargetCenter();
         if (targetWorld == null) return -1;
         return selfPos.distanceTo(targetWorld);
     }
@@ -281,10 +282,14 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             playerDirLookDir = SpaceUtils.rotateQuat(lookAngle.normalize(), invRot).scale(-1);
             updatePlayerDirAngles();
 
-            EYES_ON_PLAYER.computeIfAbsent(trackedPlayerUUID, k -> new java.util.ArrayList<>()).add(worldPosition);
+            EYES_ON_PLAYER.computeIfAbsent(trackedPlayerUUID, k -> new java.util.ArrayList<>());
+            java.util.List<BlockPos> eyesList = EYES_ON_PLAYER.get(trackedPlayerUUID);
+            if (!eyesList.contains(worldPosition)) eyesList.add(worldPosition);
 
             if (countActiveEyes(trackedPlayerUUID) >= 6) {
-                net.multyfora.advancement.JocAdvancements.SIX_EYES.awardTo((net.minecraft.server.level.ServerPlayer) player);
+                if (player instanceof net.minecraft.server.level.ServerPlayer sp2) {
+                    net.multyfora.advancement.JocAdvancements.SIX_EYES.awardTo(sp2);
+                }
             }
         } else {
             playerDirPowered = false;
@@ -598,17 +603,12 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         return (int) Math.round(15.0 * (1.0 - (dist - minDistance) / (double)(maxDistance - minDistance)));
     }
 
-    /** Called when a module is inserted, to kick off the client-side grow+twirl animation. */
     private void markInsertAnimation() {
         if (level != null) {
             insertAnimStartTick = level.getGameTime();
         }
     }
 
-    /**
-     * Returns animation progress in [0, 1]; 1 means "no animation running / finished".
-     * Safe to call every frame from the renderer.
-     **/
     public float getInsertAnimationProgress(float partialTick) {
         if (level == null || insertAnimStartTick == Long.MIN_VALUE) return 1f;
         float elapsed = (level.getGameTime() - insertAnimStartTick) + partialTick;
@@ -620,7 +620,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         if (!use3D && (direction == Direction.UP || direction == Direction.DOWN)) return 0;
 
-        Vec3 targetWorld = getTargetPosition(true);
+        Vec3 targetWorld = getTargetCenter();
         if (targetWorld == null) return 0;
 
         Vec3 selfPos = SpaceUtils.getProjectedSelfPos(subLevel, worldPosition);
@@ -670,6 +670,12 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
         return currentTarget;
     }
 
+    @Nullable
+    public Vec3 getTargetCenter() {
+        Vec3 target = getTargetPosition(true);
+        return target == null ? null : target.add(0.5, 0.5, 0.5);
+    }
+
     private boolean selectivelyUpdateNeighbors() {
         if (level == null || level.isClientSide) return false;
 
@@ -713,13 +719,11 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             tag.putUUID("tracked_sub_level", trackedSubLevel);
         }
 
-        // Only sync the animation trigger over the network — never persist it to the save file
         if (clientPacket) {
             tag.putLong("insert_anim_tick", insertAnimStartTick);
             tag.putBoolean("lost_target", lostTarget);
         }
 
-        // Persist linked seekers in server save; sync to client for highlight rendering
         var list = new net.minecraft.nbt.ListTag();
         for (BlockPos p : linkedSeekers) {
             list.add(net.minecraft.nbt.NbtUtils.writeBlockPos(p));
@@ -787,7 +791,6 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
             lostTarget = tag.getBoolean("lost_target");
         }
 
-        // Restore linked seekers from both server save and client sync
         linkedSeekers.clear();
         if (tag.contains("linked_seekers")) {
             var list = tag.getList("linked_seekers", net.minecraft.nbt.Tag.TAG_COMPOUND);
@@ -799,10 +802,139 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider 
 
         if (clientPacket) {
             requestModelDataUpdate();
-            if (level != null) {
+            if (level != null && level.isClientSide) {
                 level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
             }
         }
+    }
+
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        Lang.builder("joc")
+                .translate("goggles.seeker.module")
+                .add(Lang.builder("joc").translate(moduleKey(module)).style(moduleColor(module)))
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip);
+
+        if (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING) {
+            boolean detailed = use3D;
+            Lang.builder("joc")
+                    .translate("goggles.seeker.mode")
+                    .add(Lang.builder("joc")
+                            .translate(detailed ? "goggles.seeker.mode.3d" : "goggles.seeker.mode.2d")
+                            .style(detailed ? ChatFormatting.GREEN : ChatFormatting.YELLOW))
+                    .add(Lang.builder("joc")
+                            .translate(detailed ? "goggles.seeker.mode.detail_3d" : "goggles.seeker.mode.detail_2d")
+                            .style(ChatFormatting.DARK_GRAY))
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip, 1);
+            if (hasTarget && currentTarget != null) {
+                Vec3 center = null;
+                try {
+                    center = getTargetCenter();
+                } catch (Exception ignored) {}
+                if (center == null) center = currentTarget;
+                Lang.builder("joc")
+                        .translate("goggles.seeker.target")
+                        .text(ChatFormatting.WHITE,
+                                fmt(center.x) + ", " + fmt(center.y) + ", " + fmt(center.z))
+                        .style(ChatFormatting.GRAY)
+                        .forGoggles(tooltip, 1);
+                double dist = -1;
+                try {
+                    dist = getDistanceToTarget();
+                } catch (Exception ignored) {}
+                if (dist >= 0) {
+                    Lang.builder("joc")
+                            .translate("goggles.seeker.distance")
+                            .add(Lang.builder("joc").text(fmt(dist)).style(ChatFormatting.GREEN))
+                            .translate("goggles.seeker.distance_unit")
+                            .style(ChatFormatting.GRAY)
+                            .forGoggles(tooltip, 1);
+                }
+            } else {
+                Lang.builder("joc")
+                        .translate("goggles.seeker.no_target")
+                        .style(ChatFormatting.DARK_GRAY)
+                        .forGoggles(tooltip, 1);
+            }
+        }
+
+        if (module == ModuleType.MODULATING) {
+            Lang.builder("joc")
+                    .translate("goggles.seeker.range")
+                    .add(Lang.builder("joc").text(String.valueOf(minDistance)).style(ChatFormatting.GOLD))
+                    .text(ChatFormatting.GRAY, " - ")
+                    .add(Lang.builder("joc").text(String.valueOf(maxDistance)).style(ChatFormatting.GOLD))
+                    .translate("goggles.seeker.distance_unit")
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip, 1);
+        }
+
+        if (module == ModuleType.PLAYER_DIR) {
+            Lang.builder("joc")
+                    .translate(playerDirPowered ? "goggles.seeker.tracking" : "goggles.seeker.idle")
+                    .style(playerDirPowered ? ChatFormatting.GREEN : ChatFormatting.GRAY)
+                    .forGoggles(tooltip, 1);
+        }
+
+        if (!linkedSeekers.isEmpty()) {
+            Lang.builder("joc")
+                    .translate("goggles.seeker.linked")
+                    .add(Lang.builder("joc")
+                            .text(String.valueOf(linkedSeekers.size()))
+                            .style(ChatFormatting.YELLOW))
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip, isPlayerSneaking ? 0 : 1);
+            if (isPlayerSneaking) {
+                int shown = 0;
+                for (BlockPos linkedPos : linkedSeekers) {
+                    if (shown >= 4) {
+                        Lang.builder("joc")
+                                .translate("goggles.seeker.linked_more", linkedSeekers.size() - shown)
+                                .style(ChatFormatting.DARK_GRAY)
+                                .forGoggles(tooltip, 2);
+                        break;
+                    }
+                    Lang.builder("joc")
+                            .translate("goggles.seeker.linked_pos",
+                                    linkedPos.getX(), linkedPos.getY(), linkedPos.getZ())
+                            .style(ChatFormatting.DARK_GRAY)
+                            .forGoggles(tooltip, 2);
+                    shown++;
+                }
+            }
+        }
+
+        if (lostTarget) {
+            Lang.builder("joc")
+                    .translate("goggles.seeker.lost")
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip);
+        }
+        return true;
+    }
+
+    private static String moduleKey(ModuleType type) {
+        return switch (type) {
+            case SPYGLASS -> "goggles.seeker.module.spyglass";
+            case PLAYER_DIR -> "goggles.seeker.module.player_dir";
+            case MODULATING -> "goggles.seeker.module.modulating";
+            default -> "goggles.seeker.module.none";
+        };
+    }
+
+    private static ChatFormatting moduleColor(ModuleType type) {
+        return switch (type) {
+            case SPYGLASS -> ChatFormatting.AQUA;
+            case PLAYER_DIR -> ChatFormatting.LIGHT_PURPLE;
+            case MODULATING -> ChatFormatting.GOLD;
+            default -> ChatFormatting.DARK_GRAY;
+        };
+    }
+
+    private static String fmt(double value) {
+        return String.format(java.util.Locale.ROOT, "%.1f", value);
     }
 
     @Override

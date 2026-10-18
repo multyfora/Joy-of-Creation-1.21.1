@@ -34,7 +34,10 @@ public record ShatterAssemblePacket(BlockPos pos) implements CustomPacketPayload
     }
 
     public void handleServer(ServerPlayer player) {
+        if (player.isSpectator()) return;
+        if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
         Level level = player.level();
+        if (!level.isLoaded(this.pos)) return;
         BlockEntity be = level.getBlockEntity(this.pos);
 
         if (be instanceof ShatterAssemblerBlockEntity assembler) {

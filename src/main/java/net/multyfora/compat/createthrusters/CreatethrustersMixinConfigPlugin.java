@@ -9,18 +9,18 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Disables the whole createthrusters compat mixin set when the createthrusters
- * mod is not loaded, so the optional [[mixins]] config never applies against
- * missing classes.
- **/
 public final class CreatethrustersMixinConfigPlugin implements IMixinConfigPlugin {
 
     private static boolean enabled;
 
     @Override
     public void onLoad(String mixinPackage) {
-        enabled = ModList.get() != null && ModList.get().isLoaded("createthrusters");
+        boolean present = false;
+        try {
+            present = ModList.get() != null && ModList.get().isLoaded("createthrusters");
+        } catch (Exception ignored) {
+        }
+        enabled = present;
     }
 
     @Override
@@ -30,7 +30,7 @@ public final class CreatethrustersMixinConfigPlugin implements IMixinConfigPlugi
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return true;
+        return enabled;
     }
 
     @Override

@@ -48,16 +48,14 @@ public class CreativeStaffCaptureHandler {
 
         releaseSession(player);
 
-        ServerLevel level = (ServerLevel) target.level();
+        if (!(target.level() instanceof ServerLevel level)) return;
         double holdDist = distance;
         EntityGrabSession session = new EntityGrabSession(target.getId(), holdDist, level, target.position());
         GRAB_SESSIONS.put(player.getUUID(), session);
         event.setCanceled(true);
 
-        // Sound
         SimSoundEvents.STAFF_IGNITE.playFrom(player, 1.0F, 1.0F);
 
-        // END_ROD particles at entity position
         var random = level.getRandom();
         for (int i = 0; i < 10; i++) {
             level.addParticle(ParticleTypes.END_ROD,
@@ -67,11 +65,12 @@ public class CreativeStaffCaptureHandler {
                     0, 0, 0);
         }
 
-        // Send start payload to client
-        PacketDistributor.sendToPlayer(
-                (ServerPlayer) player,
-                new EntityGrabPayloads.Start(target.getId(), session.holdDistance)
-        );
+        if (player instanceof ServerPlayer sp) {
+            PacketDistributor.sendToPlayer(
+                    sp,
+                    new EntityGrabPayloads.Start(target.getId(), session.holdDistance)
+            );
+        }
     }
 
     public static void onEntityGrabRequestC2S(EntityGrabPayloads.GrabRequest payload, ServerPlayer player) {
@@ -141,7 +140,8 @@ public class CreativeStaffCaptureHandler {
     }
 
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        GRAB_SESSIONS.remove(event.getEntity().getUUID());
+        EntityGrabSession session = GRAB_SESSIONS.remove(event.getEntity().getUUID());
+        if (session != null) cleanup(session);
     }
 
     public static void onServerTick(ServerTickEvent.Post event) {
@@ -165,7 +165,11 @@ public class CreativeStaffCaptureHandler {
 
             Entity target = session.level.getEntity(session.grabbedEntityId);
             if (target == null || !target.isAlive()) {
+                cleanup(session);
                 it.remove();
+                if (player instanceof ServerPlayer sp2) {
+                    PacketDistributor.sendToPlayer(sp2, new EntityGrabPayloads.End());
+                }
                 continue;
             }
 
@@ -216,10 +220,8 @@ public class CreativeStaffCaptureHandler {
 
         target.setDeltaMovement(session.lastDelta);
 
-        // Sound
         SimSoundEvents.STAFF_EXTINGUISH.playFrom(player, 1.0F, 1.0F);
 
-        // Particles at entity position
         var random = session.level.getRandom();
         for (int i = 0; i < 10; i++) {
             session.level.addParticle(ParticleTypes.END_ROD,
@@ -238,12 +240,14 @@ public class CreativeStaffCaptureHandler {
     }
 
     private static boolean isDraggingContraption(Player player) {
-        PhysicsStaffServerHandler handler = PhysicsStaffServerHandler.get((ServerLevel) player.level());
+        if (!(player.level() instanceof ServerLevel serverLevel)) return false;
+        PhysicsStaffServerHandler handler = PhysicsStaffServerHandler.get(serverLevel);
         return ((PhysicsStaffServerHandlerMixin) handler).joc$getDraggingSessions().containsKey(player.getUUID());
     }
 
     private static void stopContraptionDrag(Player player) {
-        PhysicsStaffServerHandler.get((ServerLevel) player.level()).stopDragging(player.getUUID());
+        if (!(player.level() instanceof ServerLevel serverLevel)) return;
+        PhysicsStaffServerHandler.get(serverLevel).stopDragging(player.getUUID());
     }
 
     private static class EntityGrabSession {

@@ -28,13 +28,9 @@ public class CheckerboardGraphicsFiller implements GraphicsFiller {
         int first_color = (isHovering ? HOVERED_FIRST_COLOR : FIRST_COLOR);
         int second_color = (isHovering ? HOVERED_SECOND_COLOR : SECOND_COLOR);
 
-        //top left
         graphics.fill(start.x+1, start.y+1, middle.x, middle.y, first_color);
-        //top right
         graphics.fill(middle.x, start.y+1, end.x-1, middle.y, second_color);
-        //bottom left
         graphics.fill(start.x+1, middle.y, middle.x, end.y-1, second_color);
-        //bottom right
         graphics.fill(middle.x, middle.y, end.x-1, end.y-1, first_color);
     }
 

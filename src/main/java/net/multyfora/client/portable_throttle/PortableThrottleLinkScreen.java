@@ -197,7 +197,6 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     }
 
     private boolean handleInvClick(double mx, double my) {
-        //TODO: this does not perfectly line-up with GraphicsUtils::renderInventory
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return false;
         Inventory inv = mc.player.getInventory();

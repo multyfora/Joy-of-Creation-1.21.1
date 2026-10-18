@@ -29,7 +29,7 @@ import net.multyfora.content.physics_staff.EntityGrabClientState;
 import java.lang.reflect.Field;
 import java.util.List;
 
-@Mixin(PhysicsStaffClientHandler.class)
+@Mixin(value = PhysicsStaffClientHandler.class, remap = false)
 public class PhysicsStaffClientHandlerMixin {
     private static Class<?> beamNodeClass;
     private static Field beamNodesField;
@@ -67,7 +67,7 @@ public class PhysicsStaffClientHandlerMixin {
             handlerBeamsField = PhysicsStaffClientHandler.class.getDeclaredField("beams");
             handlerBeamsField.setAccessible(true);
 
-            AeronauticsJoyofcreation.LOGGER.info("PhysicsBeam reflection initialized");
+            AeronauticsJoyofcreation.LOGGER.debug("PhysicsBeam reflection initialized");
         } catch(Exception exception) {
             AeronauticsJoyofcreation.LOGGER.error("Failed to init PhysicsBeam reflection", exception);
         }
@@ -96,10 +96,8 @@ public class PhysicsStaffClientHandlerMixin {
         assert client.player != null;
         Vec3 focusPos = PhysicsStaffClientHandler.getStaffFocusPos(client.player, true, 1.0F);
 
-        // Delegate to the handler's beam lifecycle
         handler.updateBeam(client.level, client.player.getUUID(), focusPos, center);
 
-        // Animate the staff model in hand
         handler.extension = 1.0f;
         handler.targetExtension = 1.0f;
         handler.cubeScale = 1.0f;
@@ -125,14 +123,12 @@ public class PhysicsStaffClientHandlerMixin {
         assert client.player != null;
         Vec3 focusPos = PhysicsStaffClientHandler.getStaffFocusPos(client.player, true, partial_ticks);
 
-        // Ensure beam exists in the handler's map (first-frame fallback)
         PhysicsStaffClientHandler handler = SimulatedClient.PHYSICS_STAFF_CLIENT_HANDLER;
         if (target == null) {
             return;
         }
         Vec3 renderEnd = target.getPosition(partial_ticks).add(0, target.getBbHeight() / 2, 0);
 
-        // Check if beam exists in handler's map
         Object beam;
         try {
             Object beamsMap = handlerBeamsField.get(handler);
@@ -145,7 +141,6 @@ public class PhysicsStaffClientHandlerMixin {
         }
 
         if(beam == null) {
-            // First frame before tick ran — create it directly
             handler.updateBeam(client.level, client.player.getUUID(), focusPos, renderEnd);
             try {
                 Object beamsMap = handlerBeamsField.get(handler);

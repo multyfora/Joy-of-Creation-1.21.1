@@ -21,22 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Client-side handler for the Portable Throttle item.
- * Manages: bind target tracking, left-click detection to open strength screen,
- * keepalive signal sending, and cleanup when the item is deselected.
- **/
 public class PortableThrottleClientHandler {
 
-    // Tracks left mouse button edge (was-down state)
     private static boolean wasLeftDown;
-    // Pending bind target, set when right-clicking a redstone link
     private static BlockPos bindTarget;
-    // Last set strength value; 0 means inactive
     private static int lastStrength;
-    // Cooldown counter for sending keepalive packets
     private static int keepAliveCooldown;
-    // Send keepalive every N ticks
     private static final int KEEP_ALIVE_RATE = 10;
 
     private static float liveValue;
@@ -45,12 +35,10 @@ public class PortableThrottleClientHandler {
 
     private static float gripProgress;
 
-    // Records a bind target; the actual packet is sent on the next tick
     public static void startBind(BlockPos pos) {
         bindTarget = pos;
     }
 
-    // Opens the throttle configuration (frequency) screen
     public static void openScreen() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -66,7 +54,6 @@ public class PortableThrottleClientHandler {
         return lastStrength;
     }
 
-    // Updates the current strength and resets the keepalive cooldown
     public static void setStrength(int strength) {
         lastStrength = strength;
         keepAliveCooldown = 0;
@@ -116,10 +103,6 @@ public class PortableThrottleClientHandler {
         return null;
     }
 
-    /**
-     * Called every client tick: handles bind packet sending, left-click detection,
-     * strength screen opening, and keepalive signal transmission
-     **/
     public static void tick() {
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
@@ -128,19 +111,16 @@ public class PortableThrottleClientHandler {
             return;
         }
 
-        // Check if the player has a throttle anywhere in their inventory
         if (findThrottleInInventory(player) == null) {
             reset();
             return;
         }
 
-        // Send pending bind packet if we have a target
         if (bindTarget != null) {
             PacketDistributor.sendToServer(new PortableThrottleBindPacket(bindTarget));
             bindTarget = null;
         }
 
-        // Only open the screen / send shift-click signal when the throttle is actually held in hand
         boolean throttleInHand = player.getMainHandItem().getItem() instanceof PortableThrottleItem
             || player.getOffhandItem().getItem() instanceof PortableThrottleItem;
         if (throttleInHand && client.options.keyUse.isDown()) {
@@ -157,7 +137,6 @@ public class PortableThrottleClientHandler {
             }
         }
 
-        // Send keepalive signal while the strength screen is open and strength > 0
         if (0 < lastStrength && client.screen == null) {
             if (0 < keepAliveCooldown) {
                 keepAliveCooldown--;
@@ -169,17 +148,11 @@ public class PortableThrottleClientHandler {
             }
         }
 
-        // Update grip progress for two-handed pose
         tickGrip();
 
-        // Update smoothed strength for local player
         updateSmoothedStrength(player.getUUID(), lastStrength / 15f);
     }
 
-    /**
-     * Resets all state: sends strength 0 to server, closes any open throttle screens,
-     * and clears tracking variables
-     **/
     private static void reset() {
         Screen current = Minecraft.getInstance().screen;
         boolean hadScreen = current instanceof PortableThrottleStrengthScreen || current instanceof PortableThrottleLinkScreen;

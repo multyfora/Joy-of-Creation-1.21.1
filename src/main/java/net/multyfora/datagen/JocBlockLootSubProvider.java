@@ -26,6 +26,9 @@ public class JocBlockLootSubProvider extends BlockLootSubProvider {
         for (DyeColor color : DyeColor.values()) {
             dropSelf(JocBlocks.SYMMETRIC_CROSS_SAILS.get(color).get());
         }
+        dropSelf(JocBlocks.SEEKER.get());
+        dropSelf(JocBlocks.SHATTER_ASSEMBLER.get());
+        dropSelf(JocBlocks.GYROSCOPIC_SEAT.get());
     }
 
     @Override
@@ -37,6 +40,9 @@ public class JocBlockLootSubProvider extends BlockLootSubProvider {
         for (DyeColor color : DyeColor.values()) {
             blocks.add(JocBlocks.SYMMETRIC_CROSS_SAILS.get(color).get());
         }
+        blocks.add(JocBlocks.SEEKER.get());
+        blocks.add(JocBlocks.SHATTER_ASSEMBLER.get());
+        blocks.add(JocBlocks.GYROSCOPIC_SEAT.get());
         return blocks;
     }
 }

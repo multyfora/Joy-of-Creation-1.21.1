@@ -32,7 +32,6 @@ public class JocBlockEntityTypes {
                             JocBlocks.SHATTER_ASSEMBLER.get()
                     ).build(null)
             );
-    // Seeker block entity: computes redstone output based on target direction
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SeekerBlockEntity>> SEEKER =
         BLOCK_ENTITY_TYPES.register(
             "seeker",

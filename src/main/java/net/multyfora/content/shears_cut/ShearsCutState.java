@@ -72,7 +72,6 @@ public class ShearsCutState {
         reset();
     }
 
-    /** Logic-layer tick: sends preview updates and cancels a pending cut when it can no longer be completed. */
     public static void tick() {
         if (mode != Mode.PLACING) return;
         var mc = net.minecraft.client.Minecraft.getInstance();
@@ -99,7 +98,6 @@ public class ShearsCutState {
         }
     }
 
-    /** Cancels the pending cut and notifies other players that the preview is gone. */
     public static void abortCut() {
         if (previewActive) {
             sendPreview(ShearsCutPayloads.PreviewPhase.CANCEL, point1, lastSentPoint2 != null ? lastSentPoint2 : point1);
@@ -132,8 +130,6 @@ public class ShearsCutState {
     public static BlockPos getPoint1() { return point1; }
     public static Direction getOrientation() { return orientation; }
 
-    /** The real coordinate of a block's face along its perpendicular axis.
-     *  UP/SOUTH/EAST faces sit at pos+1 on their axis; DOWN/NORTH/WEST sit at pos. */
     public static double facePlaneCoord(BlockPos pos, Direction face) {
         return switch (face) {
             case UP -> pos.getY() + 1;
@@ -160,7 +156,6 @@ public class ShearsCutState {
         };
     }
 
-    /** Origin point of the cutting plane, in sub-level-local space. */
     public static Vec3 planeOrigin(BlockPos p1, Direction face) {
         double plane = facePlaneCoord(p1, face);
         return switch (face) {
@@ -170,9 +165,6 @@ public class ShearsCutState {
         };
     }
 
-    /** Computes the plane's center + in-plane basis + half-extents (with margin)
-     *  in sub-level-local space, from the two selected corners and the face orientation.
-     *  Shared by the renderer (live preview) and finishCut (flash geometry). */
     public static PlaneGeometry computeGeometry(BlockPos p1, BlockPos p2, Direction orientation) {
         Vec3 u = axisU(orientation);
         Vec3 v = axisV(orientation);
@@ -229,10 +221,6 @@ public class ShearsCutState {
         return extendToPlane(mc);
     }
 
-    /** When nothing is aimed at, project the player's look ray onto the already-placed
-     *  cutting plane so the selection can still extend to the crosshair. Works entirely
-     *  via the plane's own basis vectors so we never need an inverse local<->world
-     *  transform — only the forward projectOutOfSubLevel that's already known-good. */
     private static BlockPos extendToPlane(net.minecraft.client.Minecraft mc) {
         if (point1 == null || orientation == null || mc.level == null || mc.player == null) return null;
 

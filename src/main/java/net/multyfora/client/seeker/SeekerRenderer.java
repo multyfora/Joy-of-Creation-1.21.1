@@ -34,7 +34,7 @@ public class SeekerRenderer implements BlockEntityRenderer<SeekerBlockEntity> {
             seekerBlockEntity.getSubLevel(),
             seekerBlockEntity.getWorldPosition()
         );
-        Vec3 target = seekerBlockEntity.getTargetPosition(true);
+        Vec3 target = seekerBlockEntity.getTargetCenter();
         if(target == null) {
             return;
         }
@@ -46,7 +46,6 @@ public class SeekerRenderer implements BlockEntityRenderer<SeekerBlockEntity> {
         }
 
         Vec3 dir = diff.normalize();
-        // Cap the pointer length at 1.5 blocks so it's visible even at long range
         double pointerLen = Math.min(dist, 1.5);
 
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.LINES);
@@ -75,7 +74,6 @@ public class SeekerRenderer implements BlockEntityRenderer<SeekerBlockEntity> {
         poseStack.popPose();
     }
 
-    // Render even when the block entity is off-screen so the pointer is always visible
     @Override
     public boolean shouldRenderOffScreen(@NotNull SeekerBlockEntity blockEntity) {
         return true;

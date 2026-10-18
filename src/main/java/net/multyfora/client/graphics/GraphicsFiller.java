@@ -28,7 +28,6 @@ public interface GraphicsFiller {
           int ag = (g + hg) / 2;
           int ab = (b + hb) / 2;
 
-          //average of input color and averaging-color
           return (aa << 24) | (ar << 16) | (ag << 8) | ab;
      }
 }

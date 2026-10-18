@@ -48,7 +48,6 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
             )
             ;
 
-    // Position of the block being configured
     private final BlockPos pos;
 
     private EditBox xField;
@@ -74,13 +73,10 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
 
     @Override
     protected void init() {
-        // Title position
         this.titleLabelX = (  width  -  this.font.width(this.title)  ) / 2;
         this.titleLabelY = (int)( 0.25 * height );
-        // Image size
         this.imageWidth = 225;
         this.imageHeight = 162;
-        // remove "Inventory" label
         this.inventoryLabelX = -1000;
 
         addFields();
@@ -99,11 +95,6 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
         refreshTargetFields();
     }
 
-    /**
-     * Keeps the X/Y/Z fields synced to the block entity's current tracked target every tick,
-     * rather than the block's own position. Skips updating whichever field the user currently
-     * has focused, so typing isn't interrupted.
-     **/
     private void refreshTargetFields() {
         if (fieldsEdited) return;
         SeekerBlockEntity blockEntity = getBlockEntity();
@@ -213,10 +204,6 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
 
     }
 
-    /**
-     * A GUI button rendered as the real 3D SEEKER_SPYGLASS Flywheel partial model, drawn
-     * directly via SuperByteBuffer into GUI space, continuously rotating for visual flair.
-     **/
     private static class SpyglassSetButton extends AbstractWidget {
         private final OnPress onPress;
 
@@ -253,9 +240,9 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
             );
 
             if (hovered) {
-                superBuffer.color(0x99FF99); // light green tint
+                superBuffer.color(0x99FF99);
             } else {
-                superBuffer.color(0xFFFFFF); // no tint
+                superBuffer.color(0xFFFFFF);
             }
 
             superBuffer
@@ -313,7 +300,7 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
         );
         field.setValue( String.valueOf(initial_value) );
         field.setFilter(
-                s -> s.matches("-?\\d*\\.?\\d*") // Allow negative numbers and decimals / note: fuck regex / note 2: i love regex
+                s -> s.matches("-?\\d*\\.?\\d*")
         );
         field.setResponder(s -> fieldsEdited = true);
 
@@ -334,7 +321,6 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
     protected void renderLabels(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
         super.renderLabels(guiGraphics, mouseX, mouseY);
 
-        //positions
         SeekerBlockEntity blockEntity = this.menu.blockEntity;
         if(blockEntity == null) {
             return;
@@ -393,7 +379,6 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
         return false;
     }
 
-    // Sends the entered coordinates to the server via UpdateSeekerPayload
     private void sendUpdate(int x, int y, int z) {
         try {
             PacketDistributor.sendToServer(
@@ -415,7 +400,6 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
         );
     }
 
-    // Helper to fetch the block entity from the client level
     private SeekerBlockEntity getBlockEntity() {
         Level level = Minecraft.getInstance().level;
         if(

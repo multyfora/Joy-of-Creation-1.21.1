@@ -63,17 +63,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Core mixin to RopeStrandHolderBehavior (Simulated mod) that extends the single-rope
- * system to support multiple simultaneous rope attachments on a single block.
- * Tracks multiple rope IDs (allAttachedIDs) and multiple owned server strands
- * (allOwnedStrands), intercepts rope creation and destruction, handles per-rope
- * destruction, and provides serialization for the extended state.
- **/
 @Mixin(value = RopeStrandHolderBehavior.class, remap = false)
 public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavior {
 
-    // Shadowed fields from the original RopeStrandHolderBehavior
     @Shadow @Nullable private UUID attachedRopeID;
     @Shadow private boolean strandOwner;
     @Shadow @Nullable private ServerRopeStrand ownedServerStrand;
@@ -91,29 +83,25 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
     @Shadow public abstract VeilPacketManager.PacketSink getStrandPacketSink();
     @Shadow public abstract List<ServerPlayer> getStrandTrackingPlayers();
 
-    // Extended tracking lists for multiple ropes
     @Unique
-    private final List<UUID> joc$allAttachedIDs = new ArrayList<>(); // All rope UUIDs attached to this holder
+    private final List<UUID> joc$allAttachedIDs = new ArrayList<>();
 
     @Unique
     private final Map<UUID, ClientRopeStrand> joc$allClientStrands = new Object2ObjectOpenHashMap<>();
     @Unique
-    private final List<ServerRopeStrand> joc$allOwnedStrands = new ArrayList<>(); // All server strands owned by this holder
+    private final List<ServerRopeStrand> joc$allOwnedStrands = new ArrayList<>();
 
     @Unique
-    private int joc$maxRopeAttachments = 1; // Maximum ropes; 1 by default (single rope behaviour)
+    private int joc$maxRopeAttachments = 1;
 
-    // Temporary state saved during rope creation to transfer attachments
     @Unique @Nullable private UUID joc$preExistingID;
     @Unique @Nullable private ServerRopeStrand joc$preExistingStrand;
     @Unique @Nullable private UUID joc$targetPreExistingID;
-    // Gets the SmartBlockEntity from this behaviour (the behaviour itself is cast from this mixin)
     @Unique
     private SmartBlockEntity joc$be() {
         return ((BlockEntityBehaviour) (Object) this).blockEntity;
     }
 
-    // Gets the SmartBlockEntity from another behaviour instance
     @Unique
     private static SmartBlockEntity joc$be(RopeStrandHolderBehavior behavior) {
         return behavior.blockEntity;
@@ -138,7 +126,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    // IMultiRopeBehavior implementation
 
     @Override
     public void joc$setMaxRopeAttachments(int max) {
@@ -232,8 +219,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         joc$be().notifyUpdate();
     }
 
-    // Returns true if a rope already connects this holder to the target (in either
-    // direction), so we can reject duplicate connections between the same two blocks.
     @Unique
     private boolean joc$isAlreadyConnected(RopeStrandHolderBehavior target) {
         if (target == (Object) this) {
@@ -268,10 +253,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         return false;
     }
 
-    /**
-     * Rope creation interception
-     * Saves the current state before createRope runs so we can restore/reference it after
-     **/
     @Inject(
             method = "createRope",
             at = @At("HEAD"),
@@ -290,7 +271,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             joc$preExistingStrand = null;
         }
         if(target instanceof IMultiRopeBehavior multiTarget) {
-            // Clear the target's attached rope ID temporarily so createRope doesn't see it as occupied
             joc$targetPreExistingID = multiTarget.joc$getAttachedRopeID();
             multiTarget.joc$clearAttachedRopeID();
         } else {
@@ -298,10 +278,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    /**
-     * Redirects the destroyRope call inside createRope to skip it for multi-rope holders
-     * (we handle destruction ourselves to preserve other rope attachments)
-     **/
     @Redirect(
             method = "createRope",
             at = @At(value = "INVOKE", target = "Ldev/simulated_team/simulated/content/blocks/rope/RopeStrandHolderBehavior;destroyRope(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/phys/Vec3;Z)V")
@@ -312,13 +288,12 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    // After createRope succeeds: update tracking lists, notify balloon, and restore state
     @Inject(
             method = "createRope",
             at = @At("RETURN")
     )
     private void joc$postCreateRope(RopeStrandHolderBehavior target, boolean dropItem, CallbackInfoReturnable<Boolean> cir) {
-        AeronauticsJoyofcreation.LOGGER.info("[JOC-CREATE] src={} tgt={} ok={} srcMax={} tgtMax={} ropeId={} ownerStrand={}",
+        AeronauticsJoyofcreation.LOGGER.debug("[JOC-CREATE] src={} tgt={} ok={} srcMax={} tgtMax={} ropeId={} ownerStrand={}",
                 joc$be().getBlockPos(), joc$be(target).getBlockPos(), cir.getReturnValue(), joc$maxRopeAttachments,
                 target instanceof IMultiRopeBehavior m ? m.joc$getMaxRopeAttachments() : -1,
                 attachedRopeID, ownedServerStrand != null ? ownedServerStrand.getUUID() : null);
@@ -326,7 +301,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             return;
         }
 
-        // Notify the target that a rope was created, registering it in the multi-rope list
         if(target instanceof IMultiRopeBehavior multiTarget) {
             multiTarget.joc$onRopeCreated(attachedRopeID, joc$targetPreExistingID);
             joc$be(target).notifyUpdate();
@@ -336,7 +310,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             return;
         }
 
-        // Add the new rope ID and strand to the extended tracking lists
         if( attachedRopeID != null && !joc$allAttachedIDs.contains(attachedRopeID) ) {
             joc$allAttachedIDs.add(attachedRopeID);
         }
@@ -356,10 +329,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         joc$targetPreExistingID = null;
     }
 
-    /**
-     * Intercepts destroyRope to provide multi-rope destruction logic.
-     * If there are multiple ropes, cancels the original destroy and handles it ourselves.
-     **/
     @Inject(
             method = "destroyRope",
             at = @At("HEAD"),
@@ -367,10 +336,9 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
     )
     private void joc$interceptDestroyRope(ServerPlayer player, Vec3 ropeDropPos, boolean returnItem, CallbackInfo ci) {
         if( joc$allAttachedIDs.size() <= 1 && joc$preExistingID == null ) {
-            return; // Single rope: let the original method handle it
+            return;
         }
 
-        // If we're not the strand owner and have no owned strands, cancel (nothing to destroy)
         if(
                 !this.strandOwner
                         || ( ownedServerStrand == null && joc$allOwnedStrands.isEmpty() )
@@ -390,7 +358,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             return;
         }
 
-        // If a drop position is specified, try to find which specific strand to destroy
         if(ropeDropPos != null) {
             ServerRopeStrand found = null;
             for(ServerRopeStrand s : joc$allOwnedStrands) {
@@ -404,19 +371,16 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
                 }
             }
             if(found != null) {
-                // Destroy only the found strand
                 joc$destroySingleStrand(found, player, ropeDropPos, false);
                 ci.cancel();
                 return;
             }
         }
 
-        // No specific strand found; destroy all ropes
         joc$destroyAttachedRopes(player, ropeDropPos, returnItem, null);
         ci.cancel();
     }
 
-    // Destroys a single rope strand while preserving all others attached to this holder
     @Unique
     private void joc$destroySingleStrand(ServerRopeStrand strand, @Nullable ServerPlayer player, @Nullable Vec3 dropPos, boolean returnItem) {
         Level level = joc$be().getLevel();
@@ -424,7 +388,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             return;
         }
 
-        // Clean up the end attachment (e.g., target holder)
         RopeAttachment endAttach = strand.getAttachment(RopeAttachmentPoint.END);
         if(endAttach != null) {
             BlockPos targetPos = endAttach.blockAttachment();
@@ -443,18 +406,15 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             }
         }
 
-        // Remove the strand from physics and the server-level rope manager
         if(strand.isActive()) {
             strand.updatePose();
         }
         this.getPhysicsSystem().removeObject(strand);
         ServerLevelRopeManager.getOrCreate(level).removeStrand(strand.getUUID());
 
-        // Remove from tracking lists
         joc$allAttachedIDs.remove(strand.getUUID());
         joc$allOwnedStrands.remove(strand);
 
-        // If the destroyed strand was the primary one, promote another to primary
         if( strand.getUUID().equals(attachedRopeID) ) {
             attachedRopeID = joc$allAttachedIDs.isEmpty() ? null : joc$allAttachedIDs.getFirst();
             ownedServerStrand = joc$allOwnedStrands.isEmpty() ? null : joc$allOwnedStrands.getFirst();
@@ -579,9 +539,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    // Clears extended lists when the rope is fully detached (single-rope holders) or,
-    // for JOC-managed holders, only removes the strand being detached and restores the
-    // holder's own state so a foreign rope's teardown cannot wipe multi-rope bookkeeping.
     @Inject(method = "detachRope", at = @At("HEAD"), cancellable = true)
     private void joc$protectMultiOnDetach(CallbackInfo ci) {
         if (joc$maxRopeAttachments <= 1) {
@@ -611,11 +568,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         joc$be().notifyUpdate();
     }
 
-    /**
-     * Tick handler for extra strands (server side): ensures they are active in the physics
-     * system, syncs their point data to tracking players, and validates their end
-     * attachments still exist
-     **/
     @Inject(method = "tick", at = @At("RETURN"))
     private void joc$tickExtraStrands(CallbackInfo ci) {
         if( joc$allOwnedStrands.isEmpty() && !joc$allAttachedIDs.isEmpty() ) {
@@ -638,12 +590,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
 
         for(int i = joc$allOwnedStrands.size() - 1; 0 <= i; i--) {
             ServerRopeStrand strand = joc$allOwnedStrands.get(i);
-            // Skip the primary strand (ticked by original code)
             if(strand == this.ownedServerStrand) {
                 continue;
             }
 
-            // Activate the strand in the physics system if it's not already active
             if( !strand.isActive() ) {
                 boolean loaded = strand.areAttachmentsLoaded(serverLevel);
                 if(!loaded) {
@@ -659,7 +609,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             if (strand.needsSync()) {
                 ClientboundRopeDataPacket packet = joc$buildPacketFor(strand);
                 if (packet != null) {
-                    AeronauticsJoyofcreation.LOGGER.info("[JOC-EXTRA-SEND] holder={} strand={} pts={} sinkPlayers={}",
+                    AeronauticsJoyofcreation.LOGGER.debug("[JOC-EXTRA-SEND] holder={} strand={} pts={} sinkPlayers={}",
                             joc$be().getBlockPos(), strand.getUUID(), strand.getPoints().size(),
                             this.getStrandTrackingPlayers().size());
                     this.getStrandPacketSink().sendPacket(packet);
@@ -674,7 +624,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
                         new RopeAttachment(RopeAttachmentPoint.START, containing != null ? containing.getUniqueId() : null, joc$be().getBlockPos()));
             }
 
-            // Validate end attachment: if the target block no longer has a rope holder, destroy the strand
             RopeAttachment endAttach = strand.getAttachment(RopeAttachmentPoint.END);
             if (endAttach != null && endAttach.subLevelID() == null && strand.areAttachmentsLoaded(serverLevel)) {
                 BlockPos targetPos = endAttach.blockAttachment();
@@ -699,7 +648,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         if (level instanceof ServerLevel serverLevel) {
             chunkPlayers = serverLevel.getChunkSource().chunkMap.getPlayers(new ChunkPos(joc$be().getBlockPos()), false).size();
         }
-        AeronauticsJoyofcreation.LOGGER.info("[JOC-PUSH] pos={} strand={} active={} trackers={} chunkPlayers={}",
+        AeronauticsJoyofcreation.LOGGER.debug("[JOC-PUSH] pos={} strand={} active={} trackers={} chunkPlayers={}",
                 joc$be().getBlockPos(),
                 owned == null ? "null" : owned.getUUID().toString(),
                 owned != null && owned.isActive(),
@@ -729,7 +678,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         );
     }
 
-    // IMultiRopeBehavior: client-side strand map access
 
     @Override
     public @Nullable Map<UUID, ClientRopeStrand> joc$getAllClientStrands() {
@@ -772,7 +720,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         this.strandOwner = owned;
     }
 
-    // Client-side tick: keeps extra strands registered in ClientLevelRopeManager each frame
     @Inject(method = "tick", at = @At("RETURN"))
     private void joc$tickExtraClientStrands(CallbackInfo ci) {
         Level level = getLevel();
@@ -785,17 +732,12 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    /**
-     * NBT serialization
-     * Writes the extended multi-rope data to NBT: all attached rope UUIDs and max attachments
-     **/
     @Inject(
             method = "write",
             at = @At("RETURN")
     )
     private void joc$writeExtra(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket, CallbackInfo ci) {
         if( !joc$allAttachedIDs.isEmpty() ) {
-            // Pack UUIDs into an int array (4 ints per UUID: hi>>32, hi, lo>>32, lo)
             int[] uuids = new int[joc$allAttachedIDs.size() * 4];
             int idx = 0;
             for (UUID id : joc$allAttachedIDs) {
@@ -813,7 +755,11 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             int i = 0;
             for (ServerRopeStrand strand : joc$allOwnedStrands) {
                 if (strand == ownedServerStrand) continue;
-                strandsTag.put("s" + i++, ServerRopeStrand.CODEC.encodeStart(NbtOps.INSTANCE, strand).getOrThrow());
+                try {
+                    strandsTag.put("s" + i++, ServerRopeStrand.CODEC.encodeStart(NbtOps.INSTANCE, strand).getOrThrow());
+                } catch (Exception e) {
+                    AeronauticsJoyofcreation.LOGGER.warn("Dropping unencodable extra rope strand", e);
+                }
             }
             if (i > 0) {
                 nbt.put("joc:extra_strands", strandsTag);
@@ -821,7 +767,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    // Reads the extended multi-rope data from NBT
     @Inject(
             method = "read",
             at = @At("RETURN")
@@ -856,10 +801,14 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             Level level = joc$be().getLevel();
             CompoundTag strandsTag = nbt.getCompound("joc:extra_strands");
             for (String key : strandsTag.getAllKeys()) {
-                DataResult<Pair<ServerRopeStrand, Tag>> result = ServerRopeStrand.CODEC.decode(NbtOps.INSTANCE, strandsTag.getCompound(key));
-                ServerRopeStrand strand = result.getOrThrow().getFirst();
-                if (strand != ownedServerStrand) {
-                    joc$allOwnedStrands.add(strand);
+                try {
+                    DataResult<Pair<ServerRopeStrand, Tag>> result = ServerRopeStrand.CODEC.decode(NbtOps.INSTANCE, strandsTag.getCompound(key));
+                    ServerRopeStrand strand = result.getOrThrow().getFirst();
+                    if (strand != ownedServerStrand) {
+                        joc$allOwnedStrands.add(strand);
+                    }
+                } catch (Exception e) {
+                    AeronauticsJoyofcreation.LOGGER.warn("Dropping corrupt extra rope strand {}", key, e);
                 }
             }
             if (!joc$allOwnedStrands.isEmpty() && level instanceof ServerLevel serverLevel) {
@@ -873,11 +822,6 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
     }
 
-    /**
-     * Cleanup
-     * On unload: clean up all extra-owned strands from the physics system, and (client-side)
-     * remove all extra client strands from the render manager
-     **/
     @Inject(
             method = "unload",
             at = @At("HEAD")
@@ -931,7 +875,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
                 }
                 joc$allClientStrands.clear();
             }
-            return; // Let the base method remove the primary client strand
+            return;
         }
 
         if (!(level instanceof ServerLevel serverLevel)) {

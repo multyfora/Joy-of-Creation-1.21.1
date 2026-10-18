@@ -23,24 +23,13 @@ import java.util.Set;
 
 import org.lwjgl.glfw.GLFW;
 
-/**
- * Client-side handler for the Portable Typewriter item.
- * Manages three modes: IDLE (inactive), ACTIVE (monitoring bound keys), and BIND (waiting
- * to bind a selected key to a redstone link). In ACTIVE mode, it detects key presses/releases
- * for bound keys and sends them to the server as input packets.
- **/
 public class PortableTypewriterClientHandler {
 
-    // Current mode of the typewriter
     public static Mode MODE = Mode.IDLE;
-    // The key code currently selected in the keyboard GUI
     public static int selectedKey = -1;
-    // Set of keys currently reported as pressed (to detect release edges)
     private static final Collection<Integer> currentlyPressed = new HashSet<>();
-    // Cooldown for sending keepalive press packets
     private static int packetCooldown;
     private static final int PACKET_RATE = 5;
-    // Pending bind target position
     private static BlockPos bindTarget;
 
     private static final Set<Integer> bindPrevPressed = new HashSet<>();
@@ -69,7 +58,6 @@ public class PortableTypewriterClientHandler {
         GLFW.GLFW_KEY_SPACE
     };
 
-    // Toggles between IDLE and ACTIVE mode
     public static void toggle() {
         if (MODE == Mode.IDLE) {
             MODE = Mode.ACTIVE;
@@ -86,7 +74,6 @@ public class PortableTypewriterClientHandler {
         bindPrevPressed.clear();
     }
 
-    // Opens the keyboard layout GUI and clears the selected key
     public static void openScreen() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -99,7 +86,6 @@ public class PortableTypewriterClientHandler {
         selectedKey = -1;
     }
 
-    // Sets the selected key code on both the client handler and the item stack
     public static void setSelectedKey(int glfwKeyCode) {
         selectedKey = glfwKeyCode;
         ItemStack held = getHeldItem();
@@ -117,7 +103,6 @@ public class PortableTypewriterClientHandler {
         return held.getItem() instanceof PortableTypewriterItem ? held : null;
     }
 
-    // Called when deactivating: sends release events for all currently pressed keys
     private static void onReset() {
         packetCooldown = 0;
         bindTarget = null;
@@ -129,10 +114,6 @@ public class PortableTypewriterClientHandler {
         currentlyPressed.clear();
     }
 
-    /**
-     * Client tick: processes binding, monitors key presses in ACTIVE mode, and sends
-     * appropriate packets to the server
-     **/
     public static void tick() {
         if (MODE == Mode.IDLE) return;
         if (packetCooldown > 0) packetCooldown--;
@@ -145,7 +126,6 @@ public class PortableTypewriterClientHandler {
             return;
         }
 
-        // Check if the player is still holding the typewriter
         ItemStack heldItem = player.getMainHandItem();
         if (!(heldItem.getItem() instanceof PortableTypewriterItem)) {
             heldItem = player.getOffhandItem();
@@ -156,7 +136,6 @@ public class PortableTypewriterClientHandler {
             }
         }
 
-        // Deactivate if any screen is open (to avoid conflicts)
         if (mc.screen != null) {
             MODE = Mode.IDLE;
             onReset();
@@ -204,7 +183,6 @@ public class PortableTypewriterClientHandler {
             return;
         }
 
-        // ACTIVE mode: monitor bound keys
         if (MODE == Mode.ACTIVE) {
             Collection<Integer> boundKeys = PortableTypewriterItem.getAllBoundKeys(heldItem);
             Collection<Integer> pressedKeys = new HashSet<>();
@@ -214,24 +192,20 @@ public class PortableTypewriterClientHandler {
                 }
             }
 
-            // Compute diff: newly pressed keys and newly released keys
             Collection<Integer> newKeys = new HashSet<>(pressedKeys);
             Collection<Integer> releasedKeys = new HashSet<>(currentlyPressed);
             newKeys.removeAll(releasedKeys);
             releasedKeys.removeAll(pressedKeys);
 
-            // Send release events
             if (!releasedKeys.isEmpty()) {
                 PacketDistributor.sendToServer(new PortableTypewriterInputPacket(releasedKeys, false));
             }
 
-            // Send press events for newly pressed keys
             if (!newKeys.isEmpty()) {
                 PacketDistributor.sendToServer(new PortableTypewriterInputPacket(newKeys, true));
                 packetCooldown = PACKET_RATE;
             }
 
-            // Periodic keepalive for held keys to prevent server timeout
             if (packetCooldown == 0 && !pressedKeys.isEmpty()) {
                 PacketDistributor.sendToServer(new PortableTypewriterInputPacket(pressedKeys, true));
                 packetCooldown = PACKET_RATE;
@@ -240,7 +214,6 @@ public class PortableTypewriterClientHandler {
             currentlyPressed.clear();
             currentlyPressed.addAll(pressedKeys);
 
-            // Consume all key input to prevent normal key actions while in typewriter mode
             KeyMapping.releaseAll();
             for (KeyMapping mapping : mc.options.keyMappings) {
                 InputConstants.Key boundKey = mapping.getKey();
@@ -252,10 +225,9 @@ public class PortableTypewriterClientHandler {
         }
     }
 
-    // State machine for the typewriter
     public enum Mode {
-        IDLE,    // Not active; item is just an item
-        ACTIVE,  // Monitoring bound keys and sending press/release events
-        BIND     // Waiting to bind a selected key to a redstone link
+        IDLE,
+        ACTIVE,
+        BIND
     }
 }

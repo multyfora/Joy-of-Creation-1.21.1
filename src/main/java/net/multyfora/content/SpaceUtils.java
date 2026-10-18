@@ -17,7 +17,6 @@ public class SpaceUtils {
         return pos;
     }
 
-    // Rotates a Vec3 by a double-precision quaternion (for sublevel orientation)
     public static Vec3 rotateQuat(Vec3 vec, Quaterniond quat) {
         if (quat.equals(new Quaterniond())) return vec;
         Vector3d v = new Vector3d(vec.x, vec.y, vec.z);
@@ -25,7 +24,6 @@ public class SpaceUtils {
         return new Vec3(v.x, v.y, v.z);
     }
 
-    // Returns the orientation quaternion of the containing sublevel, or identity if not in a sublevel
     public static Quaterniond getSublevelRot(SubLevel subLevel) {
         Quaterniond q = new Quaterniond();
         if (subLevel != null) {

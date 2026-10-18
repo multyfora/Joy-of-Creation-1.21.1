@@ -18,10 +18,6 @@ import net.multyfora.index.JocItems;
 
 import static net.multyfora.network.NetworkUtils.getItemIfValid;
 
-/**
- * Client-to-server packet: sends updated frequency configuration for the Portable Throttle.
- * Carries two ItemStack NBT compounds representing the two items that define the frequency pair.
- **/
 public class PortableThrottleConfigPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "throttle_config");
@@ -32,7 +28,6 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
         PortableThrottleConfigPacket::new
     );
 
-    // NBT serialization of the two frequency-defining item stacks
     private final CompoundTag firstItem;
     private final CompoundTag secondItem;
 
@@ -46,10 +41,6 @@ public class PortableThrottleConfigPacket implements CustomPacketPayload {
         return TYPE;
     }
 
-    /**
-     * Server-side: finds the throttle item in the player's hand, deserialises the two item stacks,
-     * builds a frequency pair, and writes it to the item's NBT
-     **/
     public void handle(Player player) {
         ItemStack item = getItemIfValid(
             player,

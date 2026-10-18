@@ -12,9 +12,6 @@ import java.util.*;
 
 public class ShatterLogic {
 
-    /**
-     * Shatters a collection of blocks by turning them into individual SubLevels.
-     */
     public static void shatterStructure(Level level, Collection<BlockPos> blocks) {
         if (!(level instanceof ServerLevel serverLevel)) return;
 

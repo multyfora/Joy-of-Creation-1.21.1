@@ -24,7 +24,6 @@ public class WaypointPickerScreen extends Screen {
     private int scrollOffset;
 
 
-    //FUCK yeah making screens from code and without textures is awesome
     public WaypointPickerScreen(Screen parent, BlockPos seekerPos, List<WaypointData> waypoints,
                                 Consumer<WaypointData> callback) {
         super(Component.translatable("screen.joc.seeker.waypoint_picker"));
@@ -53,7 +52,7 @@ public class WaypointPickerScreen extends Screen {
 
         graphics.fill(pX - 1, pY - 1, pX + PANEL_WIDTH + 1, pY + PANEL_HEIGHT + 1, 0xFF383838);
         graphics.fill(pX, pY, pX + PANEL_WIDTH, pY + PANEL_HEIGHT, 0xFF141414);
-        graphics.fill(pX, pY + 22, pX + PANEL_WIDTH, pY + 23, 0xFF2A2A2A); // Clean separator line
+        graphics.fill(pX, pY + 22, pX + PANEL_WIDTH, pY + 23, 0xFF2A2A2A);
     }
 
     @Override
@@ -119,8 +118,8 @@ public class WaypointPickerScreen extends Screen {
             int scrollBarY = listTop + (int) ((float) scrollOffset / maxScroll * (listBottom - listTop - scrollBarHeight));
             int scrollBarX = listRight - 6;
 
-            graphics.fill(scrollBarX, listTop, scrollBarX + 2, listBottom, 0xFF222222); // Track
-            graphics.fill(scrollBarX, scrollBarY, scrollBarX + 2, scrollBarY + scrollBarHeight, 0xFF777777); // Thumb
+            graphics.fill(scrollBarX, listTop, scrollBarX + 2, listBottom, 0xFF222222);
+            graphics.fill(scrollBarX, scrollBarY, scrollBarX + 2, scrollBarY + scrollBarHeight, 0xFF777777);
         }
     }
 
