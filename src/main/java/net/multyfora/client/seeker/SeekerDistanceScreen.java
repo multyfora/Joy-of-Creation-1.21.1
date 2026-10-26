@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -174,9 +175,9 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
                 gui_x + 207, gui_y + 146, 10, 10,
                 btn -> {
                     if (this.menu.blockEntity == null) return;
-                    int x = (int) Double.parseDouble(xField.getValue().isEmpty() ? "0" : xField.getValue());
-                    int y = (int) Double.parseDouble(yField.getValue().isEmpty() ? "0" : yField.getValue());
-                    int z = (int) Double.parseDouble(zField.getValue().isEmpty() ? "0" : zField.getValue());
+                    int x = parseCoordinate(xField.getValue());
+                    int y = parseCoordinate(yField.getValue());
+                    int z = parseCoordinate(zField.getValue());
                     int min = sliderMin;
                     int max = sliderMax;
                     this.menu.blockEntity.setTarget(x, y, z);
@@ -369,6 +370,14 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         try {
             PacketDistributor.sendToServer(new SeekerDistancePayloads.UpdateSeekerDistancePayload(pos, x, y, z, min, max));
         } catch (NumberFormatException ignored) {}
+    }
+
+    private static int parseCoordinate(String value) {
+        try {
+            return Mth.floor(Double.parseDouble(value));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private SeekerBlockEntity getBlockEntity() {

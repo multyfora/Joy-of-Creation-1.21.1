@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create:gray_seat"
+    },
+    {
+      "item": "simulated:gyroscopic_mechanism"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "joc:gyroscopic_seat"
+  }
+}

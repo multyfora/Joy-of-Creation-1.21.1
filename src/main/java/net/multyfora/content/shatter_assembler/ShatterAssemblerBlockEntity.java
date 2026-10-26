@@ -8,11 +8,18 @@ import net.createmod.catnip.animation.LerpedFloat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.multyfora.client.shatter_assembler.ShatterAssemblerEffects;
 import net.multyfora.index.JocBlockEntityTypes;
 
 import java.util.List;
 
 public class ShatterAssemblerBlockEntity extends SmartBlockEntity {
+    public static final float SAW_SCALE = 0.45F;
+    public static final float SAW_RADIUS = 0.5F * SAW_SCALE;
+    public static final float SAW_CENTER_Y = SAW_RADIUS - 1.0F / 16.0F;
+    public static final float[] SAW_ROW_Z = {4.0F / 16.0F, 8.0F / 16.0F, 12.0F / 16.0F};
+    public static final float SAW_SPEED_DEGREES_PER_TICK = 10.0F;
+
     private static final float FLICKED_ANGLE_DEGREES = 45.0F;
     private static final double LEVER_CHASE_SPEED = 0.75;
 
@@ -56,9 +63,17 @@ public class ShatterAssemblerBlockEntity extends SmartBlockEntity {
         return Sable.HELPER.getContaining(this);
     }
 
+    public static float getSawCenterX(int side) {
+        float outward = 0.5F / 16.0F;
+        return side < 0 ? -outward : 1.0F + outward;
+    }
+
     @Override
     public void tick() {
         super.tick();
+        if (this.level != null && this.level.isClientSide && !this.isVirtual()) {
+            ShatterAssemblerEffects.spawnSawDebris(this);
+        }
         if (this.holdingLever) {
             this.visualAngle.setValue(this.visualAngle.getValue());
         } else if (this.controlledByPlayer) {

@@ -111,7 +111,7 @@ public class PortableTypewriterItem extends Item {
         CompoundTag entry = bindings.getCompound(key);
         ItemStack first = ItemStack.parseOptional(registries, entry.getCompound("first"));
         ItemStack second = ItemStack.parseOptional(registries, entry.getCompound("second"));
-        if (first.isEmpty() || second.isEmpty()) return null;
+        if (first.isEmpty() && second.isEmpty()) return null;
         return Couple.create(Frequency.of(first), Frequency.of(second));
     }
 

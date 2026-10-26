@@ -24,7 +24,9 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.createmod.catnip.math.AngleHelper;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
 
 public class ShatterAssemblerBlock extends FaceAttachedHorizontalDirectionalBlock implements IBE<ShatterAssemblerBlockEntity>, IWrenchable, BlockSubLevelAssemblyListener {
 
@@ -89,6 +91,20 @@ public class ShatterAssemblerBlock extends FaceAttachedHorizontalDirectionalBloc
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.CONSUME;
+    }
+
+    public static Matrix4f localToBlockSpace(BlockState state) {
+        float rY = (float) Math.toRadians(AngleHelper.horizontalAngle(state.getValue(FACING)));
+        float rX = (float) Math.toRadians(switch (state.getValue(FACE)) {
+            case FLOOR -> 0.0F;
+            case WALL -> 90.0F;
+            case CEILING -> 180.0F;
+        });
+        return new Matrix4f()
+                .translate(0.5F, 0.5F, 0.5F)
+                .rotateY(rY)
+                .rotateX(rX)
+                .translate(-0.5F, -0.5F, -0.5F);
     }
 
     public static Direction getStickyFacing(BlockState state) {

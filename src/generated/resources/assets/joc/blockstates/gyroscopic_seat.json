@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "joc:block/gyroscopic_seat"
+    }
+  }
+}

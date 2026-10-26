@@ -86,17 +86,21 @@ public class PortableThrottleItem extends Item {
         ItemStack  firstItem = freq.getFirst() .getStack();
         ItemStack secondItem = freq.getSecond().getStack();
 
-        if(firstItem != null && firstItem != ItemStack.EMPTY) {
+        if(firstItem != null && !firstItem.isEmpty()) {
             tag.put(
                 TAG_FREQ_FIRST,
                 firstItem.save( registries, new CompoundTag() )
             );
+        } else {
+            tag.remove(TAG_FREQ_FIRST);
         }
-        if(secondItem != null && secondItem != ItemStack.EMPTY) {
+        if(secondItem != null && !secondItem.isEmpty()) {
             tag.put(
                 TAG_FREQ_SECOND,
                 secondItem.save( registries, new CompoundTag() )
             );
+        } else {
+            tag.remove(TAG_FREQ_SECOND);
         }
 
         stack.set(

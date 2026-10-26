@@ -4,15 +4,11 @@ import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.TooltipModifier;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.world.item.Item;
-import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocItems;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 public class JocTooltips {
     private static final TooltipModifier UNFINISHED = event -> event.getToolTip().add(1,
@@ -35,31 +31,9 @@ public class JocTooltips {
             TooltipModifier modifier = isUnfinished(item) ? base.andThen(UNFINISHED) : base;
             TooltipModifier.REGISTRY.register(item, modifier);
         }
-        AeronauticsJoyofcreation.LOGGER.info("[JocTooltips] registered {} modifiers; seeker key={}, exists={}", items.size(),
-                AeronauticsJoyofcreation.MODID + ":block.joc.seeker.tooltip.summary",
-                net.minecraft.client.resources.language.I18n.exists("block.joc.seeker.tooltip.summary"));
     }
 
     private static boolean isUnfinished(Item item) {
-        return item == JocItems.SHATTER_ASSEMBLER.get()
-                || item == JocItems.GYROSCOPIC_SEAT.get()
-                || item == JocItems.PORTABLE_TYPEWRITER.get();
-    }
-
-    @net.neoforged.bus.api.SubscribeEvent
-    public static void debugTooltip(net.neoforged.neoforge.event.entity.player.ItemTooltipEvent event) {
-        if (event.getItemStack().getItemHolder().getKey().location().getNamespace().equals(AeronauticsJoyofcreation.MODID)) {
-            Item item = event.getItemStack().getItem();
-            TooltipModifier modifier = TooltipModifier.REGISTRY.get(item);
-            boolean exists = net.minecraft.client.resources.language.I18n.exists(item.getDescriptionId() + ".tooltip.summary");
-            AeronauticsJoyofcreation.LOGGER.info("[JocTooltips] tooltip event for {} modifier={} descKeyExists={} lines={} shift={}",
-                    item.getDescriptionId(), modifier != null, exists, event.getToolTip().size(),
-                    net.minecraft.client.gui.screens.Screen.hasShiftDown());
-        }
-    }
-
-    private static void registerModifier(Item item) {
-        TooltipModifier.REGISTRY.register(item,
-                new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE));
+        return item == JocItems.GYROSCOPIC_SEAT.get();
     }
 }

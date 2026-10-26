@@ -26,6 +26,12 @@ public class JocBlockTagsProvider extends BlockTagsProvider {
             mineableAxe.add(JocBlocks.SYMMETRIC_CROSS_SAILS.get(color).get());
         }
 
+        mineableAxe.add(JocBlocks.GYROSCOPIC_SEAT.get());
+
+        tag(BlockTags.MINEABLE_WITH_PICKAXE)
+                .add(JocBlocks.SEEKER.get())
+                .add(JocBlocks.SHATTER_ASSEMBLER.get());
+
         var superLight = tag(net.multyfora.index.JocTags.SUPER_LIGHT);
         var light = tag(net.multyfora.index.JocTags.LIGHT);
         for (DyeColor color : DyeColor.values()) {

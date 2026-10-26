@@ -2,6 +2,7 @@ package net.multyfora.datagen;
 
 import com.simibubi.create.AllItems;
 import dev.simulated_team.simulated.index.SimBlocks;
+import dev.simulated_team.simulated.index.SimItems;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.*;
@@ -80,6 +81,31 @@ public class JocRecipeProvider extends RecipeProvider {
                 .pattern("ter")
                 .pattern("rlb")
                 .unlockedBy("has_throttle_lever", has(SimBlocks.THROTTLE_LEVER.get()))
+                .save(output);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE,
+                JocItems.PORTABLE_TYPEWRITER.get())
+                .define('r', Items.REDSTONE)
+                .define('t', AllItems.TRANSMITTER)
+                .define('w', SimBlocks.LINKED_TYPEWRITER)
+                .define('e', AllItems.ELECTRON_TUBE)
+                .pattern("ter")
+                .pattern("rwr")
+                .unlockedBy("has_linked_typewriter", has(SimBlocks.LINKED_TYPEWRITER.get()))
+                .save(output);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
+                        JocBlocks.SHATTER_ASSEMBLER.get())
+                .requires(SimBlocks.PHYSICS_ASSEMBLER.get())
+                .requires(Items.FLINT)
+                .unlockedBy("has_physics_assembler", has(SimBlocks.PHYSICS_ASSEMBLER.get()))
+                .save(output);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
+                        JocBlocks.GYROSCOPIC_SEAT.get())
+                .requires(AllBlocks.SEATS.get(DyeColor.GRAY).get())
+                .requires(SimItems.GYRO_MECHANISM.get())
+                .unlockedBy("has_gyroscopic_mechanism", has(SimItems.GYRO_MECHANISM.get()))
                 .save(output);
 
         for (DyeColor color : DyeColor.values()) {

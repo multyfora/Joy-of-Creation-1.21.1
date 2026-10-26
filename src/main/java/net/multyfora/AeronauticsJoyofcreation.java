@@ -22,7 +22,17 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 import net.multyfora.client.renderer.PortableThrottleItemRenderer;
-import net.multyfora.client.portable_throttle.PortableThrottleRenderHandler;
+import net.multyfora.client.renderer.PortableTypewriterItemRenderer;
+import net.multyfora.client.portable_typewriter.TypewriterArmPose;
+import net.multyfora.client.portable_typewriter.TypewriterTypists;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.multyfora.client.portable_throttle.PortableThrottleGripHandler;
+import net.multyfora.client.portable_throttle.ThrottleArmPose;
+import net.multyfora.client.portable_throttle.ThrottleVisualState;
+import dev.simulated_team.simulated.index.SimClickInteractions;
 import net.multyfora.index.JocItems;
 
 import net.multyfora.config.JocConfig;
@@ -89,10 +99,8 @@ public class AeronauticsJoyofcreation {
             PonderIndex.addPlugin(new JocPonderPlugin());
 
             JocTooltips.register();
-            NeoForge.EVENT_BUS.register(JocTooltips.class);
 
-            PortableThrottleRenderHandler throttleHandler = new PortableThrottleRenderHandler();
-            throttleHandler.registerListeners(NeoForge.EVENT_BUS);
+            SimClickInteractions.CLICK_INTERACTION_ENTRIES.add(PortableThrottleGripHandler.INSTANCE);
         });
     }
 
@@ -105,8 +113,28 @@ public class AeronauticsJoyofcreation {
                     net.minecraft.client.model.geom.EntityModelSet modelSet = Minecraft.getInstance().getEntityModels();
                     return new PortableThrottleItemRenderer(dispatcher, modelSet);
                 }
+
+                @Override
+                public HumanoidModel.ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
+                    return ThrottleVisualState.isGripping(entity) ? ThrottleArmPose.get() : null;
+                }
             },
             JocItems.PORTABLE_THROTTLE.get()
+        );
+        event.registerItem(
+            new IClientItemExtensions() {
+                @Override
+                public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                    Minecraft mc = Minecraft.getInstance();
+                    return new PortableTypewriterItemRenderer(mc.getBlockEntityRenderDispatcher(), mc.getEntityModels());
+                }
+
+                @Override
+                public HumanoidModel.ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
+                    return TypewriterTypists.isTyping(entity) ? TypewriterArmPose.get() : null;
+                }
+            },
+            JocItems.PORTABLE_TYPEWRITER.get()
         );
     }
 

@@ -18,6 +18,8 @@ displayName="${mod_name}"
 
 logoFile="joc.png"
 
+enumExtensions="META-INF/enumextensions.json"
+
 
 authors="Multyfora, Hollow egg, Wheeler-Shigley"
 
@@ -51,28 +53,28 @@ config="${mod_id}.createthrusters.mixins.json"
     modId="create"
     type="required"
     versionRange="[6.0.10,6.1.0)"
-    ordering="NONE"
+    ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="simulated"
     type="required"
     versionRange="[1.0.0,)"
-    ordering="NONE"
+    ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="aeronautics"
     type="required"
     versionRange="[1.0.0,)"
-    ordering="NONE"
+    ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="sable"
     type="required"
     versionRange="[1.2.0,)"
-    ordering="NONE"
+    ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]

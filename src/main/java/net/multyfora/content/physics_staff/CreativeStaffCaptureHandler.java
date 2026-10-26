@@ -56,14 +56,7 @@ public class CreativeStaffCaptureHandler {
 
         SimSoundEvents.STAFF_IGNITE.playFrom(player, 1.0F, 1.0F);
 
-        var random = level.getRandom();
-        for (int i = 0; i < 10; i++) {
-            level.addParticle(ParticleTypes.END_ROD,
-                    target.getX() + (random.nextDouble() * 0.2 - 0.1),
-                    target.getY() + (random.nextDouble() * 0.2 - 0.1),
-                    target.getZ() + (random.nextDouble() * 0.2 - 0.1),
-                    0, 0, 0);
-        }
+        spawnGrabParticles(level, target);
 
         if (player instanceof ServerPlayer sp) {
             PacketDistributor.sendToPlayer(
@@ -98,14 +91,7 @@ public class CreativeStaffCaptureHandler {
 
         SimSoundEvents.STAFF_IGNITE.playFrom(player, 1.0F, 1.0F);
 
-        var random = level.getRandom();
-        for (int i = 0; i < 10; i++) {
-            level.addParticle(ParticleTypes.END_ROD,
-                    target.getX() + (random.nextDouble() * 0.2 - 0.1),
-                    target.getY() + (random.nextDouble() * 0.2 - 0.1),
-                    target.getZ() + (random.nextDouble() * 0.2 - 0.1),
-                    0, 0, 0);
-        }
+        spawnGrabParticles(level, target);
 
         PacketDistributor.sendToPlayer(player, new EntityGrabPayloads.Start(target.getId(), holdDist));
     }
@@ -222,14 +208,13 @@ public class CreativeStaffCaptureHandler {
 
         SimSoundEvents.STAFF_EXTINGUISH.playFrom(player, 1.0F, 1.0F);
 
-        var random = session.level.getRandom();
-        for (int i = 0; i < 10; i++) {
-            session.level.addParticle(ParticleTypes.END_ROD,
-                    target.getX() + (random.nextDouble() * 0.2 - 0.1),
-                    target.getY() + (random.nextDouble() * 0.2 - 0.1),
-                    target.getZ() + (random.nextDouble() * 0.2 - 0.1),
-                    0, 0, 0);
-        }
+        spawnGrabParticles(session.level, target);
+    }
+
+    private static void spawnGrabParticles(ServerLevel level, Entity target) {
+        level.sendParticles(ParticleTypes.END_ROD,
+                target.getX(), target.getY(), target.getZ(),
+                10, 0.1, 0.1, 0.1, 0.0);
     }
 
     private static boolean isGrabbed(int entityId) {

@@ -229,6 +229,31 @@ public class GraphicsUtils {
         }
     }
 
+    public static int getInventorySlotAt(
+        Vector2i origin,
+        int size, int gap, int thickness,
+        Vector2i mousePosition
+    ) {
+        int pitch = size - thickness/2;
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                Vector2i start = new Vector2i(origin.x + col*pitch, origin.y + row*pitch);
+                if (isInBounds(start, new Vector2i(start.x + pitch, start.y + pitch), mousePosition)) {
+                    return 9 + 9*row + col;
+                }
+            }
+        }
+
+        int hotbarY = origin.y + 3*size + gap;
+        for (int col = 0; col < 9; col++) {
+            Vector2i start = new Vector2i(origin.x + col*pitch, hotbarY);
+            if (isInBounds(start, new Vector2i(start.x + pitch, start.y + size), mousePosition)) {
+                return col;
+            }
+        }
+        return -1;
+    }
+
     public static String getCoordinateString(BlockPos position) {
         if(position == null) {
             return "Not Set";

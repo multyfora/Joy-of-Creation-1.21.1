@@ -6,6 +6,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.multyfora.client.ClientPayloadHandlers;
+import net.multyfora.content.portable_throttle.PortableThrottleHolders;
+import net.multyfora.content.portable_typewriter.PortableTypewriterTypists;
 import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.content.shears_cut.ShearsCutRemoteState;
 import net.multyfora.content.shears_cut.ShearsPreviewServerHandler;
@@ -191,6 +193,42 @@ public class PayloadRegister {
                             () -> { payload.handle( context.player() ); }
                         );
                     }
+                );
+                registrar.playToServer(
+                    PortableTypewriterStatePayloads.SetTyping.TYPE,
+                    PortableTypewriterStatePayloads.SetTyping.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                if( context.player() instanceof ServerPlayer sp ) {
+                                    PortableTypewriterTypists.setTyping(sp, payload.typing());
+                                }
+                            }
+                        );
+                    }
+                );
+                registrar.playToServer(
+                    PortableThrottlePosePayloads.SetPose.TYPE,
+                    PortableThrottlePosePayloads.SetPose.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                if( context.player() instanceof ServerPlayer sp ) {
+                                    PortableThrottleHolders.setPose(sp, payload.gripping(), payload.strength());
+                                }
+                            }
+                        );
+                    }
+                );
+                registrar.playToClient(
+                    PortableThrottlePosePayloads.PoseState.TYPE,
+                    PortableThrottlePosePayloads.PoseState.CODEC,
+                    ClientPayloadHandlers::handleThrottlePose
+                );
+                registrar.playToClient(
+                    PortableTypewriterStatePayloads.TypingState.TYPE,
+                    PortableTypewriterStatePayloads.TypingState.CODEC,
+                    ClientPayloadHandlers::handleTypingState
                 );
                 registrar.playToServer(
                     PortableTypewriterSetFreqPacket.TYPE,

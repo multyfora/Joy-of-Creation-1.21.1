@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.lwjgl.glfw.GLFW;
 
 public class PortableTypewriterClientHandler {
 
@@ -35,35 +34,22 @@ public class PortableTypewriterClientHandler {
     private static final Set<Integer> bindPrevPressed = new HashSet<>();
     private static boolean bindBaselineRecorded = false;
 
-    private static final int[] BINDABLE_KEYS = {
-        GLFW.GLFW_KEY_ESCAPE,
-        GLFW.GLFW_KEY_1, GLFW.GLFW_KEY_2, GLFW.GLFW_KEY_3, GLFW.GLFW_KEY_4, GLFW.GLFW_KEY_5,
-        GLFW.GLFW_KEY_6, GLFW.GLFW_KEY_7, GLFW.GLFW_KEY_8, GLFW.GLFW_KEY_9, GLFW.GLFW_KEY_0,
-        GLFW.GLFW_KEY_MINUS, GLFW.GLFW_KEY_EQUAL, GLFW.GLFW_KEY_BACKSPACE,
-        GLFW.GLFW_KEY_TAB,
-        GLFW.GLFW_KEY_Q, GLFW.GLFW_KEY_W, GLFW.GLFW_KEY_E, GLFW.GLFW_KEY_R,
-        GLFW.GLFW_KEY_T, GLFW.GLFW_KEY_Y, GLFW.GLFW_KEY_U, GLFW.GLFW_KEY_I,
-        GLFW.GLFW_KEY_O, GLFW.GLFW_KEY_P,
-        GLFW.GLFW_KEY_LEFT_BRACKET, GLFW.GLFW_KEY_RIGHT_BRACKET, GLFW.GLFW_KEY_BACKSLASH,
-        GLFW.GLFW_KEY_CAPS_LOCK,
-        GLFW.GLFW_KEY_A, GLFW.GLFW_KEY_S, GLFW.GLFW_KEY_D, GLFW.GLFW_KEY_F,
-        GLFW.GLFW_KEY_G, GLFW.GLFW_KEY_H, GLFW.GLFW_KEY_J, GLFW.GLFW_KEY_K, GLFW.GLFW_KEY_L,
-        GLFW.GLFW_KEY_SEMICOLON, GLFW.GLFW_KEY_APOSTROPHE, GLFW.GLFW_KEY_ENTER,
-        GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_RIGHT_SHIFT,
-        GLFW.GLFW_KEY_Z, GLFW.GLFW_KEY_X, GLFW.GLFW_KEY_C, GLFW.GLFW_KEY_V,
-        GLFW.GLFW_KEY_B, GLFW.GLFW_KEY_N, GLFW.GLFW_KEY_M,
-        GLFW.GLFW_KEY_COMMA, GLFW.GLFW_KEY_PERIOD, GLFW.GLFW_KEY_SLASH,
-        GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_RIGHT_CONTROL,
-        GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_RIGHT_ALT,
-        GLFW.GLFW_KEY_SPACE
-    };
+    private static final int HINT_RATE = 40;
+    private static int hintCooldown;
+
+    private static final int[] BINDABLE_KEYS = TypewriterLayout.PLACED_KEYS.stream()
+        .mapToInt(placed -> placed.key().glfwCode())
+        .distinct()
+        .toArray();
 
     public static void toggle() {
         if (MODE == Mode.IDLE) {
             MODE = Mode.ACTIVE;
+            hintCooldown = 0;
         } else {
             MODE = Mode.IDLE;
             onReset();
+            showHint(Component.translatable("item.joc.portable_typewriter.inactive"));
         }
     }
 
@@ -72,6 +58,14 @@ public class PortableTypewriterClientHandler {
         bindTarget = target;
         bindBaselineRecorded = false;
         bindPrevPressed.clear();
+        hintCooldown = 0;
+    }
+
+    private static void showHint(Component message) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null) {
+            player.displayClientMessage(message, true);
+        }
     }
 
     public static void openScreen() {
@@ -144,6 +138,15 @@ public class PortableTypewriterClientHandler {
 
         long window = mc.getWindow().getWindow();
 
+        if (hintCooldown > 0) {
+            hintCooldown--;
+        } else {
+            showHint(Component.translatable(MODE == Mode.BIND
+                ? "item.joc.portable_typewriter.bind_prompt"
+                : "item.joc.portable_typewriter.active"));
+            hintCooldown = HINT_RATE;
+        }
+
         if (MODE == Mode.BIND && bindTarget != null) {
             VoxelShape shape = mc.level.getBlockState(bindTarget).getShape(mc.level, bindTarget);
             if (!shape.isEmpty()) {
@@ -169,6 +172,8 @@ public class PortableTypewriterClientHandler {
                 boolean wasDown = bindPrevPressed.contains(key);
                 if (currentlyDown && !wasDown) {
                     PacketDistributor.sendToServer(new PortableTypewriterBindPacket(key, bindTarget));
+                    showHint(Component.translatable("item.joc.portable_typewriter.bound",
+                        InputConstants.Type.KEYSYM.getOrCreate(key).getDisplayName()));
                     MODE = Mode.IDLE;
                     bindTarget = null;
                     bindPrevPressed.clear();
@@ -214,11 +219,10 @@ public class PortableTypewriterClientHandler {
             currentlyPressed.clear();
             currentlyPressed.addAll(pressedKeys);
 
-            KeyMapping.releaseAll();
             for (KeyMapping mapping : mc.options.keyMappings) {
                 InputConstants.Key boundKey = mapping.getKey();
                 if (boundKey != null && boundKey.getType() == InputConstants.Type.KEYSYM) {
-                    mapping.consumeClick();
+                    while (mapping.consumeClick()) {}
                     mapping.setDown(false);
                 }
             }

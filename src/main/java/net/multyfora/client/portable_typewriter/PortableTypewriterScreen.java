@@ -20,7 +20,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,15 +32,13 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         KEY_GAP = 2,
         ROW_GAP = 4,
         KEY_UNIT = KEY_WIDTH + KEY_GAP,
-        TOTAL_UNITS = 15,
-        TOTAL_WIDTH = TOTAL_UNITS * KEY_UNIT - KEY_GAP
+        TOTAL_WIDTH = (int) TypewriterLayout.ROW_UNITS * KEY_UNIT - KEY_GAP
     ;
 
     private static final int
         FREQ_SLOT_SIZE = 22,
         FREQ_SLOT_GAP = 8,
         INV_SLOT_SIZE = 22,
-        INV_SLOT_GAP = 2,
         INV_SLOT_THICKNESS = 2
     ;
 
@@ -79,16 +76,11 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         int startX = cx - TOTAL_WIDTH / 2;
         int startY = keyboardTop();
 
-        KeyRow[] rows = getKeyboardLayout();
-        int y = startY;
-        for (KeyRow row : rows) {
-            float x = startX + row.offset * KEY_UNIT;
-            for (KeyDef key : row.keys) {
-                int w = (int) (key.widthUnits * KEY_UNIT - KEY_GAP);
-                keyWidgets.add(new KeyWidget((int) x, y, w, KEY_HEIGHT, key));
-                x += key.widthUnits * KEY_UNIT;
-            }
-            y += KEY_HEIGHT + ROW_GAP;
+        for (TypewriterLayout.PlacedKey placed : TypewriterLayout.PLACED_KEYS) {
+            int x = startX + Math.round(placed.x() * KEY_UNIT);
+            int y = startY + placed.row() * (KEY_HEIGHT + ROW_GAP);
+            int w = Math.round(placed.key().widthUnits() * KEY_UNIT) - KEY_GAP;
+            keyWidgets.add(new KeyWidget(x, y, w, KEY_HEIGHT, placed.key()));
         }
 
         loadFreqForSelectedKey();
@@ -141,8 +133,8 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
                 ? Minecraft.getInstance().level.registryAccess() : null;
         for (KeyWidget kw : keyWidgets) {
             kw.bound = registries != null
-                    && PortableTypewriterItem.hasKeyBinding(held, kw.def.glfwCode);
-            kw.selected = kw.def.glfwCode == selectedKeyCode;
+                    && PortableTypewriterItem.hasKeyBinding(held, kw.def.glfwCode());
+            kw.selected = kw.def.glfwCode() == selectedKeyCode;
         }
     }
 
@@ -197,7 +189,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         GraphicsUtils.renderInventory(
             graphics, font,
             origin,
-            FREQ_SLOT_SIZE, FREQ_SLOT_GAP, INV_SLOT_THICKNESS,
+            INV_SLOT_SIZE, FREQ_SLOT_GAP, INV_SLOT_THICKNESS,
             mousePosition
         );
     }
@@ -210,7 +202,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         if (button == 0) {
             for (KeyWidget kw : keyWidgets) {
                 if (kw.isHovered(mouseX, mouseY)) {
-                    selectedKeyCode = kw.def.glfwCode;
+                    selectedKeyCode = kw.def.glfwCode();
                     PortableTypewriterClientHandler.setSelectedKey(selectedKeyCode);
                     loadFreqForSelectedKey();
                     updateKeyWidgetStates();
@@ -245,41 +237,24 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    private int getInventorySlotAt(double mx, double my) {
+        return GraphicsUtils.getInventorySlotAt(
+            new Vector2i(invLeft(), invTopY()),
+            INV_SLOT_SIZE, FREQ_SLOT_GAP, INV_SLOT_THICKNESS,
+            new Vector2i((int) mx, (int) my)
+        );
+    }
+
     private boolean handleInvClick(double mx, double my) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return false;
-        Inventory inv = mc.player.getInventory();
-        int startX = invLeft();
-        int startY = invTopY();;
-
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * (INV_SLOT_SIZE-INV_SLOT_THICKNESS);
-                int y = startY + row * (INV_SLOT_SIZE-INV_SLOT_THICKNESS);
-                if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
-                    ItemStack stack = inv.getItem(slotIdx);
-                    if (!stack.isEmpty()) {
-                        cursorItem = stack.copyWithCount(1);
-                    }
-                    return true;
-                }
-            }
+        int slotIdx = getInventorySlotAt(mx, my);
+        if (slotIdx < 0) return false;
+        ItemStack stack = mc.player.getInventory().getItem(slotIdx);
+        if (!stack.isEmpty()) {
+            cursorItem = stack.copyWithCount(1);
         }
-
-        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
-        for (int col = 0; col < 9; col++) {
-            int x = startX + col * (INV_SLOT_SIZE-INV_SLOT_THICKNESS);
-            if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
-                ItemStack stack = inv.getItem(col);
-                if (!stack.isEmpty()) {
-                    cursorItem = stack.copyWithCount(1);
-                }
-                return true;
-            }
-        }
-
-        return false;
+        return true;
     }
 
     private void handleFreqSlotClick(int slotIndex) {
@@ -363,32 +338,10 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
     private ItemStack getHoveredInventoryStack(double mx, double my) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return null;
-        Inventory inv = mc.player.getInventory();
-        int startX = invLeft();
-        int startY = invTopY();
-
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * (INV_SLOT_SIZE - INV_SLOT_THICKNESS);
-                int y = startY + row * (INV_SLOT_SIZE - INV_SLOT_THICKNESS);
-                if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
-                    ItemStack stack = inv.getItem(slotIdx);
-                    return stack.isEmpty() ? null : stack;
-                }
-            }
-        }
-
-        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
-        for (int col = 0; col < 9; col++) {
-            int x = startX + col * (INV_SLOT_SIZE - INV_SLOT_THICKNESS);
-            if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
-                ItemStack stack = inv.getItem(col);
-                return stack.isEmpty() ? null : stack;
-            }
-        }
-
-        return null;
+        int slotIdx = getInventorySlotAt(mx, my);
+        if (slotIdx < 0) return null;
+        ItemStack stack = mc.player.getInventory().getItem(slotIdx);
+        return stack.isEmpty() ? null : stack;
     }
 
     private static ItemStack getHeldItem() {
@@ -400,86 +353,13 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
         return held.getItem() instanceof PortableTypewriterItem ? held : null;
     }
 
-    private static KeyRow[] getKeyboardLayout() {
-        return new KeyRow[] {
-            new KeyRow(0,
-                new KeyDef("Esc", GLFW.GLFW_KEY_ESCAPE, 1.5f),
-                new KeyDef("1", GLFW.GLFW_KEY_1, 1),
-                new KeyDef("2", GLFW.GLFW_KEY_2, 1),
-                new KeyDef("3", GLFW.GLFW_KEY_3, 1),
-                new KeyDef("4", GLFW.GLFW_KEY_4, 1),
-                new KeyDef("5", GLFW.GLFW_KEY_5, 1),
-                new KeyDef("6", GLFW.GLFW_KEY_6, 1),
-                new KeyDef("7", GLFW.GLFW_KEY_7, 1),
-                new KeyDef("8", GLFW.GLFW_KEY_8, 1),
-                new KeyDef("9", GLFW.GLFW_KEY_9, 1),
-                new KeyDef("0", GLFW.GLFW_KEY_0, 1),
-                new KeyDef("-", GLFW.GLFW_KEY_MINUS, 1),
-                new KeyDef("=", GLFW.GLFW_KEY_EQUAL, 1),
-                new KeyDef("Bck", GLFW.GLFW_KEY_BACKSPACE, 1.5f)
-            ),
-            new KeyRow(0.5f,
-                new KeyDef("Tab", GLFW.GLFW_KEY_TAB, 1.5f),
-                new KeyDef("Q", GLFW.GLFW_KEY_Q, 1),
-                new KeyDef("W", GLFW.GLFW_KEY_W, 1),
-                new KeyDef("E", GLFW.GLFW_KEY_E, 1),
-                new KeyDef("R", GLFW.GLFW_KEY_R, 1),
-                new KeyDef("T", GLFW.GLFW_KEY_T, 1),
-                new KeyDef("Y", GLFW.GLFW_KEY_Y, 1),
-                new KeyDef("U", GLFW.GLFW_KEY_U, 1),
-                new KeyDef("I", GLFW.GLFW_KEY_I, 1),
-                new KeyDef("O", GLFW.GLFW_KEY_O, 1),
-                new KeyDef("P", GLFW.GLFW_KEY_P, 1),
-                new KeyDef("[", GLFW.GLFW_KEY_LEFT_BRACKET, 1),
-                new KeyDef("]", GLFW.GLFW_KEY_RIGHT_BRACKET, 1),
-                new KeyDef("\\", GLFW.GLFW_KEY_BACKSLASH, 1.5f)
-            ),
-            new KeyRow(0.75f,
-                new KeyDef("Caps", GLFW.GLFW_KEY_CAPS_LOCK, 1.75f),
-                new KeyDef("A", GLFW.GLFW_KEY_A, 1),
-                new KeyDef("S", GLFW.GLFW_KEY_S, 1),
-                new KeyDef("D", GLFW.GLFW_KEY_D, 1),
-                new KeyDef("F", GLFW.GLFW_KEY_F, 1),
-                new KeyDef("G", GLFW.GLFW_KEY_G, 1),
-                new KeyDef("H", GLFW.GLFW_KEY_H, 1),
-                new KeyDef("J", GLFW.GLFW_KEY_J, 1),
-                new KeyDef("K", GLFW.GLFW_KEY_K, 1),
-                new KeyDef("L", GLFW.GLFW_KEY_L, 1),
-                new KeyDef(";", GLFW.GLFW_KEY_SEMICOLON, 1),
-                new KeyDef("'", GLFW.GLFW_KEY_APOSTROPHE, 1),
-                new KeyDef("Ent", GLFW.GLFW_KEY_ENTER, 2.25f)
-            ),
-            new KeyRow(1.25f,
-                new KeyDef("Shift", GLFW.GLFW_KEY_LEFT_SHIFT, 2.25f),
-                new KeyDef("Z", GLFW.GLFW_KEY_Z, 1),
-                new KeyDef("X", GLFW.GLFW_KEY_X, 1),
-                new KeyDef("C", GLFW.GLFW_KEY_C, 1),
-                new KeyDef("V", GLFW.GLFW_KEY_V, 1),
-                new KeyDef("B", GLFW.GLFW_KEY_B, 1),
-                new KeyDef("N", GLFW.GLFW_KEY_N, 1),
-                new KeyDef("M", GLFW.GLFW_KEY_M, 1),
-                new KeyDef(",", GLFW.GLFW_KEY_COMMA, 1),
-                new KeyDef(".", GLFW.GLFW_KEY_PERIOD, 1),
-                new KeyDef("/", GLFW.GLFW_KEY_SLASH, 1),
-                new KeyDef("Shift", GLFW.GLFW_KEY_RIGHT_SHIFT, 2.75f)
-            ),
-            new KeyRow(1.75f,
-                new KeyDef("Ctrl", GLFW.GLFW_KEY_LEFT_CONTROL, 1.25f),
-                new KeyDef("Alt", GLFW.GLFW_KEY_LEFT_ALT, 1.25f),
-                new KeyDef("Space", GLFW.GLFW_KEY_SPACE, 6.25f),
-                new KeyDef("Alt", GLFW.GLFW_KEY_RIGHT_ALT, 1.25f),
-                new KeyDef("Ctrl", GLFW.GLFW_KEY_RIGHT_CONTROL, 1.25f)
-            )
-        };
-    }
-
     private static class KeyWidget {
         final int x, y, w, h;
-        final KeyDef def;
+        final TypewriterLayout.Key def;
         boolean bound;
         boolean selected;
 
-        KeyWidget(int x, int y, int w, int h, KeyDef def) {
+        KeyWidget(int x, int y, int w, int h, TypewriterLayout.Key def) {
             this.x = x;
             this.y = y;
             this.w = w;
@@ -508,7 +388,7 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
             graphics.fill(x + 1, y + 1, x + w - 1, y + h - 1, fillColor);
 
             int textColor = selected || bound ? 0xFFFFFF : 0xAAAAAA;
-            String label = def.label;
+            String label = def.label();
             int tw = Minecraft.getInstance().font.width(label);
             int tx = x + (w - tw) / 2;
             int ty = y + (h - 8) / 2;
@@ -520,18 +400,6 @@ public class PortableTypewriterScreen extends AbstractContainerScreen<FreqScreen
             int g = Math.min(255, (color >> 8 & 0xFF) + 40);
             int b = Math.min(255, (color & 0xFF) + 40);
             return 0xFF000000 | (r << 16) | (g << 8) | b;
-        }
-    }
-
-    record KeyDef(String label, int glfwCode, float widthUnits) {}
-
-    static class KeyRow {
-        final float offset;
-        final KeyDef[] keys;
-
-        KeyRow(float offset, KeyDef... keys) {
-            this.offset = offset;
-            this.keys = keys;
         }
     }
 }

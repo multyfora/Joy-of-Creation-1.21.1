@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "e": {
+      "item": "create:electron_tube"
+    },
+    "r": {
+      "item": "minecraft:redstone"
+    },
+    "t": {
+      "item": "create:transmitter"
+    },
+    "w": {
+      "item": "simulated:linked_typewriter"
+    }
+  },
+  "pattern": [
+    "ter",
+    "rwr"
+  ],
+  "result": {
+    "count": 1,
+    "id": "joc:portable_typewriter"
+  }
+}

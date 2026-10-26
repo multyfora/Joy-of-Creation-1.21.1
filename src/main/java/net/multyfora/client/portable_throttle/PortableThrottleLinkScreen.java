@@ -196,41 +196,24 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    private int getInventorySlotAt(double mx, double my) {
+        return GraphicsUtils.getInventorySlotAt(
+            new Vector2i(getInvLeft(), getInvTopY()),
+            INV_SLOT_SIZE, INV_SLOT_GAP, INV_LINE_THICKNESS,
+            new Vector2i((int) mx, (int) my)
+        );
+    }
+
     private boolean handleInvClick(double mx, double my) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return false;
-        Inventory inv = mc.player.getInventory();
-        int startX = getInvLeft();
-        int startY = getInvTopY();
-
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * (INV_SLOT_SIZE-INV_LINE_THICKNESS);
-                int y = startY + row * (INV_SLOT_SIZE-INV_LINE_THICKNESS);
-                if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
-                    ItemStack stack = inv.getItem(slotIdx);
-                    if (!stack.isEmpty()) {
-                        cursorItem = stack.copyWithCount(1);
-                    }
-                    return true;
-                }
-            }
+        int slotIdx = getInventorySlotAt(mx, my);
+        if (slotIdx < 0) return false;
+        ItemStack stack = mc.player.getInventory().getItem(slotIdx);
+        if (!stack.isEmpty()) {
+            cursorItem = stack.copyWithCount(1);
         }
-
-        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
-        for (int col = 0; col < 9; col++) {
-            int x = startX + col * (INV_SLOT_SIZE-INV_LINE_THICKNESS);
-            if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
-                ItemStack stack = inv.getItem(col);
-                if (!stack.isEmpty()) {
-                    cursorItem = stack.copyWithCount(1);
-                }
-                return true;
-            }
-        }
-
-        return false;
+        return true;
     }
 
     private void handleFreqSlotClick(int slotIndex) {
@@ -316,32 +299,10 @@ public class PortableThrottleLinkScreen extends AbstractContainerScreen<FreqScre
     private ItemStack getHoveredInventoryStack(double mx, double my) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return null;
-        Inventory inv = mc.player.getInventory();
-        int startX = getInvLeft();
-        int startY = getInvTopY();
-
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                int slotIdx = 9 + row * 9 + col;
-                int x = startX + col * (INV_SLOT_SIZE - INV_LINE_THICKNESS);
-                int y = startY + row * (INV_SLOT_SIZE - INV_LINE_THICKNESS);
-                if (mx >= x && mx < x + INV_SLOT_SIZE && my >= y && my < y + INV_SLOT_SIZE) {
-                    ItemStack stack = inv.getItem(slotIdx);
-                    return stack.isEmpty() ? null : stack;
-                }
-            }
-        }
-
-        int hotbarY = startY + 3 * INV_SLOT_SIZE + INV_SLOT_GAP;
-        for (int col = 0; col < 9; col++) {
-            int x = startX + col * (INV_SLOT_SIZE - INV_LINE_THICKNESS);
-            if (mx >= x && mx < x + INV_SLOT_SIZE && my >= hotbarY && my < hotbarY + INV_SLOT_SIZE) {
-                ItemStack stack = inv.getItem(col);
-                return stack.isEmpty() ? null : stack;
-            }
-        }
-
-        return null;
+        int slotIdx = getInventorySlotAt(mx, my);
+        if (slotIdx < 0) return null;
+        ItemStack stack = mc.player.getInventory().getItem(slotIdx);
+        return stack.isEmpty() ? null : stack;
     }
 
     private static ItemStack getHeldItem() {

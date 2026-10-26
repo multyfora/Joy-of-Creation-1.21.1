@@ -1,9 +1,7 @@
 package net.multyfora.content.gyroseat;
 
-import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.contraptions.actors.seat.SeatBlock;
 import com.simibubi.create.content.contraptions.actors.seat.SeatEntity;
-import com.simibubi.create.foundation.utility.BlockHelper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -36,16 +34,6 @@ public class GyroscopicSeatBlock extends SeatBlock {
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (player.isShiftKeyDown() || player instanceof FakePlayer)
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-
-        DyeColor color = DyeColor.getColor(stack);
-        if (color != null && color != this.color) {
-            if (level.isClientSide)
-                return ItemInteractionResult.SUCCESS;
-            BlockState newState = BlockHelper.copyProperties(state, AllBlocks.SEATS.get(color)
-                .getDefaultState());
-            level.setBlockAndUpdate(pos, newState);
-            return ItemInteractionResult.SUCCESS;
-        }
 
         List<SeatEntity> seats = level.getEntitiesOfClass(SeatEntity.class, new AABB(pos));
         if (!seats.isEmpty()) {

@@ -1,8 +1,10 @@
 package net.multyfora.datagen;
 
 import net.minecraft.data.PackOutput;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
+import net.neoforged.neoforge.client.model.generators.ModelFile;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
 import net.multyfora.AeronauticsJoyofcreation;
@@ -25,5 +27,9 @@ public class JocItemModelProvider extends ItemModelProvider {
             String colorName = color.getSerializedName();
             withExistingParent(colorName + "_symmetric_cross_sail", modLoc("block/" + colorName + "_symmetric_cross_sail"));
         }
+
+        getBuilder("shatter_assembler").parent(new ModelFile.UncheckedModelFile(
+                ResourceLocation.fromNamespaceAndPath("simulated", "block/physics_assembler/item")));
+        withExistingParent("gyroscopic_seat", modLoc("block/gyroscopic_seat"));
     }
 }

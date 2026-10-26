@@ -28,11 +28,6 @@ public class JocSounds {
                     () -> SoundEvent.createVariableRangeEvent(
                             ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "balloon_blow")));
 
-    public static final DeferredHolder<SoundEvent, SoundEvent> BALLOON_POP =
-            SOUNDS.register("balloon_pop",
-                    () -> SoundEvent.createVariableRangeEvent(
-                            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "balloon_pop")));
-
     public static void register(IEventBus modEventBus) {
         SOUNDS.register(modEventBus);
     }

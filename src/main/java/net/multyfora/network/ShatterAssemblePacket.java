@@ -12,7 +12,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import dev.ryanhcode.sable.Sable;
 
 import java.util.Collection;
 
@@ -35,14 +39,21 @@ public record ShatterAssemblePacket(BlockPos pos) implements CustomPacketPayload
 
     public void handleServer(ServerPlayer player) {
         if (player.isSpectator()) return;
-        if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
         Level level = player.level();
         if (!level.isLoaded(this.pos)) return;
+        Vec3 worldPos = Sable.HELPER.projectOutOfSubLevel(level, Vec3.atCenterOf(this.pos));
+        if (player.distanceToSqr(worldPos) > 64.0) return;
         BlockEntity be = level.getBlockEntity(this.pos);
 
         if (be instanceof ShatterAssemblerBlockEntity assembler) {
             Direction facing = ShatterAssemblerBlock.getStickyFacing(assembler.getBlockState());
             BlockPos targetPos = this.pos.relative(facing);
+            BlockState targetState = level.getBlockState(targetPos);
+            if (!targetState.isAir() && !ShatterLogic.canAssemble(level, targetPos, targetState)) {
+                player.displayClientMessage(Component.translatable(
+                        "joc.shatter_assembler.immovable", targetState.getBlock().getName()), true);
+                return;
+            }
 
             Collection<BlockPos> connectedBlocks = ShatterLogic.getConnectedBlocks(level, targetPos);
 

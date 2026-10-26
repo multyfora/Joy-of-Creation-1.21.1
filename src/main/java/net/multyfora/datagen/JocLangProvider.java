@@ -45,6 +45,10 @@ public class JocLangProvider extends LanguageProvider {
         add("block.joc.seeker", "Seeker");
         add("block.joc.player_direction", "Player Direction");
 
+        add("block.joc.shatter_assembler", "Shatter Assembler");
+        add("block.joc.gyroscopic_seat", "Gyroscopic Seat");
+        add("joc.shatter_assembler.immovable", "%s can't be shattered");
+
         add("block.joc.seeker.tooltip.summary", "Tracks a _target_ and emits _redstone signals_ based on the direction to it. Insert a _Spyglass_, _Eye of Ender_ or _Modulating Receiver_ to choose what it seeks.");
         add("block.joc.shatter_assembler.tooltip.summary", "Splits a connected _solid block_ structure into individual _SubLevels_. Hold and drag the _lever_, then release to shatter the assembly.");
         add("block.joc.gyroscopic_seat.tooltip.summary", "A seat that prevents _sublevel rotation_ from affecting the rider, keeping your view stable. _Right-click_ to sit.");
@@ -66,7 +70,6 @@ public class JocLangProvider extends LanguageProvider {
         add("item.joc.portable_throttle", "Portable Throttle Lever");
         add("item.joc.portable_throttle.tooltip.summary", "Allows sending _analog_ redstone signal wirelessly");
         add("subtitles.joc.balloon_blow", "Balloon being blown");
-        add("subtitles.joc.balloon_pop", "Balloon pops");
         add("joc.recipe.balloon_blowing", "Balloon Blowing");
         add("joc.recipe.balloon_blowing.tooltip", "Hold to use for 2 seconds");
         add("emi.category.joc.balloon_blowing", "Balloon Blowing");
@@ -77,6 +80,10 @@ public class JocLangProvider extends LanguageProvider {
         add("screen.joc.portable_typewriter.selected_hint", "Click a Redstone Link to bind, or set frequency items above");
         add("screen.joc.portable_typewriter.click_hint", "Click a key to select it for binding");
         add("screen.joc.portable_typewriter.bound_count", "%s keys bound");
+        add("item.joc.portable_typewriter.active", "Typing into Redstone Links - right-click to stop");
+        add("item.joc.portable_typewriter.inactive", "Typewriter released");
+        add("item.joc.portable_typewriter.bind_prompt", "Press a key to bind it to this Redstone Link - right-click to cancel");
+        add("item.joc.portable_typewriter.bound", "Bound %s to the Redstone Link");
 
         add("item.joc.spyglass.carried_target", "Target: %s, %s, %s");
 

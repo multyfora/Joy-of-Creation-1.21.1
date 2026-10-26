@@ -51,8 +51,6 @@ public class ShatterAssemblerGUIHandler extends BlockHoldInteraction {
             boolean inPlot = this.getSubLevelHolding() != null;
             if (inPlot && (double)animatedValue < 0.015 && (double)lastAnimatedValue < 0.015 || !inPlot && (double)lastAnimatedValue > 0.985 && (double)animatedValue > 0.985) {
                 VeilPacketManager.server().sendPacket(new CustomPacketPayload[]{new ShatterAssemblePacket(this.getInteractionPos())});
-                inPlot = !inPlot;
-                be.setClientHoldLeverInPlace(true);
             }
 
             be.visualAngle.setValue((double)animatedValue * (double)45.0F);

@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_linked_typewriter": {
+      "conditions": {
+        "items": [
+          {
+            "items": "simulated:linked_typewriter"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "joc:portable_typewriter"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_linked_typewriter"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "joc:portable_typewriter"
+    ]
+  }
+}

@@ -54,7 +54,9 @@ public class BalloonBlock extends Block implements IBE<BalloonBlockEntity>, Bloc
             if (!level.isClientSide) {
                 level.setBlockAndUpdate(pos, JocBlocks.BALLOONS.get(dye).get().defaultBlockState());
                 level.playSound(null, pos, SoundEvents.DYE_USE, SoundSource.BLOCKS, 1.0f, 1.1f - level.random.nextFloat() * 0.2f);
-                stack.shrink(1);
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
             }
             return ItemInteractionResult.SUCCESS;
         }

@@ -16,6 +16,10 @@ sourceSets.main.resources {
     srcDir('src/generated/resources')
 
     exclude("**/*.bbmodel")
+    exclude("**/Depreciated/**")
+    exclude("**/* - Converted.gif")
+    exclude("**/*.mp3")
+    exclude("**/*.zip")
     exclude("src/generated/**/.cache")
 }
 

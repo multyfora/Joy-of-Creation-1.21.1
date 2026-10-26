@@ -9,10 +9,7 @@
   },
   "balloon_blow": {
     "category": "player",
+    "subtitle": "subtitles.joc.balloon_blow",
     "sounds": [ "joc:balloon_blow" ]
-  },
-  "balloon_pop": {
-    "category": "player",
-    "sounds": [ "joc:balloon_pop" ]
   }
 }

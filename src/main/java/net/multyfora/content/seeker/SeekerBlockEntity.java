@@ -81,6 +81,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     private static final double PLAYER_DIR_EPSILON = 1.0e-6;
 
     private static final float INSERT_ANIM_DURATION_TICKS = 12f;
+    private int lastClientTextureVariant = -1;
     private long insertAnimStartTick = Long.MIN_VALUE;
 
 
@@ -140,8 +141,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             linkedSeekers.removeIf(linkedPos -> {
                 if (!level.isLoaded(linkedPos)) return false;
                 if (!(level.getBlockEntity(linkedPos) instanceof SeekerBlockEntity other)) return true;
-                ModuleType otherModule = other.getModule();
-                return otherModule != ModuleType.SPYGLASS && otherModule != ModuleType.MODULATING;
+                return other.getModule() == ModuleType.PLAYER_DIR;
             });
         }
 
@@ -187,8 +187,12 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             if (distanceToTarget >= 5000) {
                 lastDistanceToTarget = distanceToTarget;
             }
+            float prevYaw = spyglassPointer.getYaw();
+            float prevPitch = spyglassPointer.getPitch();
             spyglassPointer.tick(this);
-            sendData();
+            if (prevYaw != spyglassPointer.getYaw() || prevPitch != spyglassPointer.getPitch()) {
+                sendData();
+            }
         }
 
         if (selectivelyUpdateNeighbors()) {
@@ -255,9 +259,6 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
 
     private void tickModulating() {
         updateTarget();
-        if (getTargetPosition(false) != null) {
-            sendData();
-        }
         if (selectivelyUpdateNeighbors()) {
             notifyUpdate();
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
@@ -334,7 +335,6 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         } else {
             currentTarget = null;
         }
-        notifyUpdate();
     }
 
     private void updateTargetFromSubLevel() {
@@ -793,17 +793,28 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
 
         linkedSeekers.clear();
         if (tag.contains("linked_seekers")) {
-            var list = tag.getList("linked_seekers", net.minecraft.nbt.Tag.TAG_COMPOUND);
+            var list = tag.getList("linked_seekers", net.minecraft.nbt.Tag.TAG_INT_ARRAY);
             for (int i = 0; i < list.size(); i++) {
-                var entry = list.getCompound(i);
+                int[] xyz = list.getIntArray(i);
+                if (xyz.length == 3) {
+                    linkedSeekers.add(new BlockPos(xyz[0], xyz[1], xyz[2]));
+                }
+            }
+            var legacy = tag.getList("linked_seekers", net.minecraft.nbt.Tag.TAG_COMPOUND);
+            for (int i = 0; i < legacy.size(); i++) {
+                var entry = legacy.getCompound(i);
                 linkedSeekers.add(new BlockPos(entry.getInt("X"), entry.getInt("Y"), entry.getInt("Z")));
             }
         }
 
         if (clientPacket) {
-            requestModelDataUpdate();
-            if (level != null && level.isClientSide) {
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            int variant = getTextureVariant();
+            if (variant != lastClientTextureVariant) {
+                lastClientTextureVariant = variant;
+                requestModelDataUpdate();
+                if (level != null && level.isClientSide) {
+                    level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+                }
             }
         }
     }
@@ -1008,7 +1019,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
 
     public BlockPos getTarget() {
         if (!hasTarget) return null;
-        return new BlockPos((int) targetX, (int) targetY, (int) targetZ);
+        return BlockPos.containing(targetX, targetY, targetZ);
     }
 
     public BlockPos getWorldPosition() { return worldPosition; }

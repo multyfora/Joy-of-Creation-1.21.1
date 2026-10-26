@@ -20,9 +20,19 @@ import net.multyfora.client.SeekerPartialModels;
 import net.multyfora.client.seeker.SeekerBakedModel;
 import net.multyfora.client.seeker.SeekerRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
+import net.multyfora.client.portable_throttle.PortableThrottleGripHandler;
+import net.multyfora.client.portable_throttle.PortableThrottleHandRenderer;
+import net.multyfora.client.portable_throttle.ThrottleVisualState;
+import net.multyfora.client.RenderingPlayer;
 import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 import net.multyfora.client.portable_typewriter.PortableTypewriterClientHandler;
+import net.multyfora.client.portable_typewriter.PortableTypewriterHandRenderer;
 import net.multyfora.client.portable_typewriter.PortableTypewriterScreen;
+import net.multyfora.client.portable_typewriter.TypewriterHeldLayer;
+import net.multyfora.client.portable_typewriter.TypewriterTypists;
+import net.multyfora.client.portable_typewriter.TypewriterVisualState;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.resources.PlayerSkin;
 import net.multyfora.config.JocConfig;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
@@ -39,6 +49,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.multyfora.content.gyroseat.GyroscopicSeatEntity;
+import net.multyfora.content.shatter_assembler.ShatterAssemblerRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -52,7 +63,17 @@ public class ClientSubscriptions {
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER.get(), SeekerBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(JocBlockEntityTypes.SHATTER_ASSEMBLER.get(), ShatterAssemblerRenderer::new);
         event.registerEntityRenderer((EntityType<GyroscopicSeatEntity>) (EntityType<?>) JocEntityTypes.GYROSCOPIC_SEAT.get(), GyroscopicSeatRenderer::new);
+    }
+
+    @SubscribeEvent
+    static void onAddLayers(EntityRenderersEvent.AddLayers event) {
+        for (PlayerSkin.Model model : event.getSkins()) {
+            if (event.getSkin(model) instanceof PlayerRenderer renderer) {
+                renderer.addLayer(new TypewriterHeldLayer(renderer));
+            }
+        }
     }
 
     @SubscribeEvent
@@ -122,8 +143,35 @@ public class ClientSubscriptions {
         static void onClientTick(ClientTickEvent.Pre event) {
             PortableTypewriterClientHandler.tick();
             PortableThrottleClientHandler.tick();
+            PortableThrottleGripHandler.INSTANCE.tick();
+            ThrottleVisualState.tick();
+            TypewriterTypists.tick();
             ShearsCutState.tick();
             ShearsCutRemoteState.tick();
+        }
+
+        @SubscribeEvent
+        static void onRenderFrame(RenderFrameEvent.Pre event) {
+            TypewriterVisualState.update();
+            ThrottleVisualState.update();
+        }
+
+        @SubscribeEvent
+        static void onRenderHand(RenderHandEvent event) {
+            PortableTypewriterHandRenderer.onRenderHand(event);
+            PortableThrottleHandRenderer.onRenderHand(event);
+        }
+
+        @SubscribeEvent
+        static void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
+            TypewriterHeldLayer.setRenderingTypist(TypewriterTypists.isTyping(event.getEntity()));
+            RenderingPlayer.set(event.getEntity());
+        }
+
+        @SubscribeEvent
+        static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
+            TypewriterHeldLayer.setRenderingTypist(false);
+            RenderingPlayer.set(null);
         }
 
         @SubscribeEvent

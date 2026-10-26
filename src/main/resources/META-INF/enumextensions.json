@@ -1,0 +1,22 @@
+{
+  "entries": [
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "JOC_TYPEWRITER",
+      "constructor": "(ZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "net/multyfora/client/portable_typewriter/TypewriterArmPose",
+        "field": "TYPING"
+      }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "JOC_THROTTLE",
+      "constructor": "(ZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "net/multyfora/client/portable_throttle/ThrottleArmPose",
+        "field": "SLIDING"
+      }
+    }
+  ]
+}

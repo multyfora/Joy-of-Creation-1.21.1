@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -175,9 +176,9 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
                         return;
                     }
 
-                    int x = (int) Double.parseDouble(xField.getValue().isEmpty() ? "0" : xField.getValue());
-                    int y = (int) Double.parseDouble(yField.getValue().isEmpty() ? "0" : yField.getValue());
-                    int z = (int) Double.parseDouble(zField.getValue().isEmpty() ? "0" : zField.getValue());
+                    int x = parseCoordinate(xField.getValue());
+                    int y = parseCoordinate(yField.getValue());
+                    int z = parseCoordinate(zField.getValue());
 
                     this.menu.blockEntity.setTarget(x, y, z);
                     sendUpdate(x, y, z);
@@ -377,6 +378,14 @@ public class SeekerScreen extends AbstractContainerScreen<SeekerMenu> {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    private static int parseCoordinate(String value) {
+        try {
+            return Mth.floor(Double.parseDouble(value));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private void sendUpdate(int x, int y, int z) {

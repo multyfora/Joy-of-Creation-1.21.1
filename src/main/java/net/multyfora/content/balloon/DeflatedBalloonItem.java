@@ -2,7 +2,6 @@ package net.multyfora.content.balloon;
 
 import com.simibubi.create.foundation.item.CustomUseEffectsItem;
 import net.createmod.catnip.data.TriState;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -51,9 +50,6 @@ public class DeflatedBalloonItem extends Item implements CustomUseEffectsItem {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         if (!(entity instanceof Player player))
             return stack;
-
-        level.playSound(null, player.blockPosition(), JocSounds.BALLOON_POP.get(),
-                SoundSource.PLAYERS, 1.0f, 1.0f);
 
         if (level.isClientSide)
             return stack;

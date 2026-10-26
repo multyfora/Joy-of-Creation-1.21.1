@@ -30,7 +30,10 @@ public class CreativeRegister {
                                         for (DyeColor color : DyeColor.values()) {
                                             output.accept( JocBlocks.BALLOON_ITEMS.get(color).get() );
                                         }
+                                        output.accept( JocItems.PORTABLE_TYPEWRITER.get() );
                                         output.accept( JocItems.SEEKER.get() );
+                                        output.accept( JocItems.SHATTER_ASSEMBLER.get() );
+                                        output.accept( JocItems.GYROSCOPIC_SEAT.get() );
                                         output.accept( JocItems.DEFLATED_BALLOONS.get(DyeColor.RED).get() );
 
                                         for (DyeColor color : DyeColor.values()) {
