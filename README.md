@@ -11,10 +11,6 @@
 	<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
-<p align="center">
-	TODO: main-image
-</p>
-
 ---
 
 ![joy of creation card](https://cdn.modrinth.com/data/cached_images/8468aef4687c22e50614005b4ce6bd99c3d3dcfd.gif)
