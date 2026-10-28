@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.multyfora.config.JocFeatures;
 import org.jetbrains.annotations.Nullable;
 
 public class NetworkUtils {
@@ -14,6 +15,7 @@ public class NetworkUtils {
         ) {
             return null;
         }
+        if (!JocFeatures.isEnabled(validItem)) return null;
 
         ItemStack usedItem = player.getMainHandItem();
         if (usedItem.getItem().asItem() == validItem) return usedItem;

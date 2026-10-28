@@ -6,12 +6,15 @@ import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.Bounds;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.DyeColor;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.portable_throttle.PortableThrottleLinkScreen;
 import net.multyfora.client.portable_typewriter.PortableTypewriterScreen;
 import net.multyfora.content.balloon.BalloonBlowingRecipe;
+import net.multyfora.config.JocFeatures;
 import net.multyfora.index.JocItems;
 
 @EmiEntrypoint
@@ -23,9 +26,14 @@ public class JocEmiPlugin implements EmiPlugin {
                 ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "balloon_blowing"),
                 EmiStack.of(JocItems.DEFLATED_BALLOONS.get(DyeColor.WHITE).get()));
         registry.addCategory(balloonBlowing);
-        for (DyeColor color : DyeColor.values()) {
-            registry.addRecipe(new BalloonBlowingEmiRecipe(balloonBlowing, new BalloonBlowingRecipe(color)));
+        if (JocFeatures.isEnabled(JocFeatures.DEFLATED_BALLOONS) && JocFeatures.isEnabled(JocFeatures.BALLOONS)) {
+            for (DyeColor color : DyeColor.values()) {
+                registry.addRecipe(new BalloonBlowingEmiRecipe(balloonBlowing, new BalloonBlowingRecipe(color)));
+            }
         }
+        registry.removeEmiStacks(stack -> stack.getItemStack().getItem() instanceof Item item
+                && BuiltInRegistries.ITEM.getKey(item).getNamespace().equals(AeronauticsJoyofcreation.MODID)
+                && !JocFeatures.isEnabled(item));
 
         registry.addDragDropHandler(PortableTypewriterScreen.class, new TypewriterDragHandler());
         registry.addDragDropHandler(PortableThrottleLinkScreen.class, new ThrottleDragHandler());

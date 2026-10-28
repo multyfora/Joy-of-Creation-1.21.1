@@ -72,7 +72,7 @@ public final class PortableThrottleHandRenderer {
 
         ms.pushPose();
         ms.mulPose(device);
-        PortableThrottleItemRenderer.renderModel(ms, buffers, light, knob, true, ThrottleVisualState.getStrength(player) > 0);
+        PortableThrottleItemRenderer.renderModel(ms, buffers, light, knob, true, ThrottleVisualState.getStrength(player));
         ms.popPose();
 
         if (player.isInvisible()) return;

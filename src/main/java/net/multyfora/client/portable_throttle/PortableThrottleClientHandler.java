@@ -11,14 +11,10 @@ import net.multyfora.client.FreqScreenMenu;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.PortableThrottleBindPacket;
-import net.multyfora.network.PortableThrottleSignalPacket;
 
 public class PortableThrottleClientHandler {
 
     private static BlockPos bindTarget;
-    private static int lastStrength;
-    private static int keepAliveCooldown;
-    private static final int KEEP_ALIVE_RATE = 10;
 
     public static void startBind(BlockPos pos) {
         bindTarget = pos;
@@ -33,15 +29,6 @@ public class PortableThrottleClientHandler {
                 mc.player.getInventory());
         mc.setScreen(new PortableThrottleLinkScreen(menu, mc.player.getInventory(),
                 Component.translatable("item.joc.portable_throttle")));
-    }
-
-    public static int getLastStrength() {
-        return lastStrength;
-    }
-
-    public static void setStrength(int strength) {
-        lastStrength = strength;
-        keepAliveCooldown = 0;
     }
 
     private static ItemStack findThrottleInInventory(LocalPlayer player) {
@@ -75,32 +62,12 @@ public class PortableThrottleClientHandler {
             PacketDistributor.sendToServer(new PortableThrottleBindPacket(bindTarget));
             bindTarget = null;
         }
-
-        boolean throttleInHand = player.getMainHandItem().getItem() instanceof PortableThrottleItem
-            || player.getOffhandItem().getItem() instanceof PortableThrottleItem;
-        if (throttleInHand && client.screen == null && client.options.keyUse.isDown() && client.options.keyShift.isDown()) {
-            PacketDistributor.sendToServer(new PortableThrottleSignalPacket(lastStrength));
-        }
-
-        if (0 < lastStrength && client.screen == null) {
-            if (0 < keepAliveCooldown) {
-                keepAliveCooldown--;
-            } else {
-                PacketDistributor.sendToServer(new PortableThrottleSignalPacket(lastStrength));
-                keepAliveCooldown = KEEP_ALIVE_RATE;
-            }
-        }
     }
 
     private static void reset() {
-        if (0 < lastStrength) {
-            PacketDistributor.sendToServer(new PortableThrottleSignalPacket(0));
-        }
         if (Minecraft.getInstance().screen instanceof PortableThrottleLinkScreen) {
             Minecraft.getInstance().setScreen(null);
         }
-        lastStrength = 0;
-        keepAliveCooldown = 0;
         bindTarget = null;
     }
 }

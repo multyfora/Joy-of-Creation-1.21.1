@@ -19,7 +19,9 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
+import net.minecraft.util.Mth;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
+import net.multyfora.index.JocDataComponents;
 
 public class PortableThrottleItem extends Item {
 
@@ -59,6 +61,24 @@ public class PortableThrottleItem extends Item {
             PortableThrottleClientHandler.openScreen();
         }
         return InteractionResultHolder.success(heldItem);
+    }
+
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
+        return slotChanged || oldStack.getItem() != newStack.getItem();
+    }
+
+    public static int getStrength(ItemStack stack) {
+        return stack.getOrDefault(JocDataComponents.THROTTLE_STRENGTH, 0);
+    }
+
+    public static void setStrength(ItemStack stack, int strength) {
+        strength = Mth.clamp(strength, 0, 15);
+        if (strength == 0) {
+            stack.remove(JocDataComponents.THROTTLE_STRENGTH);
+        } else {
+            stack.set(JocDataComponents.THROTTLE_STRENGTH, strength);
+        }
     }
 
     public static Couple<Frequency> getFrequency(ItemStack stack, HolderLookup.Provider registries) {

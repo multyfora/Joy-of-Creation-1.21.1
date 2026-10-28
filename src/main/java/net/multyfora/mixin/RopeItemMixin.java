@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
 import net.multyfora.IMultiRopeBehavior;
+import net.multyfora.config.JocFeatures;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,7 +26,7 @@ public class RopeItemMixin {
         remap = false
     )
     private static void joc$acceptMultiRope(Level level, BlockPos blockPos, CallbackInfoReturnable<Boolean> cir) {
-        if( cir.getReturnValue() ) {
+        if( cir.getReturnValue() || !JocFeatures.isEnabled(JocFeatures.MULTI_ROPE) ) {
             return;
         }
 

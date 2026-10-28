@@ -13,6 +13,7 @@ import net.multyfora.content.shears_cut.ShearsCutRemoteState;
 import net.multyfora.content.shears_cut.ShearsPreviewServerHandler;
 import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
+import net.minecraft.world.phys.Vec3;
 import net.multyfora.index.JocDataComponents;
 import net.multyfora.index.SeekerCapturedTarget;
 import net.multyfora.network.*;
@@ -99,7 +100,7 @@ public class PayloadRegister {
                 registrar.playToClient(
                     SeekerPayloads.OpenSeekerPayload.TYPE,
                     SeekerPayloads.OpenSeekerPayload.CODEC,
-                    ClientPayloadHandlers::handleOpenSeeker
+                    (payload, context) -> ClientPayloadHandlers.handleOpenSeeker(payload, context)
                 );
                 registrar.playToServer(
                     SeekerPayloads.UpdateSeekerPayload.TYPE,
@@ -142,7 +143,7 @@ public class PayloadRegister {
                 registrar.playToClient(
                     SeekerDistancePayloads.OpenSeekerDistancePayload.TYPE,
                     SeekerDistancePayloads.OpenSeekerDistancePayload.CODEC,
-                    ClientPayloadHandlers::handleOpenSeekerDistance
+                    (payload, context) -> ClientPayloadHandlers.handleOpenSeekerDistance(payload, context)
                 );
                 registrar.playToServer(
                     SeekerDistancePayloads.UpdateSeekerDistancePayload.TYPE,
@@ -223,12 +224,12 @@ public class PayloadRegister {
                 registrar.playToClient(
                     PortableThrottlePosePayloads.PoseState.TYPE,
                     PortableThrottlePosePayloads.PoseState.CODEC,
-                    ClientPayloadHandlers::handleThrottlePose
+                    (payload, context) -> ClientPayloadHandlers.handleThrottlePose(payload, context)
                 );
                 registrar.playToClient(
                     PortableTypewriterStatePayloads.TypingState.TYPE,
                     PortableTypewriterStatePayloads.TypingState.CODEC,
-                    ClientPayloadHandlers::handleTypingState
+                    (payload, context) -> ClientPayloadHandlers.handleTypingState(payload, context)
                 );
                 registrar.playToServer(
                     PortableTypewriterSetFreqPacket.TYPE,
@@ -288,6 +289,31 @@ public class PayloadRegister {
                         context.enqueueWork(
                             () -> {
                                 EntityGrabClientState.grabbedEntityId = 0;
+                            }
+                        );
+                    }
+                );
+
+                registrar.playToClient(
+                    EntityGrabPayloads.HeldPosition.TYPE,
+                    EntityGrabPayloads.HeldPosition.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                EntityGrabClientState.grabTargetPos = new Vec3(payload.x(), payload.y(), payload.z());
+                                EntityGrabClientState.lastGrabPacketTime = System.currentTimeMillis();
+                            }
+                        );
+                    }
+                );
+
+                registrar.playToClient(
+                    EntityGrabPayloads.HeldRelease.TYPE,
+                    EntityGrabPayloads.HeldRelease.CODEC,
+                    (payload, context) -> {
+                        context.enqueueWork(
+                            () -> {
+                                EntityGrabClientState.grabTargetPos = null;
                             }
                         );
                     }

@@ -303,6 +303,9 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
 
         if(target instanceof IMultiRopeBehavior multiTarget) {
             multiTarget.joc$onRopeCreated(attachedRopeID, joc$targetPreExistingID);
+            if (multiTarget.joc$getMaxRopeAttachments() > 1 && target.getOwnedStrand() != null) {
+                multiTarget.joc$setStrandOwner(true);
+            }
             joc$be(target).notifyUpdate();
         }
 
@@ -570,6 +573,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
 
     @Inject(method = "tick", at = @At("RETURN"))
     private void joc$tickExtraStrands(CallbackInfo ci) {
+        if( joc$maxRopeAttachments > 1 && !strandOwner && ownedServerStrand != null ) {
+            strandOwner = true;
+            joc$be().notifyUpdate();
+        }
         if( joc$allOwnedStrands.isEmpty() && !joc$allAttachedIDs.isEmpty() ) {
             joc$tryResolveOwnedStrands();
         }
@@ -609,6 +616,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             if (strand.needsSync()) {
                 ClientboundRopeDataPacket packet = joc$buildPacketFor(strand);
                 if (packet != null) {
+                    strand.networkingStopped = false;
                     AeronauticsJoyofcreation.LOGGER.debug("[JOC-EXTRA-SEND] holder={} strand={} pts={} sinkPlayers={}",
                             joc$be().getBlockPos(), strand.getUUID(), strand.getPoints().size(),
                             this.getStrandTrackingPlayers().size());

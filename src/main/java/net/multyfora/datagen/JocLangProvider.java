@@ -41,6 +41,8 @@ public class JocLangProvider extends LanguageProvider {
     protected void addTranslations() {
         add("itemGroup.joc", "Aeronautics: Joy of Creation");
         add("joc.tooltip.unfinished", "[UNFINISHED]");
+        add("joc.tooltip.disabled", "Disabled in config");
+        add("joc.feature_disabled", "This feature is disabled in the config");
 
         add("block.joc.seeker", "Seeker");
         add("block.joc.player_direction", "Player Direction");
@@ -75,7 +77,6 @@ public class JocLangProvider extends LanguageProvider {
         add("emi.category.joc.balloon_blowing", "Balloon Blowing");
         add("screen.joc.portable_throttle.hint", "Click an inventory item, then click a frequency slot to set it");
         add("screen.joc.portable_throttle.saved", "\u00a7aSaved");
-        add("screen.joc.portable_throttle.bound_strength", "Sending signal strength %s");
         add("screen.joc.portable_typewriter.frequency_label", "Frequency Items");
         add("screen.joc.portable_typewriter.selected_hint", "Click a Redstone Link to bind, or set frequency items above");
         add("screen.joc.portable_typewriter.click_hint", "Click a key to select it for binding");
@@ -132,6 +133,21 @@ public class JocLangProvider extends LanguageProvider {
         add("joc.configuration.creative_staff.canPickupPlayers", "Allow grabbing other players");
         add("joc.configuration.creative_staff.staffGrabRange", "Max grab range in blocks");
         add("joc.configuration.creative_staff.staffHoldDistance", "Default hold distance in blocks");
+
+        add("joc.configuration.shatter_assembler", "Shatter Assembler");
+        add("joc.configuration.shatter_assembler.maxBlocks", "Max blocks shattered at once");
+
+        add("joc.configuration.features", "Features");
+        add("joc.configuration.features.balloons", "Balloons");
+        add("joc.configuration.features.deflatedBalloons", "Deflated balloons");
+        add("joc.configuration.features.symmetricCrossSails", "Symmetric cross sails");
+        add("joc.configuration.features.seeker", "Seeker");
+        add("joc.configuration.features.shatterAssembler", "Shatter assembler");
+        add("joc.configuration.features.gyroscopicSeat", "Gyroscopic seat");
+        add("joc.configuration.features.portableThrottle", "Portable throttle");
+        add("joc.configuration.features.portableTypewriter", "Portable typewriter");
+        add("joc.configuration.features.shearsCutting", "Shears cutting");
+        add("joc.configuration.features.multiRope", "Multiple ropes per connector");
 
         add("joc.ponder.seeker.header", "Using the Seeker");
         add("joc.ponder.seeker.text_1", "The Seeker tracks targets and emits redstone signals based on the direction to the target.");

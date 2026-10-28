@@ -128,8 +128,8 @@ public final class TypewriterUvLayout {
     );
 
     public static final BoxUv ANTENNA_ROD = new BoxUv(
-        null,
-        null,
+        new Rect(0.000000F, 0.814453F, 0.015625F, 0.822266F, false),
+        new Rect(0.000000F, 0.814453F, 0.015625F, 0.822266F, false),
         new Rect(0.000000F, 0.814453F, 0.164062F, 0.822266F, true),
         new Rect(0.171875F, 0.814453F, 0.335938F, 0.822266F, true),
         new Rect(0.343750F, 0.814453F, 0.507812F, 0.822266F, true),

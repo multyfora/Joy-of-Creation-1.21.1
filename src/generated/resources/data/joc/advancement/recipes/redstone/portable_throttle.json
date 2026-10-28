@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "portableThrottle"
+    }
+  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_the_recipe": {

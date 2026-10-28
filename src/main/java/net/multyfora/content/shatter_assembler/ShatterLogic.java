@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.physics.chunk.VoxelNeighborhoodState;
 import com.simibubi.create.api.contraption.BlockMovementChecks;
 import net.minecraft.core.BlockPos;
+import net.multyfora.config.JocConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
@@ -61,7 +62,7 @@ public class ShatterLogic {
         queue.add(startPos);
         visited.add(startPos);
 
-        int maxBlocks = 512;
+        int maxBlocks = JocConfig.SHATTER_ASSEMBLER_MAX_BLOCKS.get();
 
         while (!queue.isEmpty() && visited.size() < maxBlocks) {
             BlockPos current = queue.poll();

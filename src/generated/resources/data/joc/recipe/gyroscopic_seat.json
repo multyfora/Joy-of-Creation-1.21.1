@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "gyroscopicSeat"
+    }
+  ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [

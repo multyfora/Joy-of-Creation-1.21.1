@@ -7,8 +7,8 @@ import dev.simulated_team.simulated.util.click_interactions.InteractCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
@@ -20,12 +20,12 @@ public class PortableThrottleGripHandler implements InteractCallback {
     public static final PortableThrottleGripHandler INSTANCE = new PortableThrottleGripHandler();
 
     private static final double PITCH_PER_FULL_SWEEP = 180.0;
-    private static final int HINT_RATE = 30;
 
     private boolean gripping;
     private float value;
     private int signal;
-    private int hintCooldown;
+    private InteractionHand hand;
+    private int slot;
 
     private PortableThrottleGripHandler() {}
 
@@ -35,6 +35,10 @@ public class PortableThrottleGripHandler implements InteractCallback {
 
     public float getValue() {
         return value;
+    }
+
+    public int getSignal() {
+        return signal;
     }
 
     @Override
@@ -59,9 +63,10 @@ public class PortableThrottleGripHandler implements InteractCallback {
         }
 
         gripping = true;
-        signal = PortableThrottleClientHandler.getLastStrength();
+        hand = throttleHand(player);
+        slot = gripSlot(player, hand);
+        signal = PortableThrottleItem.getStrength(player.getItemInHand(hand));
         value = signal / 15.0F;
-        hintCooldown = 0;
         return new Result(true);
     }
 
@@ -73,10 +78,12 @@ public class PortableThrottleGripHandler implements InteractCallback {
         int newSignal = Math.round(value * 15.0F);
         if (newSignal != signal) {
             signal = newSignal;
-            PortableThrottleClientHandler.setStrength(signal);
-            PacketDistributor.sendToServer(new PortableThrottleSignalPacket(signal));
+            ItemStack lever = Minecraft.getInstance().player.getItemInHand(hand);
+            if (lever.getItem() instanceof PortableThrottleItem) {
+                PortableThrottleItem.setStrength(lever, signal);
+            }
+            PacketDistributor.sendToServer(new PortableThrottleSignalPacket(hand, signal));
             playDetent();
-            hintCooldown = 0;
         }
         return new Result(true);
     }
@@ -85,13 +92,10 @@ public class PortableThrottleGripHandler implements InteractCallback {
         if (!gripping) return;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        if (player == null || mc.screen != null || throttleHand(player) == null || !isUseHeld(mc)) {
+        if (player == null || mc.screen != null || !isUseHeld(mc)
+                || !(player.getItemInHand(hand).getItem() instanceof PortableThrottleItem)
+                || gripSlot(player, hand) != slot) {
             stop();
-            return;
-        }
-        if (hintCooldown-- <= 0) {
-            player.displayClientMessage(Component.translatable("screen.joc.portable_throttle.bound_strength", signal), true);
-            hintCooldown = HINT_RATE;
         }
     }
 
@@ -104,6 +108,10 @@ public class PortableThrottleGripHandler implements InteractCallback {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
         AllSoundEvents.SCROLL_VALUE.playAt(mc.level, mc.player.position(), 0.25F, 0.8F + value * 0.5F, false);
+    }
+
+    private static int gripSlot(LocalPlayer player, InteractionHand hand) {
+        return hand == InteractionHand.MAIN_HAND ? player.getInventory().selected : -1;
     }
 
     private static boolean isUseHeld(Minecraft mc) {

@@ -39,7 +39,7 @@ public abstract class RopeConnectorRendererMixin {
         multi.joc$setStrandOwner(true);
         try {
             for (ClientRopeStrand strand : extras.values()) {
-                if (strand == owned) continue;
+                if (strand == owned && originalOwner) continue;
                 multi.joc$setOwnedClientStrand(strand);
                 RopeStrandRenderer.render(be, holder, partialTicks, ms, buffer);
             }

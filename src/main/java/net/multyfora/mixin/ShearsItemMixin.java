@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 
+import net.multyfora.config.JocFeatures;
 import net.multyfora.content.shears_cut.ShearsCutState;
 
 @Mixin(Item.class)
@@ -27,6 +28,7 @@ public class ShearsItemMixin {
     @Inject(method = "useOn", at = @At("HEAD"), cancellable = true)
     private void joc$onUseOn(UseOnContext context, CallbackInfoReturnable<InteractionResult> cir) {
         if (!context.getItemInHand().is(Items.SHEARS)) return;
+        if (!JocFeatures.isEnabled(JocFeatures.SHEARS_CUTTING)) return;
 
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
@@ -60,6 +62,7 @@ public class ShearsItemMixin {
                            CallbackInfoReturnable<InteractionResultHolder<ItemStack>> cir) {
         ItemStack stack = player.getItemInHand(hand);
         if (!stack.is(Items.SHEARS)) return;
+        if (!JocFeatures.isEnabled(JocFeatures.SHEARS_CUTTING)) return;
         if (!level.isClientSide()) return;
 
         if (ShearsCutState.getMode() == ShearsCutState.Mode.PLACING) {

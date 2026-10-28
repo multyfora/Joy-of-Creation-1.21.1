@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "deflatedBalloons"
+    }
+  ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "group": "joc_deflated_balloon",

@@ -175,7 +175,7 @@ public final class TypewriterKeyboardModel {
         ms.translate(0, 0.3F, 0);
         ms.mulPose(Axis.XP.rotationDegrees(-55.0F));
         mesh = new Mesh(ms.last(), vc, overlay);
-        mesh.box(-0.11F, 0, -0.11F, 0.11F, 2.6F, 0.11F, TypewriterUvLayout.ANTENNA_ROD, WHITE, light);
+        mesh.box(-0.11F, -0.25F, -0.11F, 0.11F, 2.6F, 0.11F, TypewriterUvLayout.ANTENNA_ROD, WHITE, light);
         mesh.box(-0.25F, 2.6F, -0.25F, 0.25F, 3.1F, 0.25F, TypewriterUvLayout.ANTENNA_TIP,
                 transmitting ? ANTENNA_TIP_ON : ANTENNA_TIP_OFF, transmitting ? LightTexture.FULL_BRIGHT : light);
         ms.popPose();

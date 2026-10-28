@@ -1,6 +1,8 @@
 package net.multyfora.network;
 
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.config.FeatureGuards;
+import net.multyfora.config.JocFeatures;
 import net.multyfora.content.shatter_assembler.ShatterAssemblerBlock;
 import net.multyfora.content.shatter_assembler.ShatterAssemblerBlockEntity;
 import net.multyfora.content.shatter_assembler.ShatterLogic;
@@ -39,6 +41,10 @@ public record ShatterAssemblePacket(BlockPos pos) implements CustomPacketPayload
 
     public void handleServer(ServerPlayer player) {
         if (player.isSpectator()) return;
+        if (!JocFeatures.isEnabled(JocFeatures.SHATTER_ASSEMBLER)) {
+            FeatureGuards.notifyDisabled(player);
+            return;
+        }
         Level level = player.level();
         if (!level.isLoaded(this.pos)) return;
         Vec3 worldPos = Sable.HELPER.projectOutOfSubLevel(level, Vec3.atCenterOf(this.pos));

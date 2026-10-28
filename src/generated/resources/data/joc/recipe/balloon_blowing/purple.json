@@ -1,4 +1,14 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "deflatedBalloons"
+    },
+    {
+      "type": "joc:feature_enabled",
+      "feature": "balloons"
+    }
+  ],
   "type": "joc:balloon_blowing",
   "color": "purple"
 }

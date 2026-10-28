@@ -1,34 +1,39 @@
 package net.multyfora.network;
 
-import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler.Frequency;
+import net.multyfora.config.JocFeatures;
 
 import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.data.Couple;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.content.portable_throttle.PortableThrottleServerHandler;
-import net.multyfora.index.JocItems;
-
-import static net.multyfora.network.NetworkUtils.getItemIfValid;
 
 public class PortableThrottleSignalPacket implements CustomPacketPayload {
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "throttle_signal");
     public static final Type<PortableThrottleSignalPacket> TYPE = new Type<>(ID);
     public static final StreamCodec<ByteBuf, PortableThrottleSignalPacket> CODEC = StreamCodec.composite(
+        ByteBufCodecs.BOOL, p -> p.mainHand,
         ByteBufCodecs.VAR_INT, p -> p.strength,
         PortableThrottleSignalPacket::new
     );
 
+    private final boolean mainHand;
     private final int strength;
 
-    public PortableThrottleSignalPacket(int strength) {
+    public PortableThrottleSignalPacket(InteractionHand hand, int strength) {
+        this(hand == InteractionHand.MAIN_HAND, strength);
+    }
+
+    private PortableThrottleSignalPacket(boolean mainHand, int strength) {
+        this.mainHand = mainHand;
         this.strength = strength;
     }
 
@@ -38,22 +43,16 @@ public class PortableThrottleSignalPacket implements CustomPacketPayload {
     }
 
     public void handle(net.minecraft.world.entity.player.Player player) {
-        ItemStack item = getItemIfValid(
-            player,
-            JocItems.PORTABLE_THROTTLE.asItem()
-        );
-        if(item == null) {
+        if (!(player instanceof ServerPlayer serverPlayer) || serverPlayer.isSpectator()) {
             return;
         }
 
-        Couple<Frequency> freq = PortableThrottleItem.getFrequency(item, player.level().registryAccess());
-        if(freq == null) {
+        ItemStack item = player.getItemInHand(mainHand ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
+        if (!(item.getItem() instanceof PortableThrottleItem) || !JocFeatures.isEnabled(item)) {
             return;
         }
 
-        PortableThrottleServerHandler.receiveSignal(
-            player.level(), player.blockPosition(), player.getUUID(),
-            freq, strength
-        );
+        PortableThrottleItem.setStrength(item, strength);
+        PortableThrottleServerHandler.updatePlayer(serverPlayer);
     }
 }

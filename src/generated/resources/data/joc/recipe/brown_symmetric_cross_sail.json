@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "symmetricCrossSails"
+    }
+  ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "group": "joc_symmetric_cross_sail",

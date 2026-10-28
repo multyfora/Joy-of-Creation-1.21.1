@@ -7,8 +7,10 @@ import net.multyfora.AeronauticsJoyofcreation;
 public class JocPartialModels {
     public static final PartialModel THROTTLE_BODY = PartialModel.of(
             ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "item/portable_throttle_body"));
-    public static final PartialModel THROTTLE_BODY_POWERED = PartialModel.of(
-            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "item/portable_throttle_body_powered"));
+    public static final PartialModel THROTTLE_ANTENNA = PartialModel.of(
+            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "item/portable_throttle_antenna"));
+    public static final PartialModel THROTTLE_ANTENNA_POWERED = PartialModel.of(
+            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "item/portable_throttle_antenna_powered"));
     public static final PartialModel THROTTLE_KNOB = PartialModel.of(
             ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "item/portable_throttle_knob"));
     public static final PartialModel SHATTER_SAW = PartialModel.of(

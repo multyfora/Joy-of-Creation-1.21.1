@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "deflatedBalloons"
+    }
+  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_dried_kelp": {

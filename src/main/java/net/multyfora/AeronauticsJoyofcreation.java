@@ -35,6 +35,7 @@ import net.multyfora.client.portable_throttle.ThrottleVisualState;
 import dev.simulated_team.simulated.index.SimClickInteractions;
 import net.multyfora.index.JocItems;
 
+import net.multyfora.config.FeatureEnabledCondition;
 import net.multyfora.config.JocConfig;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
 import net.multyfora.register.JocTooltips;
@@ -63,11 +64,11 @@ public class AeronauticsJoyofcreation {
         JocBlocks.register();
         JocItems.register();
         JocMenuTypes.register();
-        JocClickInteractions.register();
         JocSounds.register(modEventBus);
         JocDataComponents.register(modEventBus);
         JocRecipeTypes.RECIPE_TYPES.register(modEventBus);
         JocRecipeTypes.RECIPE_SERIALIZERS.register(modEventBus);
+        FeatureEnabledCondition.register(modEventBus);
 
         JocBlockEntityTypes.BLOCK_ENTITY_TYPES.register(modEventBus);
         JocEntityTypes.ENTITY_TYPES.register(modEventBus);
@@ -101,6 +102,7 @@ public class AeronauticsJoyofcreation {
             JocTooltips.register();
 
             SimClickInteractions.CLICK_INTERACTION_ENTRIES.add(PortableThrottleGripHandler.INSTANCE);
+            JocClickInteractions.register();
         });
     }
 

@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "shatterAssembler"
+    }
+  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_physics_assembler": {

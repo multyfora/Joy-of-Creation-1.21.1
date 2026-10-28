@@ -43,14 +43,14 @@ public class CreativeStaffCaptureHandler {
         if (target instanceof Player && !JocConfig.CAN_PICKUP_PLAYERS.get()) return;
         if (isGrabbed(target.getId())) return;
 
-        double distance = player.distanceTo(target);
+        double distance = holdDistanceTo(player, target);
         if (distance > 64.0) return;
 
         releaseSession(player);
 
         if (!(target.level() instanceof ServerLevel level)) return;
         double holdDist = distance;
-        EntityGrabSession session = new EntityGrabSession(target.getId(), holdDist, level, target.position());
+        EntityGrabSession session = new EntityGrabSession(target, holdDist, level);
         GRAB_SESSIONS.put(player.getUUID(), session);
         event.setCanceled(true);
 
@@ -80,13 +80,13 @@ public class CreativeStaffCaptureHandler {
         if (target instanceof Player && !JocConfig.CAN_PICKUP_PLAYERS.get()) return;
         if (isGrabbed(target.getId())) return;
 
-        double distance = player.distanceTo(target);
+        double distance = holdDistanceTo(player, target);
         if (distance > 64.0) return;
 
         releaseSession(player);
 
         double holdDist = distance;
-        EntityGrabSession session = new EntityGrabSession(target.getId(), holdDist, level, target.position());
+        EntityGrabSession session = new EntityGrabSession(target, holdDist, level);
         GRAB_SESSIONS.put(player.getUUID(), session);
 
         SimSoundEvents.STAFF_IGNITE.playFrom(player, 1.0F, 1.0F);
@@ -161,7 +161,19 @@ public class CreativeStaffCaptureHandler {
 
             Vec3 eyePos = player.getEyePosition(1.0F);
             Vec3 lookVec = player.getLookAngle();
-            Vec3 targetPos = eyePos.add(lookVec.scale(session.holdDistance));
+            Vec3 targetPos = eyePos.add(lookVec.scale(session.holdDistance))
+                    .subtract(0, target.getBbHeight() / 2.0, 0);
+
+            target.fallDistance = 0;
+
+            if (target instanceof ServerPlayer sp) {
+                Vec3 currentPos = sp.position();
+                session.lastDelta = currentPos.subtract(session.lastTickPos);
+                session.lastTickPos = currentPos;
+                sp.setNoGravity(true);
+                PacketDistributor.sendToPlayer(sp, new EntityGrabPayloads.HeldPosition(targetPos.x, targetPos.y, targetPos.z));
+                continue;
+            }
 
             Vec3 currentPos = target.position();
             Vec3 delta = targetPos.subtract(currentPos);
@@ -170,13 +182,8 @@ public class CreativeStaffCaptureHandler {
             session.lastDelta = newPos.subtract(session.lastTickPos);
             session.lastTickPos = newPos;
 
-            if (target instanceof ServerPlayer sp) {
-                sp.connection.teleport(newPos.x, newPos.y, newPos.z, sp.getYRot(), sp.getXRot());
-            } else {
-                target.setPos(newPos.x, newPos.y, newPos.z);
-            }
+            target.setPos(newPos.x, newPos.y, newPos.z);
             target.setDeltaMovement(Vec3.ZERO);
-            target.fallDistance = 0;
             target.hurtMarked = true;
             target.noPhysics = true;
         }
@@ -195,7 +202,12 @@ public class CreativeStaffCaptureHandler {
 
     private static void cleanup(EntityGrabSession session) {
         Entity target = session.level.getEntity(session.grabbedEntityId);
-        if (target != null) {
+        if (target == null) return;
+
+        if (target instanceof ServerPlayer sp) {
+            sp.setNoGravity(session.wasNoGravity);
+            PacketDistributor.sendToPlayer(sp, new EntityGrabPayloads.HeldRelease());
+        } else {
             target.noPhysics = false;
         }
     }
@@ -205,6 +217,7 @@ public class CreativeStaffCaptureHandler {
         if (target == null) return;
 
         target.setDeltaMovement(session.lastDelta);
+        target.hurtMarked = true;
 
         SimSoundEvents.STAFF_EXTINGUISH.playFrom(player, 1.0F, 1.0F);
 
@@ -215,6 +228,10 @@ public class CreativeStaffCaptureHandler {
         level.sendParticles(ParticleTypes.END_ROD,
                 target.getX(), target.getY(), target.getZ(),
                 10, 0.1, 0.1, 0.1, 0.0);
+    }
+
+    private static double holdDistanceTo(Player player, Entity target) {
+        return player.getEyePosition(1.0F).distanceTo(target.getBoundingBox().getCenter());
     }
 
     private static boolean isGrabbed(int entityId) {
@@ -239,14 +256,16 @@ public class CreativeStaffCaptureHandler {
         final int grabbedEntityId;
         double holdDistance;
         final ServerLevel level;
+        final boolean wasNoGravity;
         Vec3 lastTickPos;
         Vec3 lastDelta;
 
-        EntityGrabSession(int grabbedEntityId, double holdDistance, ServerLevel level, Vec3 startPos) {
-            this.grabbedEntityId = grabbedEntityId;
+        EntityGrabSession(Entity target, double holdDistance, ServerLevel level) {
+            this.grabbedEntityId = target.getId();
             this.holdDistance = holdDistance;
             this.level = level;
-            this.lastTickPos = startPos;
+            this.wasNoGravity = target.isNoGravity();
+            this.lastTickPos = target.position();
             this.lastDelta = Vec3.ZERO;
         }
     }

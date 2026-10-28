@@ -3,7 +3,11 @@ package net.multyfora.client.portable_throttle;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.network.PortableThrottlePosePayloads;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -39,7 +43,7 @@ public final class ThrottleVisualState {
 
         PortableThrottleGripHandler handler = PortableThrottleGripHandler.INSTANCE;
         grip = approach(grip, handler.isGripping() ? 1.0F : 0.0F, GRIP_SPEED * dt);
-        float knobTarget = handler.isGripping() ? handler.getValue() : PortableThrottleClientHandler.getLastStrength() / 15.0F;
+        float knobTarget = handler.isGripping() ? handler.getValue() : localStrength() / 15.0F;
         knob = approach(knob, knobTarget, KNOB_SPEED * dt);
 
         for (Remote remote : REMOTE.values()) {
@@ -61,7 +65,7 @@ public final class ThrottleVisualState {
             return;
         }
         boolean gripping = PortableThrottleGripHandler.INSTANCE.isGripping();
-        int strength = PortableThrottleClientHandler.getLastStrength();
+        int strength = localStrength();
         if (gripping != sentGripping || strength != sentStrength) {
             sentGripping = gripping;
             sentStrength = strength;
@@ -88,7 +92,7 @@ public final class ThrottleVisualState {
     }
 
     public static int getStrength(Entity entity) {
-        if (entity == Minecraft.getInstance().player) return PortableThrottleClientHandler.getLastStrength();
+        if (entity == Minecraft.getInstance().player) return localStrength();
         Remote remote = REMOTE.get(entity.getId());
         return remote == null ? 0 : remote.strength;
     }
@@ -97,6 +101,27 @@ public final class ThrottleVisualState {
         if (entity == Minecraft.getInstance().player) return PortableThrottleGripHandler.INSTANCE.isGripping();
         Remote remote = REMOTE.get(entity.getId());
         return remote != null && remote.gripping;
+    }
+
+    public static boolean isActiveStack(Entity holder, ItemStack stack) {
+        if (!(holder instanceof Player player)) return false;
+        InteractionHand hand = activeHand(player);
+        return hand != null && player.getItemInHand(hand) == stack;
+    }
+
+    private static int localStrength() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) return 0;
+        PortableThrottleGripHandler handler = PortableThrottleGripHandler.INSTANCE;
+        if (handler.isGripping()) return handler.getSignal();
+        InteractionHand hand = activeHand(player);
+        return hand == null ? 0 : PortableThrottleItem.getStrength(player.getItemInHand(hand));
+    }
+
+    private static InteractionHand activeHand(Player player) {
+        if (player.getMainHandItem().getItem() instanceof PortableThrottleItem) return InteractionHand.MAIN_HAND;
+        if (player.getOffhandItem().getItem() instanceof PortableThrottleItem) return InteractionHand.OFF_HAND;
+        return null;
     }
 
     private static float approach(float value, float target, float step) {

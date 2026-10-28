@@ -8,12 +8,13 @@ import net.createmod.catnip.data.Couple;
 import net.createmod.catnip.data.Pair;
 import net.createmod.catnip.data.WorldAttached;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LevelAccessor;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -22,104 +23,121 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import static net.multyfora.AeronauticsJoyofcreation.LOGGER;
-
 public class PortableThrottleServerHandler {
 
-    public static final WorldAttached<Map<UUID, Collection<ThrottleEntry>>> receivedInputs =
+    public static final WorldAttached<Map<UUID, Map<Couple<Frequency>, ThrottleEntry>>> receivedInputs =
         new WorldAttached<>($ -> new HashMap<>());
 
-    private static final Map<UUID, Long> lastSyncTick = new HashMap<>();
-
-    static final int TIMEOUT = 200;
+    static final int TIMEOUT = 20;
 
     public static void tick(LevelAccessor world) {
-        Map<UUID, Collection<ThrottleEntry>> map = receivedInputs.get(world);
-        int totalRemoved = 0;
-        for (Iterator<Entry<UUID, Collection<ThrottleEntry>>> iterator = map.entrySet()
-            .iterator(); iterator.hasNext(); ) {
-
-            Entry<UUID, Collection<ThrottleEntry>> entry = iterator.next();
-            UUID uid = entry.getKey();
-            Collection<ThrottleEntry> list = entry.getValue();
-
-            for (Iterator<ThrottleEntry> entryIterator = list.iterator(); entryIterator.hasNext(); ) {
+        Map<UUID, Map<Couple<Frequency>, ThrottleEntry>> map = receivedInputs.get(world);
+        for (Iterator<Map<Couple<Frequency>, ThrottleEntry>> iterator = map.values().iterator(); iterator.hasNext(); ) {
+            Map<Couple<Frequency>, ThrottleEntry> entries = iterator.next();
+            for (Iterator<ThrottleEntry> entryIterator = entries.values().iterator(); entryIterator.hasNext(); ) {
                 ThrottleEntry throttleEntry = entryIterator.next();
                 throttleEntry.decrement();
-                int timeout = throttleEntry.getFirst();
                 if (!throttleEntry.isAlive()) {
-                    Couple<Frequency> freq = throttleEntry.getSecond();
-                    forceUpdateListeners(world, freq, 0);
-                    Create.REDSTONE_LINK_NETWORK_HANDLER.removeFromNetwork(world, throttleEntry);
                     entryIterator.remove();
-                    totalRemoved++;
+                    removeTransmitter(world, throttleEntry);
                 }
             }
-
-            if (list.isEmpty())
+            if (entries.isEmpty())
                 iterator.remove();
         }
-        lastSyncTick.keySet().removeIf(uid -> !map.containsKey(uid));
     }
 
-    private static void forceUpdateListeners(LevelAccessor world, Couple<Frequency> freq, int power) {
-        Set<IRedstoneLinkable> network = Create.REDSTONE_LINK_NETWORK_HANDLER.getNetworkOf(world, new ThrottleEntry(BlockPos.ZERO, freq, power));
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            updatePlayer(player);
+        }
+    }
 
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        LevelAccessor world = event.getEntity().level();
+        Map<Couple<Frequency>, ThrottleEntry> entries = receivedInputs.get(world).remove(event.getEntity().getUUID());
+        if (entries == null) return;
+        for (ThrottleEntry entry : entries.values()) {
+            removeTransmitter(world, entry);
+        }
+    }
+
+    public static void updatePlayer(ServerPlayer player) {
+        LevelAccessor world = player.level();
+        Map<Couple<Frequency>, Integer> wanted = new HashMap<>();
+        if (!player.isSpectator()) {
+            Inventory inventory = player.getInventory();
+            for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+                ItemStack stack = inventory.getItem(slot);
+                if (!(stack.getItem() instanceof PortableThrottleItem)) continue;
+                int strength = PortableThrottleItem.getStrength(stack);
+                if (strength <= 0) continue;
+                Couple<Frequency> freq = PortableThrottleItem.getFrequency(stack, player.level().registryAccess());
+                if (freq == null) continue;
+                wanted.merge(freq, strength, Math::max);
+            }
+        }
+
+        Map<UUID, Map<Couple<Frequency>, ThrottleEntry>> map = receivedInputs.get(world);
+        Map<Couple<Frequency>, ThrottleEntry> entries = map.get(player.getUUID());
+        if (entries == null) {
+            if (wanted.isEmpty()) return;
+            entries = new HashMap<>();
+            map.put(player.getUUID(), entries);
+        }
+
+        for (Iterator<Entry<Couple<Frequency>, ThrottleEntry>> iterator = entries.entrySet().iterator(); iterator.hasNext(); ) {
+            ThrottleEntry entry = iterator.next().getValue();
+            if (!wanted.containsKey(entry.getSecond())) {
+                iterator.remove();
+                removeTransmitter(world, entry);
+            }
+        }
+
+        BlockPos pos = player.blockPosition();
+        for (Entry<Couple<Frequency>, Integer> want : wanted.entrySet()) {
+            ThrottleEntry entry = entries.get(want.getKey());
+            if (entry == null) {
+                entry = new ThrottleEntry(pos, want.getKey(), want.getValue());
+                entries.put(want.getKey(), entry);
+                Create.REDSTONE_LINK_NETWORK_HANDLER.addToNetwork(world, entry);
+                updateListeners(world, entry.getSecond());
+                continue;
+            }
+            entry.setPos(pos);
+            entry.setFirst(TIMEOUT);
+            if (entry.getTransmittedStrength() != want.getValue()) {
+                entry.setStrength(want.getValue());
+                updateListeners(world, entry.getSecond());
+            }
+        }
+
+        if (entries.isEmpty())
+            map.remove(player.getUUID());
+    }
+
+    private static void removeTransmitter(LevelAccessor world, ThrottleEntry entry) {
+        entry.setFirst(0);
+        Create.REDSTONE_LINK_NETWORK_HANDLER.removeFromNetwork(world, entry);
+        updateListeners(world, entry.getSecond());
+    }
+
+    private static void updateListeners(LevelAccessor world, Couple<Frequency> freq) {
+        int power = 0;
+        for (Map<Couple<Frequency>, ThrottleEntry> entries : receivedInputs.get(world).values()) {
+            ThrottleEntry entry = entries.get(freq);
+            if (entry != null) {
+                power = Math.max(power, entry.getTransmittedStrength());
+            }
+        }
+
+        Set<IRedstoneLinkable> network = Create.REDSTONE_LINK_NETWORK_HANDLER.getNetworkOf(world, new ThrottleEntry(BlockPos.ZERO, freq, 0));
         for (IRedstoneLinkable other : List.copyOf(network)) {
             if (!other.isAlive()) {
                 continue;
             }
             if (other.isListening()) {
                 other.setReceivedStrength(power);
-            }
-        }
-    }
-
-    public static void receiveSignal(LevelAccessor world, BlockPos pos, UUID uniqueID, Couple<Frequency> freq, int strength) {
-
-        Map<UUID, Collection<ThrottleEntry>> map = receivedInputs.get(world);
-        Collection<ThrottleEntry> list = map.computeIfAbsent(uniqueID, $ -> {
-            return new ArrayList<>();
-        });
-
-        ThrottleEntry existing = null;
-        for (ThrottleEntry entry : list) {
-            if (entry.getSecond().equals(freq)) {
-                existing = entry;
-                break;
-            }
-        }
-
-        if (strength <= 0) {
-            if (existing != null) {
-                forceUpdateListeners(world, freq, 0);
-                Create.REDSTONE_LINK_NETWORK_HANDLER.removeFromNetwork(world, existing);
-                list.remove(existing);
-            }
-            if (world instanceof ServerLevel serverLevel) {
-                serverLevel.getPlayerByUUID(uniqueID);
-            }
-            return;
-        }
-
-        if (existing != null) {
-            existing.setStrength(strength);
-            existing.setFirst(TIMEOUT);
-        } else {
-            existing = new ThrottleEntry(pos, freq, strength);
-            Create.REDSTONE_LINK_NETWORK_HANDLER.addToNetwork(world, existing);
-            list.add(existing);
-        }
-
-        forceUpdateListeners(world, freq, strength);
-
-        if (world instanceof ServerLevel serverLevel) {
-            long gameTime = serverLevel.getGameTime();
-            Long lastSync = lastSyncTick.get(uniqueID);
-            if (lastSync == null || gameTime - lastSync >= 2) {
-                if (serverLevel.getPlayerByUUID(uniqueID) instanceof ServerPlayer) {
-                    lastSyncTick.put(uniqueID, gameTime);
-                }
             }
         }
     }
@@ -137,18 +155,20 @@ public class PortableThrottleServerHandler {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (!(obj instanceof ThrottleEntry other)) return false;
-            return getSecond().equals(other.getSecond());
+            return this == obj;
         }
 
         @Override
         public int hashCode() {
-            return getSecond().hashCode();
+            return System.identityHashCode(this);
         }
 
         public void setStrength(int strength) {
             this.strength = strength;
+        }
+
+        public void setPos(BlockPos pos) {
+            this.pos = pos;
         }
 
         public void decrement() {

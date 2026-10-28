@@ -14,6 +14,9 @@ import com.simibubi.create.AllBlocks;
 
 import net.minecraft.world.item.Items;
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.config.FeatureEnabledCondition;
+import net.multyfora.config.JocFeatures;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import net.multyfora.content.balloon.BalloonBlowingRecipe;
 import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocItems;
@@ -28,12 +31,21 @@ public class JocRecipeProvider extends RecipeProvider {
 
     @Override
     protected void buildRecipes(RecipeOutput output) {
+        RecipeOutput crossSails = enabledOnly(output, JocFeatures.SYMMETRIC_CROSS_SAILS);
+        RecipeOutput seeker = enabledOnly(output, JocFeatures.SEEKER);
+        RecipeOutput deflatedBalloons = enabledOnly(output, JocFeatures.DEFLATED_BALLOONS);
+        RecipeOutput portableThrottle = enabledOnly(output, JocFeatures.PORTABLE_THROTTLE);
+        RecipeOutput portableTypewriter = enabledOnly(output, JocFeatures.PORTABLE_TYPEWRITER);
+        RecipeOutput shatterAssembler = enabledOnly(output, JocFeatures.SHATTER_ASSEMBLER);
+        RecipeOutput gyroscopicSeat = enabledOnly(output, JocFeatures.GYROSCOPIC_SEAT);
+        RecipeOutput balloonBlowing = enabledOnly(output, JocFeatures.DEFLATED_BALLOONS, JocFeatures.BALLOONS);
+
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
                         JocBlocks.SYMMETRIC_CROSS_SAILS.get(DyeColor.WHITE).get())
                 .requires(SimBlocks.WHITE_SYMMETRIC_SAIL.get())
                 .requires(SimBlocks.WHITE_SYMMETRIC_SAIL.get())
                 .unlockedBy("has_sail", has(SimBlocks.WHITE_SYMMETRIC_SAIL.get()))
-                .save(output);
+                .save(crossSails);
 
         for (DyeColor color : DyeColor.values()) {
             if (color == DyeColor.WHITE) continue;
@@ -45,7 +57,7 @@ public class JocRecipeProvider extends RecipeProvider {
                     .group("joc_symmetric_cross_sail")
                     .unlockedBy("has_white_cross_sail",
                             has(JocBlocks.SYMMETRIC_CROSS_SAILS.get(DyeColor.WHITE).get()))
-                    .save(output);
+                    .save(crossSails);
         }
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE,
@@ -58,7 +70,7 @@ public class JocRecipeProvider extends RecipeProvider {
                 .pattern("rbr")
                 .pattern("imi")
                 .unlockedBy("has_brass", has(AllItems.BRASS_INGOT.get()))
-                .save(output);
+                .save(seeker);
 
         for (DyeColor color : DyeColor.values()) {
             ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
@@ -68,7 +80,7 @@ public class JocRecipeProvider extends RecipeProvider {
                     .requires(DyeItem.byColor(color))
                     .group("joc_deflated_balloon")
                     .unlockedBy("has_dried_kelp", has(Items.DRIED_KELP))
-                    .save(output);
+                    .save(deflatedBalloons);
         }
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE,
@@ -81,7 +93,7 @@ public class JocRecipeProvider extends RecipeProvider {
                 .pattern("ter")
                 .pattern("rlb")
                 .unlockedBy("has_throttle_lever", has(SimBlocks.THROTTLE_LEVER.get()))
-                .save(output);
+                .save(portableThrottle);
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE,
                 JocItems.PORTABLE_TYPEWRITER.get())
@@ -92,26 +104,34 @@ public class JocRecipeProvider extends RecipeProvider {
                 .pattern("ter")
                 .pattern("rwr")
                 .unlockedBy("has_linked_typewriter", has(SimBlocks.LINKED_TYPEWRITER.get()))
-                .save(output);
+                .save(portableTypewriter);
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
                         JocBlocks.SHATTER_ASSEMBLER.get())
                 .requires(SimBlocks.PHYSICS_ASSEMBLER.get())
                 .requires(Items.FLINT)
                 .unlockedBy("has_physics_assembler", has(SimBlocks.PHYSICS_ASSEMBLER.get()))
-                .save(output);
+                .save(shatterAssembler);
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
                         JocBlocks.GYROSCOPIC_SEAT.get())
                 .requires(AllBlocks.SEATS.get(DyeColor.GRAY).get())
                 .requires(SimItems.GYRO_MECHANISM.get())
                 .unlockedBy("has_gyroscopic_mechanism", has(SimItems.GYRO_MECHANISM.get()))
-                .save(output);
+                .save(gyroscopicSeat);
 
         for (DyeColor color : DyeColor.values()) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID,
                     "balloon_blowing/" + color.getSerializedName());
-            output.accept(id, new BalloonBlowingRecipe(color), null);
+            balloonBlowing.accept(id, new BalloonBlowingRecipe(color), null);
         }
+    }
+
+    private static RecipeOutput enabledOnly(RecipeOutput output, String... features) {
+        ICondition[] conditions = new ICondition[features.length];
+        for (int i = 0; i < features.length; i++) {
+            conditions[i] = new FeatureEnabledCondition(features[i]);
+        }
+        return output.withConditions(conditions);
     }
 }

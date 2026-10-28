@@ -3,8 +3,7 @@
   "credit": "Hollow-Egg, with Blockbench",
   "texture_size": [32, 32],
   "textures": {
-    "1": "joc:item/phone",
-    "redstone_antenna": "create:block/redstone_antenna"
+    "1": "joc:item/phone"
   },
   "elements": [
     {
@@ -58,36 +57,6 @@
         "east": {"uv": [9.6, 3.42857, 10.13334, 12.57143], "rotation": 90, "texture": "#1"},
         "south": {"uv": [8.53333, 12.57143, 9.6, 13.71429], "texture": "#1"},
         "down": {"uv": [8.53333, 12.57143, 9.6, 3.42857], "texture": "#1"}
-      }
-    },
-    {
-      "name": "AntennaX",
-      "from": [3, 4.65, -2.5],
-      "to": [6, 16.65, -1.5],
-      "rotation": {"angle": -45, "axis": "x", "origin": [4, 15.15, -1.5]},
-      "faces": {
-        "north": {"uv": [0, 0, 3, 9], "texture": "#redstone_antenna"},
-        "south": {"uv": [0, 0, 3, 9], "texture": "#redstone_antenna"},
-        "down": {"uv": [0, 9, 3, 10], "texture": "#redstone_antenna"}
-      }
-    },
-    {
-      "name": "AntennaTop",
-      "from": [4, 15.65, -1.5],
-      "to": [5, 15.65, -0.5],
-      "rotation": {"angle": -45, "axis": "x", "origin": [4, 14.15, -0.5]},
-      "faces": {
-        "up": {"uv": [1.25, 1.25, 1.75, 1.75], "texture": "#redstone_antenna"}
-      }
-    },
-    {
-      "name": "AntennaZ",
-      "from": [4, 4.65, -3.5],
-      "to": [5, 16.65, -0.5],
-      "rotation": {"angle": -45, "axis": "x", "origin": [4, 15.15, -1.5]},
-      "faces": {
-        "east": {"uv": [0, 0, 3, 9], "texture": "#redstone_antenna"},
-        "west": {"uv": [0, 0, 3, 9], "texture": "#redstone_antenna"}
       }
     }
   ],

@@ -1,0 +1,7 @@
+{
+  "parent": "joc:item/portable_throttle_antenna",
+  "textures": {
+    "redstone_antenna": "create:block/redstone_antenna_powered",
+    "particle": "create:block/redstone_antenna_powered"
+  }
+}

@@ -1,5 +1,7 @@
 package net.multyfora.network;
 
+import net.multyfora.config.JocFeatures;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
@@ -44,6 +46,7 @@ public class ShearsCutPayloads {
 
         public void handle(ServerPlayer player) {
             if (player.isSpectator()) return;
+            if (!JocFeatures.isEnabled(JocFeatures.SHEARS_CUTTING)) return;
             ServerLevel level = player.serverLevel();
 
             try {

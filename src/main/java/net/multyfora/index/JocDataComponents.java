@@ -1,6 +1,8 @@
 package net.multyfora.index;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -25,6 +27,13 @@ public class JocDataComponents {
             () -> DataComponentType.<BlockPos>builder()
                 .persistent(BlockPos.CODEC)
                 .networkSynchronized(BlockPos.STREAM_CODEC)
+                .build());
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> THROTTLE_STRENGTH =
+        DATA_COMPONENTS.register("throttle_strength",
+            () -> DataComponentType.<Integer>builder()
+                .persistent(Codec.intRange(0, 15))
+                .networkSynchronized(ByteBufCodecs.VAR_INT)
                 .build());
 
     public static void register(IEventBus modEventBus) {

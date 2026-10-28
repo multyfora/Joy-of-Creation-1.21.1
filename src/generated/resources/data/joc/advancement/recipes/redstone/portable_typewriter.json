@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "portableTypewriter"
+    }
+  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_linked_typewriter": {

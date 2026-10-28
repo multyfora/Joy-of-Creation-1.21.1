@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "gyroscopicSeat"
+    }
+  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_gyroscopic_mechanism": {
