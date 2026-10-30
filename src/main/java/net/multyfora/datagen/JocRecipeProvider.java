@@ -72,6 +72,12 @@ public class JocRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_brass", has(AllItems.BRASS_INGOT.get()))
                 .save(seeker);
 
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, JocItems.MAP_PIN.get(), 4)
+                .requires(Items.IRON_NUGGET)
+                .requires(Items.RED_DYE)
+                .unlockedBy("has_seeker", has(JocBlocks.SEEKER.get()))
+                .save(seeker);
+
         for (DyeColor color : DyeColor.values()) {
             ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
                             JocItems.DEFLATED_BALLOONS.get(color).get())

@@ -64,9 +64,14 @@ public final class SeekerLinkedHighlightRenderer {
         if (!level.isLoaded(targetPos)) return;
 
         BlockEntity be = level.getBlockEntity(targetPos);
-        if (!(be instanceof net.multyfora.content.seeker.SeekerBlockEntity)) return;
-
-        VoxelShape shape = level.getBlockState(targetPos).getShape(level, targetPos);
+        VoxelShape shape;
+        if (be instanceof net.multyfora.content.seeker.SeekerTableBlockEntity table && table.isController()) {
+            shape = net.minecraft.world.phys.shapes.Shapes.create(table.getLocalBounds());
+        } else if (be instanceof net.multyfora.content.seeker.SeekerBlockEntity) {
+            shape = level.getBlockState(targetPos).getShape(level, targetPos);
+        } else {
+            return;
+        }
         if (shape.isEmpty()) return;
 
         PoseStack ms = event.getPoseStack();

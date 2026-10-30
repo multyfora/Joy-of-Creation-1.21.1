@@ -6,6 +6,7 @@ import net.multyfora.content.portable_throttle.PortableThrottleHolders;
 import net.multyfora.content.portable_throttle.PortableThrottleServerHandler;
 import net.multyfora.content.portable_typewriter.PortableTypewriterServerHandler;
 import net.multyfora.content.portable_typewriter.PortableTypewriterTypists;
+import net.multyfora.content.seeker.SeekerTableProjectiles;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
@@ -28,6 +29,8 @@ public class EventsRegister {
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent.class, PortableThrottleHolders::onLogout);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, PortableThrottleServerHandler::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent.class, PortableThrottleServerHandler::onLogout);
+
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.ProjectileImpactEvent.class, SeekerTableProjectiles::onProjectileImpact);
 
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, CreativeStaffCaptureHandler::onServerTick);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, CreativeStaffCaptureHandler::onEntityInteract);

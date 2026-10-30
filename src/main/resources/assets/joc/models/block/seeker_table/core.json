@@ -1,0 +1,60 @@
+{
+	"credit": "joc seeker table",
+	"texture_size": [
+		64,
+		64
+	],
+	"textures": {
+		"0": "joc:block/seeker_table",
+		"particle": "joc:block/seeker_table"
+	},
+	"elements": [
+		{
+			"from": [
+				0,
+				13,
+				0
+			],
+			"to": [
+				16,
+				13,
+				16
+			],
+			"faces": {
+				"up": {
+					"uv": [
+						4.0,
+						0.0,
+						8.0,
+						4.0
+					],
+					"texture": "#0"
+				}
+			}
+		},
+		{
+			"from": [
+				0,
+				0,
+				0
+			],
+			"to": [
+				16,
+				0,
+				16
+			],
+			"faces": {
+				"down": {
+					"uv": [
+						4.0,
+						4.0,
+						8.0,
+						8.0
+					],
+					"texture": "#0",
+					"cullface": "down"
+				}
+			}
+		}
+	]
+}

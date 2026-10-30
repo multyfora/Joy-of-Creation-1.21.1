@@ -14,11 +14,15 @@ import net.multyfora.client.seeker.SpyglassTargetOutlineRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
+import net.multyfora.client.GyroscopicSeatBlockEntityRenderer;
 import net.multyfora.client.SeekerBlockEntityRenderer;
 import net.multyfora.client.JocPartialModels;
 import net.multyfora.client.SeekerPartialModels;
 import net.multyfora.client.seeker.SeekerBakedModel;
 import net.multyfora.client.seeker.SeekerRenderer;
+import net.multyfora.client.seeker.SeekerTableMap;
+import net.multyfora.client.seeker.SeekerTableRenderer;
+import net.multyfora.client.seeker.MapPinRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
 import net.multyfora.client.portable_throttle.PortableThrottleGripHandler;
 import net.multyfora.client.portable_throttle.PortableThrottleHandRenderer;
@@ -63,8 +67,11 @@ public class ClientSubscriptions {
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER.get(), SeekerBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER_TABLE.get(), SeekerTableRenderer::new);
         event.registerBlockEntityRenderer(JocBlockEntityTypes.SHATTER_ASSEMBLER.get(), ShatterAssemblerRenderer::new);
+        event.registerBlockEntityRenderer(JocBlockEntityTypes.GYROSCOPIC_SEAT.get(), GyroscopicSeatBlockEntityRenderer::new);
         event.registerEntityRenderer((EntityType<GyroscopicSeatEntity>) (EntityType<?>) JocEntityTypes.GYROSCOPIC_SEAT.get(), GyroscopicSeatRenderer::new);
+        event.registerEntityRenderer(JocEntityTypes.MAP_PIN.get(), MapPinRenderer::new);
     }
 
     @SubscribeEvent
@@ -137,6 +144,12 @@ public class ClientSubscriptions {
             if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
                 SeekerLinkedHighlightRenderer.render(event);
             }
+        }
+
+        @SubscribeEvent
+        static void onLevelUnload(net.neoforged.neoforge.event.level.LevelEvent.Unload event) {
+            if (event.getLevel().isClientSide())
+                SeekerTableMap.releaseAll();
         }
 
         @SubscribeEvent

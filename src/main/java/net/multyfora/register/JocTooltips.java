@@ -18,6 +18,7 @@ public class JocTooltips {
     public static void register() {
         List<Item> items = new ArrayList<>();
         items.add(JocItems.SEEKER.get());
+        items.add(JocItems.MAP_PIN.get());
         items.add(JocItems.SHATTER_ASSEMBLER.get());
         items.add(JocItems.GYROSCOPIC_SEAT.get());
         items.add(JocItems.PORTABLE_TYPEWRITER.get());

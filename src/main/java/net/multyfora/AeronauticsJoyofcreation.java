@@ -37,6 +37,7 @@ import net.multyfora.index.JocItems;
 
 import net.multyfora.config.FeatureEnabledCondition;
 import net.multyfora.config.JocConfig;
+import net.multyfora.config.JocClientConfig;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
 import net.multyfora.register.JocTooltips;
 
@@ -78,6 +79,7 @@ public class AeronauticsJoyofcreation {
         ITEMS.register(modEventBus);
 
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, JocConfig.SPEC);
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, JocClientConfig.SPEC);
 
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::clientSetup);

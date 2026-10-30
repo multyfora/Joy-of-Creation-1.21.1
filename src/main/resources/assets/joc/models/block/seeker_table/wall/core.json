@@ -1,0 +1,59 @@
+{
+	"credit": "joc seeker wall map",
+	"texture_size": [
+		64,
+		64
+	],
+	"textures": {
+		"0": "joc:block/seeker_wall_map",
+		"particle": "joc:block/seeker_table"
+	},
+	"elements": [
+		{
+			"from": [
+				0,
+				5,
+				0
+			],
+			"to": [
+				16,
+				5,
+				16
+			],
+			"faces": {
+				"up": {
+					"uv": [
+						4,
+						0,
+						8,
+						4
+					],
+					"texture": "#0"
+				}
+			}
+		},
+		{
+			"from": [
+				0,
+				1,
+				0
+			],
+			"to": [
+				16,
+				1,
+				16
+			],
+			"faces": {
+				"down": {
+					"uv": [
+						0,
+						8,
+						4,
+						12
+					],
+					"texture": "#0"
+				}
+			}
+		}
+	]
+}

@@ -51,6 +51,7 @@ public class JocFeatures {
             putAll(map, JocItems.DEFLATED_BALLOONS.values(), DEFLATED_BALLOONS);
             putAll(map, JocBlocks.SYMMETRIC_CROSS_SAIL_ITEMS.values(), SYMMETRIC_CROSS_SAILS);
             map.put(JocItems.SEEKER.get(), SEEKER);
+            map.put(JocItems.MAP_PIN.get(), SEEKER);
             map.put(JocItems.SHATTER_ASSEMBLER.get(), SHATTER_ASSEMBLER);
             map.put(JocItems.GYROSCOPIC_SEAT.get(), GYROSCOPIC_SEAT);
             map.put(JocItems.PORTABLE_THROTTLE.get(), PORTABLE_THROTTLE);
@@ -66,6 +67,7 @@ public class JocFeatures {
             putAll(map, JocBlocks.BALLOONS.values(), BALLOONS);
             putAll(map, JocBlocks.SYMMETRIC_CROSS_SAILS.values(), SYMMETRIC_CROSS_SAILS);
             map.put(JocBlocks.SEEKER.get(), SEEKER);
+            map.put(JocBlocks.SEEKER_TABLE.get(), SEEKER);
             map.put(JocBlocks.SHATTER_ASSEMBLER.get(), SHATTER_ASSEMBLER);
             map.put(JocBlocks.GYROSCOPIC_SEAT.get(), GYROSCOPIC_SEAT);
             blockFeatures = map;

@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -44,6 +45,15 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
         return defaultBlockState();
+    }
+
+    @Override
+    public void setPlacedBy(
+        @NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state,
+        LivingEntity placer, @NotNull ItemStack stack
+    ) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        SeekerTableMultiblock.tryForm(level, pos, placer instanceof Player player ? player : null);
     }
 
     @Override

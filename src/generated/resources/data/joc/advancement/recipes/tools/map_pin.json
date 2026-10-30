@@ -1,0 +1,38 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "seeker"
+    }
+  ],
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_seeker": {
+      "conditions": {
+        "items": [
+          {
+            "items": "joc:seeker"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "joc:map_pin"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_seeker"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "joc:map_pin"
+    ]
+  }
+}

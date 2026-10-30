@@ -31,6 +31,7 @@ public class CreativeRegister {
                                             if (JocFeatures.isEnabled(stack)) rawOutput.accept(stack, visibility);
                                         };
                                         output.accept( JocItems.SEEKER.get() );
+                                        output.accept( JocItems.MAP_PIN.get() );
                                         output.accept( JocItems.SHATTER_ASSEMBLER.get() );
                                         output.accept( JocItems.GYROSCOPIC_SEAT.get() );
 

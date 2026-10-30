@@ -46,12 +46,16 @@ public class JocLangProvider extends LanguageProvider {
 
         add("block.joc.seeker", "Seeker");
         add("block.joc.player_direction", "Player Direction");
+        add("block.joc.seeker_table", "Seeker Table");
+        add("item.joc.map_pin", "Map Pin");
+        add("item.joc.map_pin.tooltip.summary", "Right-click a _Seeker Table_'s map to pin a spot, or _throw_ it onto the map to pin wherever it lands. _Arrows_ shot onto the map work too.");
+        add("entity.joc.map_pin", "Map Pin");
 
         add("block.joc.shatter_assembler", "Shatter Assembler");
         add("block.joc.gyroscopic_seat", "Gyroscopic Seat");
         add("joc.shatter_assembler.immovable", "%s can't be shattered");
 
-        add("block.joc.seeker.tooltip.summary", "Tracks a _target_ and emits _redstone signals_ based on the direction to it. Insert a _Spyglass_, _Eye of Ender_ or _Modulating Receiver_ to choose what it seeks.");
+        add("block.joc.seeker.tooltip.summary", "Tracks a _target_ and emits _redstone signals_ based on the direction to it. Insert a _Spyglass_, _Eye of Ender_ or _Modulating Receiver_ to choose what it seeks. Place _3×3_ or more empty seekers side by side to build a _Seeker Table_.");
         add("block.joc.shatter_assembler.tooltip.summary", "Splits a connected _solid block_ structure into individual _SubLevels_. Hold and drag the _lever_, then release to shatter the assembly.");
         add("block.joc.gyroscopic_seat.tooltip.summary", "A seat that prevents _sublevel rotation_ from affecting the rider, keeping your view stable. _Right-click_ to sit.");
 
@@ -94,6 +98,16 @@ public class JocLangProvider extends LanguageProvider {
         add("item.joc.seeker.link_self", "Cannot link a seeker to itself");
         add("item.joc.seeker.link_gone", "Target seeker no longer exists");
         add("item.joc.seeker.link_incompatible", "Target seeker has an incompatible module");
+        add("joc.seeker_table.formed", "Seeker Table assembled (%s × %s)");
+        add("joc.seeker_table.scale_set", "Map scale 1 : %s");
+        add("joc.goggles.seeker_table.header", "Seeker Table");
+        add("joc.goggles.seeker_table.size", "Size: ");
+        add("joc.goggles.seeker_table.scale", "Scale: ");
+        add("joc.goggles.seeker_table.marker", "Marker: ");
+        add("joc.goggles.seeker_table.no_marker", "Right-click the map to place a marker");
+        add("joc.goggles.seeker.following_table", "Following a Seeker Table marker");
+        add("item.joc.seeker.captured_table", "Captured seeker table at %s, %s, %s");
+        add("item.joc.seeker.linked_table", "Seeker now follows the table's marker");
 
         add("screen.joc.seeker", "Seeker");
         add("screen.joc.seeker.set", "Set Target");
@@ -125,6 +139,11 @@ public class JocLangProvider extends LanguageProvider {
         add("joc.configuration.title", "Aeronautics: Joy of Creation Configs");
         add("joc.configuration.section.joc.common.toml", "Aeronautics: Joy of Creation Configs");
         add("joc.configuration.section.joc.common.toml.title", "Aeronautics: Joy of Creation Configs");
+
+        add("joc.configuration.section.joc.client.toml", "Aeronautics: Joy of Creation Client Configs");
+        add("joc.configuration.section.joc.client.toml.title", "Aeronautics: Joy of Creation Client Configs");
+        add("joc.configuration.seeker_table", "Seeker Table");
+        add("joc.configuration.seeker_table.terrainModel", "3D terrain on the map");
 
         add("joc.configuration.balloon.liftPerBalloon", "Lift per balloon block");
         add("joc.configuration.balloon.dragCoefficient", "Air drag coefficient for balloons");

@@ -8,6 +8,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.gyroseat.GyroscopicSeatEntity;
+import net.multyfora.content.seeker.MapPinEntity;
 
 public class JocEntityTypes {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
@@ -18,4 +19,11 @@ public class JocEntityTypes {
             .sized(0.25f, 0.35f)
             .noSummon()
             .build("gyroscopic_seat"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MapPinEntity>> MAP_PIN =
+        ENTITY_TYPES.register("map_pin", () -> EntityType.Builder.<MapPinEntity>of(MapPinEntity::new, MobCategory.MISC)
+            .sized(0.25f, 0.25f)
+            .clientTrackingRange(4)
+            .updateInterval(10)
+            .build("map_pin"));
 }

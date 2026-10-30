@@ -30,6 +30,7 @@ public class JocBlockTagsProvider extends BlockTagsProvider {
 
         tag(BlockTags.MINEABLE_WITH_PICKAXE)
                 .add(JocBlocks.SEEKER.get())
+                .add(JocBlocks.SEEKER_TABLE.get())
                 .add(JocBlocks.SHATTER_ASSEMBLER.get());
 
         var superLight = tag(net.multyfora.index.JocTags.SUPER_LIGHT);

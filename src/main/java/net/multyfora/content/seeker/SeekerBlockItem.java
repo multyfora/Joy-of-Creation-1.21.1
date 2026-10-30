@@ -26,17 +26,40 @@ public class SeekerBlockItem extends BlockItem {
         Level level = ctx.getLevel();
         BlockPos pos = ctx.getClickedPos();
 
-        if (!(level.getBlockEntity(pos) instanceof SeekerBlockEntity be)) {
+        if (player.isShiftKeyDown()) {
             return InteractionResult.PASS;
         }
 
-        if (player.isShiftKeyDown()) {
+        BlockState clicked = level.getBlockState(pos);
+        if (clicked.getBlock() instanceof SeekerTableBlock && ctx.getClickedFace() == clicked.getValue(SeekerTableBlock.FACING)) {
+            BlockPos tablePos = SeekerTableBlock.getControllerPos(level, pos, level.getBlockState(pos));
+            stack.set(JocDataComponents.LINKED_SEEKER_POS.get(), tablePos);
+            if (!level.isClientSide) {
+                player.displayClientMessage(
+                    Component.translatable("item.joc.seeker.captured_table", tablePos.getX(), tablePos.getY(), tablePos.getZ()),
+                    true
+                );
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!(level.getBlockEntity(pos) instanceof SeekerBlockEntity be)) {
             return InteractionResult.PASS;
         }
 
         SeekerBlockEntity.ModuleType module = be.getModule();
         if (module != SeekerBlockEntity.ModuleType.SPYGLASS && module != SeekerBlockEntity.ModuleType.MODULATING) {
             return InteractionResult.PASS;
+        }
+
+        BlockPos capturedTable = stack.get(JocDataComponents.LINKED_SEEKER_POS.get());
+        if (capturedTable != null && level.getBlockState(capturedTable).getBlock() instanceof SeekerTableBlock) {
+            stack.remove(JocDataComponents.LINKED_SEEKER_POS.get());
+            if (!level.isClientSide) {
+                be.linkToTable(capturedTable);
+                player.displayClientMessage(Component.translatable("item.joc.seeker.linked_table"), true);
+            }
+            return InteractionResult.SUCCESS;
         }
 
         if (level.isClientSide) {
@@ -111,7 +134,12 @@ public class SeekerBlockItem extends BlockItem {
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, Player player, ItemStack stack, BlockState state) {
         BlockPos storedPos = stack.get(JocDataComponents.LINKED_SEEKER_POS.get());
-        if (storedPos != null) {
+        if (storedPos != null && level.getBlockState(storedPos).getBlock() instanceof SeekerTableBlock) {
+            if (level.getBlockEntity(pos) instanceof SeekerBlockEntity newBE) {
+                newBE.linkToTable(storedPos);
+            }
+            stack.remove(JocDataComponents.LINKED_SEEKER_POS.get());
+        } else if (storedPos != null) {
             if (level.getBlockEntity(storedPos) instanceof SeekerBlockEntity capturedBE) {
                 SeekerBlockEntity.ModuleType capturedModule = capturedBE.getModule();
                 if (capturedModule == SeekerBlockEntity.ModuleType.SPYGLASS || capturedModule == SeekerBlockEntity.ModuleType.MODULATING) {

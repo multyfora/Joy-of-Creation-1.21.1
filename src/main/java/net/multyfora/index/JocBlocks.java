@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
 import net.multyfora.content.gyroseat.GyroscopicSeatBlock;
 import net.multyfora.content.shatter_assembler.ShatterAssemblerBlock;
@@ -14,6 +15,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 
 import net.multyfora.content.balloon.BalloonBlock;
 import net.multyfora.content.seeker.SeekerBlock;
+import net.multyfora.content.seeker.SeekerTableBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 
@@ -28,6 +30,7 @@ public class JocBlocks {
     public static final Map<DyeColor, DeferredBlock<BalloonBlock>> BALLOONS = new EnumMap<>(DyeColor.class);
     public static final Map<DyeColor, DeferredItem<BlockItem>> BALLOON_ITEMS = new EnumMap<>(DyeColor.class);
     public static final DeferredBlock<SeekerBlock> SEEKER;
+    public static final DeferredBlock<SeekerTableBlock> SEEKER_TABLE;
     public static final DeferredBlock<GyroscopicSeatBlock> GYROSCOPIC_SEAT;
 
     public static final Map<DyeColor, DeferredBlock<SymmetricCrossSailBlock>> SYMMETRIC_CROSS_SAILS = new EnumMap<>(DyeColor.class);
@@ -87,13 +90,26 @@ public class JocBlocks {
                 );
             }
         );
+        SEEKER_TABLE = BLOCKS.register("seeker_table",
+            () -> new SeekerTableBlock(
+                BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_BROWN)
+                    .strength(3.0f)
+                    .sound(SoundType.NETHERITE_BLOCK)
+                    .noOcclusion()
+                    .pushReaction(PushReaction.BLOCK)
+            )
+        );
         GYROSCOPIC_SEAT = BLOCKS.register("gyroscopic_seat",
             () -> new GyroscopicSeatBlock(
                 BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_GRAY)
                     .strength(0.5F)
                     .sound(SoundType.WOOD)
-                    .noOcclusion(),
+                    .noOcclusion()
+                    .pushReaction(PushReaction.BLOCK)
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false),
                 DyeColor.GRAY
             )
         );

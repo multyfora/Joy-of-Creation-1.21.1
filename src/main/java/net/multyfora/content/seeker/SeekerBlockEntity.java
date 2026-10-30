@@ -88,6 +88,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     private ModuleType module = ModuleType.NONE;
 
     private final Set<BlockPos> linkedSeekers = new HashSet<>();
+    @Nullable
+    private BlockPos linkedTable;
     private transient boolean isSyncingFromLink = false;
 
     private int ticks;
@@ -164,6 +166,11 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
                     return;
                 }
             }
+        }
+
+        if (linkedTable != null && level.getGameTime() % 10 == 0
+            && (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING)) {
+            followTable();
         }
 
         if (!lostTarget) {
@@ -513,6 +520,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         }
 
         onModuleChanged();
+        if (level != null) {
+            SeekerTableMultiblock.tryForm(level, worldPosition, player);
+        }
         return true;
     }
 
@@ -549,6 +559,43 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
 
     public Set<BlockPos> getLinkedSeekers() {
         return linkedSeekers;
+    }
+
+    public void linkToTable(BlockPos tablePos) {
+        linkedTable = tablePos.subtract(worldPosition);
+        setChanged();
+        sendData();
+        if (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING) {
+            followTable();
+        }
+    }
+
+    public boolean isFollowingTable() {
+        return linkedTable != null;
+    }
+
+    private void followTable() {
+        if (level == null || linkedTable == null) return;
+        BlockPos tablePos = worldPosition.offset(linkedTable);
+        if (!level.isLoaded(tablePos)) return;
+
+        SeekerTableBlockEntity table = SeekerTableBlock.getController(level, tablePos);
+        if (table == null) {
+            linkedTable = null;
+            setChanged();
+            sendData();
+            return;
+        }
+
+        BlockPos marker = table.getMarkerTarget();
+        if (marker == null) {
+            if (hasTarget) clearTarget();
+            return;
+        }
+        if (!hasTarget || targetX != marker.getX() || targetY != marker.getY() || targetZ != marker.getZ()) {
+            trackedSubLevel = null;
+            setTarget(marker.getX(), marker.getY(), marker.getZ());
+        }
     }
 
     private void onModuleChanged() {
@@ -729,6 +776,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             list.add(net.minecraft.nbt.NbtUtils.writeBlockPos(p));
         }
         tag.put("linked_seekers", list);
+        if (linkedTable != null) {
+            tag.put("linked_table", net.minecraft.nbt.NbtUtils.writeBlockPos(linkedTable));
+        }
     }
 
     @Override
@@ -807,6 +857,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             }
         }
 
+        linkedTable = net.minecraft.nbt.NbtUtils.readBlockPos(tag, "linked_table").orElse(null);
+
         if (clientPacket) {
             int variant = getTextureVariant();
             if (variant != lastClientTextureVariant) {
@@ -869,6 +921,13 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
                         .style(ChatFormatting.DARK_GRAY)
                         .forGoggles(tooltip, 1);
             }
+        }
+
+        if (linkedTable != null && (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING)) {
+            Lang.builder("joc")
+                    .translate("goggles.seeker.following_table")
+                    .style(ChatFormatting.GOLD)
+                    .forGoggles(tooltip, 1);
         }
 
         if (module == ModuleType.MODULATING) {

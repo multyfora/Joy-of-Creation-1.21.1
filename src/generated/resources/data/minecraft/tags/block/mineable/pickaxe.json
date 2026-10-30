@@ -1,6 +1,7 @@
 {
   "values": [
     "joc:seeker",
+    "joc:seeker_table",
     "joc:shatter_assembler"
   ]
 }
