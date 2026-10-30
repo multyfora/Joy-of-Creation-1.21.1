@@ -20,6 +20,7 @@ import dev.simulated_team.simulated.SimulatedClient;
 import dev.simulated_team.simulated.content.physics_staff.PhysicsStaffItem;
 import dev.simulated_team.simulated.util.click_interactions.InteractCallback.Result;
 import net.multyfora.config.JocConfig;
+import net.multyfora.content.physics_staff.CreativeStaffCaptureHandler;
 import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.network.EntityGrabPayloads;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -38,6 +39,10 @@ public class PhysicsStaffMouseHandlerMixin {
 
         Minecraft client = Minecraft.getInstance();
         if(mapping != client.options.keyUse) {
+            return;
+        }
+
+        if(client.player == null || !CreativeStaffCaptureHandler.isHoldingStaff(client.player)) {
             return;
         }
 
