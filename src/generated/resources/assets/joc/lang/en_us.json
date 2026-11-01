@@ -284,7 +284,6 @@
   "joc.seeker_table.scale_set": "Map scale 1 : %s",
   "joc.shatter_assembler.immovable": "%s can't be shattered",
   "joc.tooltip.disabled": "Disabled in config",
-  "joc.tooltip.unfinished": "[UNFINISHED]",
   "screen.joc.portable_throttle.hint": "Click an inventory item, then click a frequency slot to set it",
   "screen.joc.portable_throttle.saved": "§aSaved",
   "screen.joc.portable_typewriter.bound_count": "%s keys bound",

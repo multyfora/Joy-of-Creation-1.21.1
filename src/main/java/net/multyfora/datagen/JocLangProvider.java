@@ -42,7 +42,6 @@ public class JocLangProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         add("itemGroup.joc", "Aeronautics: Joy of Creation");
-        add("joc.tooltip.unfinished", "[UNFINISHED]");
         add("joc.tooltip.disabled", "Disabled in config");
         add("joc.feature_disabled", "This feature is disabled in the config");
 
