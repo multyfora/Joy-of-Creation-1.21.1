@@ -1,6 +1,8 @@
 package net.multyfora.client;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
+import net.createmod.catnip.render.SpriteShiftEntry;
+import net.createmod.catnip.render.SpriteShifter;
 import net.minecraft.resources.ResourceLocation;
 import net.multyfora.AeronauticsJoyofcreation;
 
@@ -37,6 +39,18 @@ public class JocPartialModels {
             ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "block/seeker_table/pins/torch"));
     public static final PartialModel SEEKER_TABLE_TORCH_FLAME = PartialModel.of(
             ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "block/seeker_table/pins/torch_flame"));
+    public static final PartialModel CHAIN_ROPE = PartialModel.of(
+            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "block/chain_rope/rope"));
+    public static final PartialModel CHAIN_ROPE_KNOT = PartialModel.of(
+            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "block/chain_rope/knot"));
+    public static final PartialModel CHAIN_ROPE_CONNECTOR_KNOT = PartialModel.of(
+            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "block/chain_rope/connector_knot"));
+    public static final PartialModel CHAIN_ROPE_COIL = PartialModel.of(
+            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "block/chain_rope/coil"));
+
+    public static final SpriteShiftEntry CHAIN_ROPE_COIL_SHIFT = SpriteShifter.get(
+            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "block/chain_rope/coil"),
+            ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "block/chain_rope/coil_scroll"));
 
     public static void init() {}
 }

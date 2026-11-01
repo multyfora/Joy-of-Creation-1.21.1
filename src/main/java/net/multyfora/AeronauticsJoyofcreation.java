@@ -35,6 +35,7 @@ import net.multyfora.client.portable_throttle.ThrottleVisualState;
 import dev.simulated_team.simulated.index.SimClickInteractions;
 import net.multyfora.index.JocItems;
 
+import net.multyfora.content.chain_rope.ChainRopeEnergyStorage;
 import net.multyfora.config.FeatureEnabledCondition;
 import net.multyfora.config.JocConfig;
 import net.multyfora.config.JocClientConfig;
@@ -65,6 +66,7 @@ public class AeronauticsJoyofcreation {
         JocBlocks.register();
         JocItems.register();
         JocMenuTypes.register();
+        modEventBus.addListener(ChainRopeEnergyStorage::registerCapabilities);
         JocSounds.register(modEventBus);
         JocDataComponents.register(modEventBus);
         JocRecipeTypes.RECIPE_TYPES.register(modEventBus);

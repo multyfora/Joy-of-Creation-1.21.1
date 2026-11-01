@@ -38,6 +38,9 @@ public class CreativeRegister {
                                         output.accept( JocItems.PORTABLE_THROTTLE.get() );
                                         output.accept( JocItems.PORTABLE_TYPEWRITER.get() );
 
+                                        output.accept( JocItems.CHAIN_COUPLING.get() );
+                                        output.accept( JocItems.LOGIC_CORE.get() );
+
                                         output.accept( JocItems.DEFLATED_BALLOONS.get(DyeColor.RED).get() );
                                         for (DyeColor color : DyeColor.values()) {
                                             output.accept( JocBlocks.BALLOON_ITEMS.get(color).get() );

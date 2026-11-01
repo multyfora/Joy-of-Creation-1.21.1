@@ -23,6 +23,7 @@ public class JocTooltips {
         items.add(JocItems.GYROSCOPIC_SEAT.get());
         items.add(JocItems.PORTABLE_TYPEWRITER.get());
         items.add(JocItems.PORTABLE_THROTTLE.get());
+        items.add(JocItems.CHAIN_COUPLING.get());
         JocItems.DEFLATED_BALLOONS.values().forEach(item -> items.add(item.get()));
         JocBlocks.BALLOON_ITEMS.values().forEach(item -> items.add(item.get()));
         JocBlocks.SYMMETRIC_CROSS_SAIL_ITEMS.values().forEach(item -> items.add(item.get()));

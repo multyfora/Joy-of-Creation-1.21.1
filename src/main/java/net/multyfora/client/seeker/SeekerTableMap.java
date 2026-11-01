@@ -2,6 +2,8 @@ package net.multyfora.client.seeker;
 
 import com.mojang.blaze3d.platform.NativeImage;
 
+import net.createmod.ponder.api.level.PonderLevel;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
@@ -32,6 +34,7 @@ public final class SeekerTableMap {
     private static final double FLOOR_PERCENTILE = 0.1;
     private static final float FLOOR_EASE = 0.1f;
     private static final int GROUND_SEARCH = 40;
+    private static final int PONDER_SEA_LEVEL = 64;
 
     private static final int PARCHMENT = abgr(236, 205, 147);
     private static final int PARCHMENT_DARK = abgr(224, 191, 132);
@@ -66,7 +69,7 @@ public final class SeekerTableMap {
 
     double shownMarkerX = Double.NaN, shownMarkerZ = Double.NaN;
     SeekerTableMarker shownMarkerStyle;
-    long markerPlacedAt;
+    float markerPlacedAt;
     long lastParticleTick;
 
     private SeekerTableMap(int scale, int width, int depth) {
@@ -149,6 +152,10 @@ public final class SeekerTableMap {
     }
 
     public void tick(Level level, double centerX, double centerZ) {
+        if (level instanceof PonderLevel) {
+            paintPonderTerrain(centerX, centerZ);
+            return;
+        }
         long time = level.getGameTime();
         if (time == lastTick)
             return;
@@ -173,6 +180,47 @@ public final class SeekerTableMap {
             texture.upload();
             dirty = false;
         }
+    }
+
+    private void paintPonderTerrain(double centerX, double centerZ) {
+        if (placed)
+            return;
+        recenter(centerX, centerZ);
+        int[] west = new int[size];
+        int[] north = new int[size];
+        Arrays.fill(north, UNKNOWN_HEIGHT);
+        for (int y = 0; y < size; y++) {
+            int previous = UNKNOWN_HEIGHT;
+            for (int x = 0; x < size; x++) {
+                int worldX = originX + x * blocksPerPixel, worldZ = originZ + y * blocksPerPixel;
+                int height = ponderHeight(worldX, worldZ);
+                boolean water = height < PONDER_SEA_LEVEL;
+                MapColor mapColor = water ? MapColor.WATER : height < PONDER_SEA_LEVEL + 2 ? MapColor.SAND
+                    : height < PONDER_SEA_LEVEL + 32 ? MapColor.GRASS : MapColor.STONE;
+                int slope = height - ponderHeight(worldX, worldZ - blocksPerPixel);
+                MapColor.Brightness brightness = water ? MapColor.Brightness.HIGH
+                    : slope > 0 ? MapColor.Brightness.HIGH : slope < 0 ? MapColor.Brightness.LOW : MapColor.Brightness.NORMAL;
+                int color = lerp(mapColor.calculateRGBColor(brightness), PARCHMENT, 0.16f);
+                int ground = Math.max(height, PONDER_SEA_LEVEL);
+                if (!water && onContour(ground, previous, north[x]))
+                    color = lerp(color, CONTOUR, 0.35f);
+                if (onGrid(worldX) || onGrid(worldZ))
+                    color = darken(color, 0.86f);
+                image.setPixelRGBA(x, y, color);
+                this.ground[y * size + x] = ground + 1;
+                previous = north[x] = water ? UNKNOWN_HEIGHT : ground;
+            }
+        }
+        rebuildRelief();
+        shownFloor = floor;
+        row = size;
+        texture.upload();
+    }
+
+    private static int ponderHeight(int x, int z) {
+        double wide = Math.sin(x * 0.019 + 1.2) * Math.cos(z * 0.023 - 0.4) * 30;
+        double hills = Math.sin(x * 0.061 + z * 0.037) * 9 + Math.cos(z * 0.053 - x * 0.029) * 7;
+        return (int) (PONDER_SEA_LEVEL + 4 + wide + hills);
     }
 
     private void recenter(double centerX, double centerZ) {

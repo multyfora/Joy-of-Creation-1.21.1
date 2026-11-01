@@ -60,6 +60,8 @@ public class GyroscopicSeatBlockEntityRenderer extends SafeBlockEntityRenderer<G
 
     private static Quaternionf getBallOrientation(GyroscopicSeatBlockEntity be, float partialTicks) {
         Quaternionf world = Axis.YP.rotationDegrees(-getSeatYaw(be, partialTicks));
+        if (be.isVirtual())
+            return be.getVirtualTilt().conjugate().mul(world);
         ClientSubLevel subLevel = Sable.HELPER.getContainingClient(be);
         if (subLevel == null)
             return world;

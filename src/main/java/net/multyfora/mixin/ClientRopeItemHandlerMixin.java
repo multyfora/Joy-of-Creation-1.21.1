@@ -1,5 +1,7 @@
 package net.multyfora.mixin;
 
+import com.tterrag.registrate.util.entry.ItemEntry;
+
 import dev.simulated_team.simulated.content.blocks.rope.strand.client.ClientLevelRopeManager;
 import dev.simulated_team.simulated.content.blocks.rope.strand.client.ClientRopeStrand;
 import dev.simulated_team.simulated.content.items.rope.RopeItem.ClientRopeItemHandler;
@@ -14,6 +16,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import net.multyfora.index.JocItems;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,6 +25,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = ClientRopeItemHandler.class, remap = false)
 public class ClientRopeItemHandlerMixin {
+
+    @Redirect(
+            method = "tick",
+            at = @At(value = "INVOKE", target = "Lcom/tterrag/registrate/util/entry/ItemEntry;isIn(Lnet/minecraft/world/item/ItemStack;)Z")
+    )
+    private static boolean joc$previewChainCoupling(ItemEntry<?> coupling, ItemStack stack) {
+        return coupling.isIn(stack) || stack.is(JocItems.CHAIN_COUPLING);
+    }
 
     @Redirect(
             method = "tick",

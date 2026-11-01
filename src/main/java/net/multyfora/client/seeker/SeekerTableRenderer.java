@@ -10,6 +10,7 @@ import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;
 
+import net.createmod.catnip.animation.AnimationTickHolder;
 import net.createmod.catnip.render.CachedBuffers;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -289,9 +290,9 @@ public class SeekerTableRenderer extends SafeBlockEntityRenderer<SeekerTableBloc
             map.shownMarkerX = table.getMarkerX();
             map.shownMarkerZ = table.getMarkerZ();
             map.shownMarkerStyle = style;
-            map.markerPlacedAt = level.getGameTime();
+            map.markerPlacedAt = AnimationTickHolder.getRenderTime(level);
         }
-        float time = level.getGameTime() + partialTicks;
+        float time = AnimationTickHolder.getRenderTime(level);
         float drop = Mth.clamp((time - map.markerPlacedAt) / PIN_DROP_TICKS, 0, 1);
         float lift = (1 - drop) * (1 - drop) * 0.6f;
 
@@ -397,7 +398,7 @@ public class SeekerTableRenderer extends SafeBlockEntityRenderer<SeekerTableBloc
 
     private static void spawnTorchParticles(SeekerTableBlockEntity table, SeekerTableMap map, Pose3dc pose,
                                             double x, double y, double z, Level level) {
-        long tick = level.getGameTime();
+        long tick = AnimationTickHolder.getTicks(level);
         if (tick == map.lastParticleTick || tick % 6 != 0)
             return;
         map.lastParticleTick = tick;

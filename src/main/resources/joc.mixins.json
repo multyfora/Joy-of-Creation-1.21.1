@@ -9,6 +9,7 @@
     "physics_staff.PhysicsStaffServerHandlerMixin",
     "ShearsItemMixin",
     "RopeStrandHolderBehaviorMixin",
+    "ServerRopeStrandMixin",
     "RopeItemMixin",
     "RopeConnectorBlockEntityMixin",
     "RopeBreakPacketMixin",
@@ -24,9 +25,12 @@
     "ModListScreenMixin",
     "InfoPanelMixin",
     "RopeConnectorRendererMixin",
+    "RopeStrandRendererMixin",
+    "RopeWinchRendererMixin",
     "ClientRopeItemHandlerMixin",
     "ClientboundRopeDataPacketMixin",
-    "ClientboundRopeStoppedPacketMixin"
+    "ClientboundRopeStoppedPacketMixin",
+    "ItemInHandLayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

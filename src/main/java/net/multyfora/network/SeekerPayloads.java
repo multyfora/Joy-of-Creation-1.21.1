@@ -17,17 +17,6 @@ import java.util.UUID;
 public final class SeekerPayloads {
     private SeekerPayloads() {}
 
-    public record OpenSeekerPayload(BlockPos pos) implements CustomPacketPayload {
-        public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "open_seeker");
-        public static final Type<OpenSeekerPayload> TYPE = new Type<>(ID);
-        public static final StreamCodec<ByteBuf, OpenSeekerPayload> CODEC =
-                BlockPos.STREAM_CODEC.map(OpenSeekerPayload::new, OpenSeekerPayload::pos);
-        @Override
-        public Type<? extends CustomPacketPayload> type() {
-            return TYPE;
-        }
-    }
-
     public record UpdateSeekerPayload(BlockPos pos, double x, double y, double z) implements CustomPacketPayload {
         public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "update_seeker");
         public static final Type<UpdateSeekerPayload> TYPE = new Type<>(ID);
@@ -37,6 +26,22 @@ public final class SeekerPayloads {
                 ByteBufCodecs.DOUBLE, UpdateSeekerPayload::y,
                 ByteBufCodecs.DOUBLE, UpdateSeekerPayload::z,
                 UpdateSeekerPayload::new
+        );
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public record SetOffsetPayload(BlockPos pos, double x, double y, double z) implements CustomPacketPayload {
+        public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "set_seeker_offset");
+        public static final Type<SetOffsetPayload> TYPE = new Type<>(ID);
+        public static final StreamCodec<ByteBuf, SetOffsetPayload> CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, SetOffsetPayload::pos,
+                ByteBufCodecs.DOUBLE, SetOffsetPayload::x,
+                ByteBufCodecs.DOUBLE, SetOffsetPayload::y,
+                ByteBufCodecs.DOUBLE, SetOffsetPayload::z,
+                SetOffsetPayload::new
         );
         @Override
         public Type<? extends CustomPacketPayload> type() {

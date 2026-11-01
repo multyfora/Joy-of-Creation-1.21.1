@@ -8,7 +8,11 @@ import org.joml.Vector3d;
 
 public class SpaceUtils {
     public static Vec3 getProjectedSelfPos(SubLevel subLevel, BlockPos worldPosition) {
-        Vec3 pos = Vec3.atCenterOf(worldPosition);
+        return getProjectedSelfPos(subLevel, worldPosition, Vec3.ZERO);
+    }
+
+    public static Vec3 getProjectedSelfPos(SubLevel subLevel, BlockPos worldPosition, Vec3 localOffset) {
+        Vec3 pos = Vec3.atCenterOf(worldPosition).add(localOffset);
         if (subLevel != null) {
             try {
                 pos = subLevel.logicalPose().transformPosition(pos);

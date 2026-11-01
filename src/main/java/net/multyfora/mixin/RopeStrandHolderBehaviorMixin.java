@@ -22,19 +22,25 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -43,7 +49,10 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.IChainRopeStrand;
 import net.multyfora.IMultiRopeBehavior;
+import net.multyfora.content.chain_rope.ChainCouplingItem;
+import net.multyfora.index.JocItems;
 import net.multyfora.mixin.ClientboundRopeDataPacketMixin;
 
 import net.minecraft.world.level.ChunkPos;
@@ -54,13 +63,17 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Mixin(value = RopeStrandHolderBehavior.class, remap = false)
@@ -90,6 +103,8 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
     private final Map<UUID, ClientRopeStrand> joc$allClientStrands = new Object2ObjectOpenHashMap<>();
     @Unique
     private final List<ServerRopeStrand> joc$allOwnedStrands = new ArrayList<>();
+    @Unique
+    private final Set<UUID> joc$chainRopeIDs = new HashSet<>();
 
     @Unique
     private int joc$maxRopeAttachments = 1;
@@ -301,6 +316,15 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             return;
         }
 
+        if( ChainCouplingItem.isPlacing() && ownedServerStrand instanceof IChainRopeStrand chain ) {
+            chain.joc$setChain(true);
+            joc$markChainRope(ownedServerStrand.getUUID());
+            if (target instanceof IMultiRopeBehavior multiTarget) {
+                multiTarget.joc$markChainRope(ownedServerStrand.getUUID());
+            }
+            joc$be().notifyUpdate();
+        }
+
         if(target instanceof IMultiRopeBehavior multiTarget) {
             multiTarget.joc$onRopeCreated(attachedRopeID, joc$targetPreExistingID);
             if (multiTarget.joc$getMaxRopeAttachments() > 1 && target.getOwnedStrand() != null) {
@@ -385,6 +409,44 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
     }
 
     @Unique
+    private static boolean joc$isChain(@Nullable ServerRopeStrand strand) {
+        return strand instanceof IChainRopeStrand chain && chain.joc$isChain();
+    }
+
+    @Unique
+    private static ItemStack joc$coupling(ServerRopeStrand strand) {
+        return new ItemStack(joc$isChain(strand) ? JocItems.CHAIN_COUPLING.get() : SimItems.ROPE_COUPLING.get());
+    }
+
+    @Unique
+    private static BlockState joc$breakParticleState(ServerRopeStrand strand) {
+        return joc$isChain(strand) ? Blocks.CHAIN.defaultBlockState() : AllBlocks.ROPE.getDefaultState();
+    }
+
+    @ModifyVariable(method = "destroyRope", at = @At("STORE"))
+    private ItemStack joc$dropChainCoupling(ItemStack stack) {
+        return joc$isChain(ownedServerStrand) ? joc$coupling(ownedServerStrand) : stack;
+    }
+
+    @ModifyArg(
+            method = "destroyRope",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;playSound(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V"),
+            index = 4
+    )
+    private SoundEvent joc$chainBreakSound(SoundEvent sound) {
+        return joc$isChain(ownedServerStrand) ? SoundEvents.CHAIN_BREAK : sound;
+    }
+
+    @ModifyArg(
+            method = "destroyRope",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;sendParticles(Lnet/minecraft/core/particles/ParticleOptions;DDDIDDDD)I"),
+            index = 0
+    )
+    private ParticleOptions joc$chainBreakParticles(ParticleOptions particles) {
+        return joc$isChain(ownedServerStrand) ? new BlockParticleOption(ParticleTypes.BLOCK, Blocks.CHAIN.defaultBlockState()) : particles;
+    }
+
+    @Unique
     private void joc$destroySingleStrand(ServerRopeStrand strand, @Nullable ServerPlayer player, @Nullable Vec3 dropPos, boolean returnItem) {
         Level level = joc$be().getLevel();
         if(level == null) {
@@ -425,6 +487,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
                 strandOwner = false;
             }
         }
+        if( strand == ownedServerStrand ) {
+            ownedServerStrand = joc$allOwnedStrands.isEmpty() ? null : joc$allOwnedStrands.getFirst();
+            strandOwner = ownedServerStrand != null;
+        }
         if( joc$allAttachedIDs.isEmpty() ) {
             strandOwner = false;
         }
@@ -438,7 +504,7 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
 
     @Unique
     private void joc$dropStrandItem(ServerRopeStrand strand, @Nullable ServerPlayer player, @Nullable Vec3 dropPos, Level level) {
-        ItemStack stack = new ItemStack(SimItems.ROPE_COUPLING.get());
+        ItemStack stack = joc$coupling(strand);
 
         if (player != null) {
             if (!player.hasInfiniteMaterials() || !player.getInventory().contains(stack)) {
@@ -454,10 +520,10 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
 
         for (Vector3d position : strand.getPoints()) {
-            level.playSound(null, position.x, position.y, position.z, SoundEvents.WOOL_BREAK, SoundSource.BLOCKS, 0.5F, 1F);
+            level.playSound(null, position.x, position.y, position.z, joc$isChain(strand) ? SoundEvents.CHAIN_BREAK : SoundEvents.WOOL_BREAK, SoundSource.BLOCKS, 0.5F, 1F);
             if (level instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(
-                        new BlockParticleOption(ParticleTypes.BLOCK, AllBlocks.ROPE.getDefaultState()),
+                        new BlockParticleOption(ParticleTypes.BLOCK, joc$breakParticleState(strand)),
                         position.x, position.y, position.z,
                         10, 0.1, 0.1, 0.1, 0.1
                 );
@@ -688,6 +754,16 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
 
 
     @Override
+    public boolean joc$isChainRope(UUID ropeID) {
+        return joc$chainRopeIDs.contains(ropeID);
+    }
+
+    @Override
+    public void joc$markChainRope(UUID ropeID) {
+        joc$chainRopeIDs.add(ropeID);
+    }
+
+    @Override
     public @Nullable Map<UUID, ClientRopeStrand> joc$getAllClientStrands() {
         return joc$allClientStrands;
     }
@@ -758,6 +834,15 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
         }
         nbt.putInt("joc:max_rope_attachments", joc$maxRopeAttachments);
 
+        joc$chainRopeIDs.removeIf(id -> !id.equals(attachedRopeID) && !joc$allAttachedIDs.contains(id));
+        if (!joc$chainRopeIDs.isEmpty()) {
+            ListTag chainIDs = new ListTag();
+            for (UUID id : joc$chainRopeIDs) {
+                chainIDs.add(NbtUtils.createUUID(id));
+            }
+            nbt.put("joc:chain_rope_ids", chainIDs);
+        }
+
         if (!clientPacket && !joc$allOwnedStrands.isEmpty()) {
             CompoundTag strandsTag = new CompoundTag();
             int i = 0;
@@ -827,6 +912,20 @@ public abstract class RopeStrandHolderBehaviorMixin implements IMultiRopeBehavio
             }
         } else if (!joc$allAttachedIDs.isEmpty()) {
             joc$tryResolveOwnedStrands();
+        }
+
+        joc$chainRopeIDs.clear();
+        for (Tag id : nbt.getList("joc:chain_rope_ids", Tag.TAG_INT_ARRAY)) {
+            joc$chainRopeIDs.add(NbtUtils.loadUUID(id));
+        }
+        joc$markChain(ownedServerStrand);
+        joc$allOwnedStrands.forEach(this::joc$markChain);
+    }
+
+    @Unique
+    private void joc$markChain(@Nullable ServerRopeStrand strand) {
+        if (strand instanceof IChainRopeStrand chain && joc$chainRopeIDs.contains(strand.getUUID())) {
+            chain.joc$setChain(true);
         }
     }
 

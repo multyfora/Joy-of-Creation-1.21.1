@@ -1,0 +1,38 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "chainRope"
+    }
+  ],
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_chain": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:chain"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "joc:chain_coupling"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_chain"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "joc:chain_coupling"
+    ]
+  }
+}

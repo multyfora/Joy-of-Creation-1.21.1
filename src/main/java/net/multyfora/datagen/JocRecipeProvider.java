@@ -1,6 +1,9 @@
 package net.multyfora.datagen;
 
 import com.simibubi.create.AllItems;
+import com.simibubi.create.content.kinetics.deployer.DeployerApplicationRecipe;
+import com.simibubi.create.content.kinetics.press.PressingRecipe;
+import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipeBuilder;
 import dev.simulated_team.simulated.index.SimBlocks;
 import dev.simulated_team.simulated.index.SimItems;
 import net.minecraft.core.HolderLookup;
@@ -38,6 +41,7 @@ public class JocRecipeProvider extends RecipeProvider {
         RecipeOutput portableTypewriter = enabledOnly(output, JocFeatures.PORTABLE_TYPEWRITER);
         RecipeOutput shatterAssembler = enabledOnly(output, JocFeatures.SHATTER_ASSEMBLER);
         RecipeOutput gyroscopicSeat = enabledOnly(output, JocFeatures.GYROSCOPIC_SEAT);
+        RecipeOutput chainRope = enabledOnly(output, JocFeatures.CHAIN_ROPE);
         RecipeOutput balloonBlowing = enabledOnly(output, JocFeatures.DEFLATED_BALLOONS, JocFeatures.BALLOONS);
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC,
@@ -89,6 +93,16 @@ public class JocRecipeProvider extends RecipeProvider {
                     .save(deflatedBalloons);
         }
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC,
+                JocItems.CHAIN_COUPLING.get())
+                .define('c', Items.CHAIN)
+                .define('n', Items.IRON_NUGGET)
+                .pattern(" c ")
+                .pattern("ncn")
+                .pattern(" c ")
+                .unlockedBy("has_chain", has(Items.CHAIN))
+                .save(chainRope);
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE,
                 JocItems.PORTABLE_THROTTLE.get())
                 .define('r', Items.REDSTONE)
@@ -131,6 +145,18 @@ public class JocRecipeProvider extends RecipeProvider {
                     "balloon_blowing/" + color.getSerializedName());
             balloonBlowing.accept(id, new BalloonBlowingRecipe(color), null);
         }
+
+        new SequencedAssemblyRecipeBuilder(ResourceLocation.fromNamespaceAndPath(AeronauticsJoyofcreation.MODID, "logic_core"))
+                .require(AllItems.IRON_SHEET)
+                .transitionTo(JocItems.UNFINISHED_LOGIC_CORE.get())
+                .addOutput(JocItems.LOGIC_CORE.get(), 1)
+                .loops(4)
+                .addStep(DeployerApplicationRecipe::new, step -> step.require(Items.REDSTONE))
+                .addStep(DeployerApplicationRecipe::new, step -> step.require(AllItems.POLISHED_ROSE_QUARTZ))
+                .addStep(DeployerApplicationRecipe::new, step -> step.require(Items.IRON_NUGGET))
+                .addStep(PressingRecipe::new, step -> step)
+                .addStep(DeployerApplicationRecipe::new, step -> step.require(AllItems.TRANSMITTER))
+                .build(output);
     }
 
     private static RecipeOutput enabledOnly(RecipeOutput output, String... features) {
