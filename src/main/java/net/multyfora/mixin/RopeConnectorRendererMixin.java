@@ -1,5 +1,6 @@
 package net.multyfora.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
@@ -9,12 +10,7 @@ import dev.simulated_team.simulated.content.blocks.rope.rope_connector.RopeConne
 import dev.simulated_team.simulated.content.blocks.rope.strand.client.ClientRopeStrand;
 import dev.simulated_team.simulated.content.blocks.rope.strand.client.RopeStrandRenderer;
 
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
-
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
 
 import net.multyfora.IMultiRopeBehavior;
 import net.multyfora.client.JocPartialModels;
@@ -22,7 +18,6 @@ import net.multyfora.client.JocPartialModels;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
@@ -31,18 +26,15 @@ import java.util.UUID;
 @Mixin(value = RopeConnectorRenderer.class, remap = false)
 public abstract class RopeConnectorRendererMixin {
 
-    @Redirect(
+    @ModifyExpressionValue(
             method = "renderSafe",
-            at = @At(value = "INVOKE", target = "Lnet/createmod/catnip/render/CachedBuffers;partialFacing(Ldev/engine_room/flywheel/lib/model/baked/PartialModel;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Lnet/createmod/catnip/render/SuperByteBuffer;")
+            at = @At(value = "FIELD", target = "Ldev/simulated_team/simulated/index/SimPartialModels;ROPE_CONNECTOR_KNOT:Ldev/engine_room/flywheel/lib/model/baked/PartialModel;")
     )
-    private SuperByteBuffer joc$chainKnot(
-            PartialModel model, BlockState state, Direction facing,
-            RopeConnectorBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay
-    ) {
+    private PartialModel joc$chainKnot(PartialModel model, RopeConnectorBlockEntity be) {
         boolean chain = be.getRopeHolder() instanceof IMultiRopeBehavior multi
                 && multi.joc$getAttachedRopeID() != null
                 && multi.joc$isChainRope(multi.joc$getAttachedRopeID());
-        return CachedBuffers.partialFacing(chain ? JocPartialModels.CHAIN_ROPE_CONNECTOR_KNOT : model, state, facing);
+        return chain ? JocPartialModels.CHAIN_ROPE_CONNECTOR_KNOT : model;
     }
 
     @Inject(method = "renderSafe", at = @At("TAIL"))

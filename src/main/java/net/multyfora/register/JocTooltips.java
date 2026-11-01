@@ -11,10 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JocTooltips {
-    private static final TooltipModifier UNFINISHED = event -> event.getToolTip().add(1,
-            net.minecraft.network.chat.Component.translatable("joc.tooltip.unfinished")
-                    .withStyle(net.minecraft.ChatFormatting.RED));
-
     public static void register() {
         List<Item> items = new ArrayList<>();
         items.add(JocItems.SEEKER.get());
@@ -29,13 +25,7 @@ public class JocTooltips {
         JocBlocks.SYMMETRIC_CROSS_SAIL_ITEMS.values().forEach(item -> items.add(item.get()));
 
         for (Item item : items) {
-            TooltipModifier base = new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE);
-            TooltipModifier modifier = isUnfinished(item) ? base.andThen(UNFINISHED) : base;
-            TooltipModifier.REGISTRY.register(item, modifier);
+            TooltipModifier.REGISTRY.register(item, new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE));
         }
-    }
-
-    private static boolean isUnfinished(Item item) {
-        return item == JocItems.GYROSCOPIC_SEAT.get();
     }
 }
