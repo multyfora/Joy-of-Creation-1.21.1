@@ -1,0 +1,27 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "joc:feature_enabled",
+      "feature": "chainRope"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "c": {
+      "item": "minecraft:chain"
+    },
+    "n": {
+      "item": "minecraft:iron_nugget"
+    }
+  },
+  "pattern": [
+    " c ",
+    "ncn",
+    " c "
+  ],
+  "result": {
+    "count": 1,
+    "id": "joc:chain_coupling"
+  }
+}

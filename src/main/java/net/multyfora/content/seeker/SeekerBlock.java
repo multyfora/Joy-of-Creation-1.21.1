@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -21,12 +22,15 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.multyfora.index.JocBlockEntityTypes;
-import net.multyfora.network.SeekerDistancePayloads;
-import net.multyfora.network.SeekerPayloads;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenchable {
 
@@ -44,6 +48,15 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
         return defaultBlockState();
+    }
+
+    @Override
+    public void setPlacedBy(
+        @NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state,
+        LivingEntity placer, @NotNull ItemStack stack
+    ) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        SeekerTableMultiblock.tryForm(level, pos, placer instanceof Player player ? player : null);
     }
 
     @Override
@@ -103,9 +116,9 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
 
         if (stack.isEmpty() && be.hasModule()) {
             switch (be.getModule()) {
-                case SPYGLASS -> {
+                case SPYGLASS, MODULATING -> {
                     if (player instanceof ServerPlayer serverPlayer) {
-                        serverPlayer.connection.send(new SeekerPayloads.OpenSeekerPayload(pos));
+                        serverPlayer.openMenu(be, pos);
                     }
                     return ItemInteractionResult.SUCCESS;
                 }
@@ -115,17 +128,21 @@ public class SeekerBlock extends Block implements IBE<SeekerBlockEntity>, IWrenc
                     }
                     return ItemInteractionResult.SUCCESS;
                 }
-                case MODULATING -> {
-                    if (player instanceof ServerPlayer serverPlayer) {
-                        serverPlayer.connection.send(new SeekerDistancePayloads.OpenSeekerDistancePayload(pos));
-                    }
-                    return ItemInteractionResult.SUCCESS;
-                }
                 default -> {}
             }
         }
 
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    @Override
+    protected @NotNull List<ItemStack> getDrops(@NotNull BlockState state, LootParams.@NotNull Builder params) {
+        List<ItemStack> drops = new ArrayList<>(super.getDrops(state, params));
+        if (params.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof SeekerBlockEntity be
+                && be.hasLogicCore()) {
+            drops.add(be.getLinks().getCore().getStackInSlot(0).copy());
+        }
+        return drops;
     }
 
     @Override

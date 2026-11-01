@@ -13,6 +13,7 @@ public class JocConfig {
     public static final ModConfigSpec.BooleanValue CAN_PICKUP_PLAYERS;
 
     public static final ModConfigSpec.DoubleValue LIFT_PER_BALLOON;
+    public static final ModConfigSpec.DoubleValue BALLOON_POP_PRESSURE;
 
     public static final ModConfigSpec.IntValue SHATTER_ASSEMBLER_MAX_BLOCKS;
 
@@ -41,6 +42,11 @@ public class JocConfig {
         LIFT_PER_BALLOON = BUILDER
             .comment("Number of blocks' worth of mass each balloon supports at full air pressure; lift scales linearly with air pressure as aeronautics envelopes do, so balloons decelerate as they climb and stop where the air is too thin")
             .defineInRange("liftPerBalloon", 1.5, 0.0, 100.0)
+        ;
+
+        BALLOON_POP_PRESSURE = BUILDER
+            .comment("Balloons pop when the air pressure around them drops below this, read the same way as an altitude sensor (1 is sea level, 0 is the top of the atmosphere). Set to 0 to turn this off")
+            .defineInRange("popPressure", 0.00001, 0.0, 2.0)
         ;
 
         BUILDER.pop();
@@ -72,6 +78,7 @@ public class JocConfig {
         feature("portableTypewriter", "Portable typewriter item");
         feature("shearsCutting", "Cutting physics structures apart with shears");
         feature("multiRope", "Attaching more than one rope to a single rope connector");
+        feature("chainRope", "Chain coupling item, a rope that doesn't stretch and carries FE");
 
         BUILDER.pop();
 

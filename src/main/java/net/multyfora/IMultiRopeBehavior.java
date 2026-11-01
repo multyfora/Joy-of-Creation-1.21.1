@@ -34,4 +34,7 @@ public interface IMultiRopeBehavior {
 
     boolean joc$isStrandOwner();
     void joc$setStrandOwner(boolean owned);
+
+    boolean joc$isChainRope(UUID ropeID);
+    void joc$markChainRope(UUID ropeID);
 }

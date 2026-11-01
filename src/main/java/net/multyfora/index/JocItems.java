@@ -1,5 +1,6 @@
 package net.multyfora.index;
 
+import com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -7,8 +8,10 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.balloon.DeflatedBalloonItem;
+import net.multyfora.content.chain_rope.ChainCouplingItem;
 import net.multyfora.content.portable_throttle.PortableThrottleItem;
 import net.multyfora.content.portable_typewriter.PortableTypewriterItem;
+import net.multyfora.content.seeker.MapPinItem;
 import net.multyfora.content.seeker.SeekerBlockItem;
 
 import java.util.EnumMap;
@@ -19,6 +22,8 @@ public class JocItems {
 
     public static final DeferredItem<SeekerBlockItem> SEEKER = ITEMS.register("seeker",
             () -> new SeekerBlockItem(JocBlocks.SEEKER.get(), new Item.Properties()));
+    public static final DeferredItem<MapPinItem> MAP_PIN = ITEMS.register("map_pin",
+            () -> new MapPinItem(new Item.Properties()));
     public static final DeferredItem<BlockItem> SHATTER_ASSEMBLER = ITEMS.registerSimpleBlockItem(
             "shatter_assembler", () -> JocBlocks.SHATTER_ASSEMBLER.get());
     public static final DeferredItem<BlockItem> GYROSCOPIC_SEAT = ITEMS.registerSimpleBlockItem(
@@ -37,6 +42,13 @@ public class JocItems {
             () -> new PortableTypewriterItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<PortableThrottleItem> PORTABLE_THROTTLE = ITEMS.register("portable_throttle",
             () -> new PortableThrottleItem(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredItem<ChainCouplingItem> CHAIN_COUPLING = ITEMS.register("chain_coupling",
+            () -> new ChainCouplingItem(new Item.Properties()));
+
+    public static final DeferredItem<Item> LOGIC_CORE = ITEMS.registerSimpleItem("logic_core");
+    public static final DeferredItem<SequencedAssemblyItem> UNFINISHED_LOGIC_CORE = ITEMS.register("unfinished_logic_core",
+            () -> new SequencedAssemblyItem(new Item.Properties()));
 
     public static void register() {}
 }

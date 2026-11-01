@@ -4,8 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.createmod.catnip.animation.AnimationTickHolder;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
 import net.multyfora.content.balloon.DeflatedBalloonItem;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -15,41 +17,56 @@ import net.neoforged.neoforge.client.event.RenderHandEvent;
 @EventBusSubscriber(modid = "joc", value = Dist.CLIENT)
 public class DeflatedBalloonHandAnimation {
 
-    private static final float APPROACH_FRACTION = 0.22f;
-    private static final float INFLATE_FRACTION = -0.28f;
-    private static final float MAX_INFLATE_SCALE = 1.35f;
+    private static final float HAND_X = 0.56f, HAND_Y = -0.52f, HAND_Z = -0.72f;
+    private static final float MOUTH_X = 0.08f, MOUTH_Y = -0.38f, MOUTH_Z = -0.60f;
+    private static final float EQUIP_DROP = 0.6f;
+    private static final float TURN_DEGREES = 14f;
+    private static final float DEFLATE_TICKS = 6f;
+    private static final float FINISHED = 0.97f;
+
+    private static float lastProgress;
+    private static float lastRenderTime;
+    private static InteractionHand lastHand;
 
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
-        ItemStack stack = event.getItemStack();
-        if (!(stack.getItem() instanceof DeflatedBalloonItem))
+        if (!(event.getItemStack().getItem() instanceof DeflatedBalloonItem balloon))
             return;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || !mc.player.isUsingItem()
-                || !mc.player.getUseItem().is(stack.getItem())
-                || mc.player.getUsedItemHand() != event.getHand())
+        LocalPlayer player = mc.player;
+        if (player == null)
             return;
 
-        float duration = stack.getUseDuration(mc.player);
-        float ticksUsing = duration - mc.player.getUseItemRemainingTicks()
-                + AnimationTickHolder.getPartialTicks();
-        float progress = duration > 0 ? Mth.clamp(ticksUsing / duration, 0f, 1f) : 1f;
+        float now = AnimationTickHolder.getRenderTime();
+        float progress = BalloonInflation.progress(player, event.getPartialTick());
+        if (progress >= 0f) {
+            if (player.getUsedItemHand() != event.getHand())
+                return;
+            lastProgress = progress;
+            lastRenderTime = now;
+            lastHand = event.getHand();
+        } else {
+            if (event.getHand() != lastHand || lastProgress >= FINISHED)
+                return;
+            progress = lastProgress * (1f - (now - lastRenderTime) / DEFLATE_TICKS);
+            if (progress <= 0f)
+                return;
+        }
 
-        float approach = smoothstep(Mth.clamp(progress / APPROACH_FRACTION, 0f, 1f));
+        event.setCanceled(true);
 
-        float inflateStart = 1f - INFLATE_FRACTION;
-        float inflate = progress <= inflateStart ? 0f
-                : smoothstep(Mth.clamp((progress - inflateStart) / INFLATE_FRACTION, 0f, 1f));
-        float scale = Mth.lerp(inflate, 1.0f, MAX_INFLATE_SCALE);
+        HumanoidArm arm = event.getHand() == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
+        float side = arm == HumanoidArm.LEFT ? -1f : 1f;
+        float raise = BalloonInflation.raise(progress);
 
-        PoseStack poseStack = event.getPoseStack();
-        poseStack.translate(-0.5f, 0.30f * approach, -0.25f * approach);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(-90f));
-        poseStack.mulPose(Axis.XP.rotationDegrees(90f * approach));
-    }
-
-    private static float smoothstep(float t) {
-        return t * t * (3f - 2f * t);
+        PoseStack ms = event.getPoseStack();
+        ms.pushPose();
+        ms.translate(side * Mth.lerp(raise, HAND_X, MOUTH_X),
+                Mth.lerp(raise, HAND_Y, MOUTH_Y) - event.getEquipProgress() * EQUIP_DROP,
+                Mth.lerp(raise, HAND_Z, MOUTH_Z));
+        ms.mulPose(Axis.YP.rotationDegrees(side * -TURN_DEGREES));
+        BalloonInflation.renderBlock(ms, event.getMultiBufferSource(), event.getPackedLight(), balloon.getColor(), progress);
+        ms.popPose();
     }
 }

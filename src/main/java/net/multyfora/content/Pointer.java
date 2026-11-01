@@ -26,10 +26,7 @@ public class Pointer {
             return;
         }
 
-        Vec3 selfPos = SpaceUtils.getProjectedSelfPos(
-            parent.getSubLevel(),
-            parent.getWorldPosition()
-        );
+        Vec3 selfPos = parent.getSeekingPosition();
 
         Vec3 diffWorld = targetWorld.subtract(selfPos);
 

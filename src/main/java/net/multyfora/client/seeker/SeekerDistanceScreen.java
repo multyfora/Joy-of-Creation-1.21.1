@@ -1,319 +1,225 @@
 package net.multyfora.client.seeker;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.simibubi.create.foundation.gui.AllIcons;
-import com.simibubi.create.foundation.gui.widget.IconButton;
-import dev.ryanhcode.sable.Sable;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
-import net.minecraft.Util;
-import net.minecraft.client.Minecraft;
+import com.simibubi.create.foundation.gui.widget.TooltipArea;
+import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.client.SeekerPartialModels;
-import net.multyfora.client.graphics.GraphicsUtils;
-import net.multyfora.client.integration.xaeros.WaypointData;
-import net.multyfora.client.integration.xaeros.WaypointPickerScreen;
-import net.multyfora.client.integration.xaeros.XaerosCompat;
 import net.multyfora.content.seeker.SeekerBlockEntity;
 import net.multyfora.network.SeekerDistancePayloads;
-import net.multyfora.network.SeekerPayloads;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector2i;
 
-public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistanceMenu> {
-    public static final ResourceLocation GUI_TEXTURE =
+import java.util.List;
+
+public class SeekerDistanceScreen extends AbstractSeekerScreen<SeekerDistanceMenu> {
+    private static final ResourceLocation SLIDER_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(
                     AeronauticsJoyofcreation.MODID,
-                    "textures/gui/seeker_screen_new.png"
+                    "textures/gui/seeker_distance_slider.png"
             );
+    private static final Component MIN_LABEL = Component.translatable("screen.joc.seeker.distance.min");
+    private static final Component MAX_LABEL = Component.translatable("screen.joc.seeker.distance.max");
 
     private static final int MAX_DISTANCE = 256;
-    private static final int TRACK_HEIGHT = 8;
-    private static final int HANDLE_RADIUS = 6;
-    private static final int TRACK_BORDER_COLOR = 0xFF1A1A1A;
-    private static final int DIM_OVERLAY_COLOR = 0xB0000000;
-    private static final int HANDLE_FILL_COLOR = 0xFFECECEC;
-    private static final int HANDLE_BORDER_COLOR = 0xFF303030;
-    private static final int HANDLE_ACTIVE_BORDER = 0xFFFFFFFF;
-    private static final int TRACK_INACTIVE_COLOR = 0xFF262626;
 
-    private final BlockPos pos;
-    private EditBox xField;
-    private EditBox yField;
-    private EditBox zField;
-    private boolean use3D;
-    private boolean fieldsEdited;
-    private WaypointData pendingWaypoint;
-    private IconButton waypointButton;
-    private IconButton modeButton;
-    private ModulatingSetButton setButton;
+    private static final int ROW_Y = 108;
+    private static final int ROW_HEIGHT = 18;
+    private static final int TRACK_X = 32;
+    private static final int TRACK_WIDTH = 161;
+    private static final int BOX_WIDTH = 21;
+    private static final int BOX_V = 20;
+    private static final int MIN_BOX_X = 8;
+    private static final int MAX_BOX_X = 196;
+    private static final int LABEL_Y = ROW_Y - 10;
+    private static final int VALUE_Y = ROW_Y + 5;
+
+    private static final int BAND_X = TRACK_X + 8;
+    private static final int BAND_Y = ROW_Y + 6;
+    private static final int BAND_WIDTH = 144;
+    private static final int BAND_HEIGHT = 5;
+    private static final int BAND_V = 40;
+    private static final float BAND_OFF_SHADE = 0.2F;
+    private static final float BAND_DIM_SHADE = 0.3F;
+
+    private static final int HANDLE_WIDTH = 7;
+    private static final int HANDLE_HEIGHT = 16;
+    private static final int HANDLE_Y = ROW_Y + 1;
+    private static final int HANDLE_V = 46;
+    private static final int MIN_HANDLE_U = 0;
+    private static final int MAX_HANDLE_U = 16;
+    private static final int HANDLE_ACTIVE_U_OFFSET = 8;
+
+    private static final int LABEL_COLOR = 0xFFFFFFFF;
+    private static final int ACTIVE_LABEL_COLOR = 0xFFFFEB8C;
+
     private int sliderMin;
     private int sliderMax;
+    private boolean sliderLoaded;
     private boolean draggingMin;
     private boolean draggingMax;
-    private int sliderX;
-    private int sliderY;
-    private int sliderWidth;
+    private int dragOffset;
 
-    public SeekerDistanceScreen(SeekerDistanceMenu menu, Inventory inventory) {
-        super(menu, inventory, Component.translatable("screen.joc.seeker_distance"));
-        this.pos = menu.blockEntity.getBlockPos();
+    public SeekerDistanceScreen(SeekerDistanceMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title, menu.blockEntity);
     }
 
     @Override
     protected void init() {
-        this.titleLabelX = (width - this.font.width(this.title)) / 2;
-        this.titleLabelY = (int)(0.25 * height);
-        this.imageWidth = 225;
-        this.imageHeight = 162;
-        this.inventoryLabelX = -1000;
-        addFields();
-        addWidgets();
-        if (pendingWaypoint != null) {
-            xField.setValue(String.valueOf(pendingWaypoint.x()));
-            yField.setValue(String.valueOf(pendingWaypoint.y()));
-            zField.setValue(String.valueOf(pendingWaypoint.z()));
-            pendingWaypoint = null;
+        if (!sliderLoaded) {
+            sliderMin = menu.blockEntity.getMinDistance();
+            sliderMax = menu.blockEntity.getMaxDistance();
+            sliderLoaded = true;
         }
+        super.init();
+
+        addValueTooltip(MIN_BOX_X, MIN_LABEL, "screen.joc.seeker.distance.min");
+        addValueTooltip(MAX_BOX_X, MAX_LABEL, "screen.joc.seeker.distance.max");
+    }
+
+    private void addValueTooltip(int x, Component label, String key) {
+        addRenderableWidget(new TooltipArea(
+                leftPos + x, topPos + LABEL_Y, BOX_WIDTH, ROW_Y + ROW_HEIGHT - LABEL_Y
+        ).withTooltip(List.of(
+                label,
+                Component.translatable(key + ".hint_1"),
+                Component.translatable(key + ".hint_2")
+        )));
     }
 
     @Override
-    protected void containerTick() {
-        super.containerTick();
-        refreshTargetFields();
-    }
-    private static int colorForPower(int power) {
-        float f = power / 15.0F;
-        float r = f * 0.6F + 0.4F;
-        if (power == 0) r = 0.0F;
-        float g = Math.max(0.0F, f * f * 0.7F - 0.5F);
-        float b = Math.max(0.0F, f * f * 0.6F - 0.7F);
-        int ri = (int) (r * 255.0F);
-        int gi = (int) (g * 255.0F);
-        int bi = (int) (b * 255.0F);
-        return 0xFF000000 | (ri << 16) | (gi << 8) | bi;
+    protected PartialModel setButtonModel() {
+        return SeekerPartialModels.SEEKER_MODULATING;
     }
 
-    private static int distanceToPower(int distance) {
-        double t = 1.0 - Math.min(1.0, Math.max(0.0, (double) distance / MAX_DISTANCE));
-        return (int) Math.round(t * 15.0);
+    @Override
+    protected float setButtonScale() {
+        return 20f;
     }
 
-    private void refreshTargetFields() {
-        if (fieldsEdited) return;
-        SeekerBlockEntity blockEntity = getBlockEntity();
-        if (blockEntity == null || xField == null || yField == null || zField == null) return;
-        var targetPos = blockEntity.getTargetPosition(true);
-        if (targetPos == null) return;
-        Vec3 worldPosition = Sable.HELPER.projectOutOfSubLevel(blockEntity.getLevel(), targetPos);
-        if (!xField.isFocused()) xField.setValue(String.valueOf((int) worldPosition.x));
-        if (!yField.isFocused()) yField.setValue(String.valueOf((int) worldPosition.y));
-        if (!zField.isFocused()) zField.setValue(String.valueOf((int) worldPosition.z));
+    @Override
+    protected void beforeTargetApplied(SeekerBlockEntity blockEntity) {
+        blockEntity.setMinMaxDistance(sliderMin, sliderMax);
     }
 
-    private void addFields() {
-        SeekerBlockEntity blockEntity = getBlockEntity();
-        use3D = blockEntity == null || blockEntity.isUse3D();
-        int gui_x = (width - imageWidth) / 2;
-        int gui_y = (height - imageHeight) / 2;
-        if (blockEntity == null) return;
-        var targetPos = blockEntity.getTargetPosition(true);
-        Vec3 worldPosition = targetPos != null
-                ? Sable.HELPER.projectOutOfSubLevel(blockEntity.getLevel(), targetPos)
-                : Vec3.ZERO;
-
-        xField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 51), new Vector2i(137, 18),
-                Component.literal("X"), (int) worldPosition.x);
-        xField.setBordered(false);
-        yField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 74), new Vector2i(137, 18),
-                Component.literal("Y"), (int) worldPosition.y);
-        yField.setBordered(false);
-        zField = createIntegerField(new Vector2i(gui_x + 60, gui_y + 97), new Vector2i(137, 18),
-                Component.literal("Z"), (int) worldPosition.z);
-        zField.setBordered(false);
-        yField.setEditable(use3D);
-    }
-
-    private void addWidgets() {
-        int gui_x = (width - imageWidth) / 2;
-        int gui_y = (height - imageHeight) / 2;
-
-        SeekerBlockEntity blockEntity = getBlockEntity();
-        sliderMin = blockEntity != null ? blockEntity.getMinDistance() : 0;
-        sliderMax = blockEntity != null ? blockEntity.getMaxDistance() : 256;
-        sliderX = gui_x + 51;
-        sliderY = gui_y + 108;
-        sliderWidth = imageWidth - 78;
-        waypointButton = new IconButton(
-                (width - imageWidth) / 2 + 8,
-                (height - imageHeight) / 2 + 24,
-                AllIcons.I_TARGET
+    @Override
+    protected void sendTarget(int x, int y, int z) {
+        PacketDistributor.sendToServer(
+                new SeekerDistancePayloads.UpdateSeekerDistancePayload(pos, x, y, z, sliderMin, sliderMax)
         );
-        waypointButton.withCallback(this::accessWayPointScreen);
-        addRenderableWidget(waypointButton);
-
-        setButton = new ModulatingSetButton(
-                gui_x + 207, gui_y + 146, 10, 10,
-                btn -> {
-                    if (this.menu.blockEntity == null) return;
-                    int x = parseCoordinate(xField.getValue());
-                    int y = parseCoordinate(yField.getValue());
-                    int z = parseCoordinate(zField.getValue());
-                    int min = sliderMin;
-                    int max = sliderMax;
-                    this.menu.blockEntity.setTarget(x, y, z);
-                    this.menu.blockEntity.setMinMaxDistance(min, max);
-                    sendUpdate(x, y, z, min, max);
-                });
-        addRenderableWidget(setButton);
-
-        modeButton = new IconButton(
-                (width - imageWidth) / 2 + (255 - 52),
-                (height - imageHeight) / 2 + 24,
-                use3D ? AllIcons.I_FX_SURFACE_ON : AllIcons.I_MTD_USER_MODE
-        );
-        modeButton.withCallback(this::toggleMode);
-        addRenderableWidget(modeButton);
     }
 
-    private void toggleMode() {
-        SeekerBlockEntity blockEntity = getBlockEntity();
-        use3D = !use3D;
-        if (blockEntity != null) blockEntity.setUse3D(use3D);
-        yField.setEditable(use3D);
-        if (!use3D) yField.setValue(String.valueOf(pos.getY()));
-        modeButton.setIcon(use3D ? AllIcons.I_FX_SURFACE_ON : AllIcons.I_MTD_USER_MODE);
-        try {
-            PacketDistributor.sendToServer(new SeekerPayloads.ToggleModePayload(pos, use3D));
-        } catch (Exception ignored) {}
-    }
-    private static int colorForPowerF(float power) {
-        float f = power / 15.0F;
-        float r = f * 0.6F + 0.4F;
-        if (power <= 0.0F) r = 0.0F;
-        float g = Math.max(0.0F, f * f * 0.7F - 0.5F);
-        float b = Math.max(0.0F, f * f * 0.6F - 0.7F);
-        int ri = (int) (r * 255.0F);
-        int gi = (int) (g * 255.0F);
-        int bi = (int) (b * 255.0F);
-        return 0xFF000000 | (ri << 16) | (gi << 8) | bi;
-    }
-    private EditBox createIntegerField(Vector2i position, Vector2i size, Component text, int initialValue) {
-        EditBox field = addRenderableWidget(new EditBox(font, position.x, position.y, size.x, size.y, text));
-        field.setValue(String.valueOf(initialValue));
-        field.setFilter(s -> s.matches("-?\\d*\\.?\\d*"));
-        field.setResponder(s -> fieldsEdited = true);
-        return field;
+    @Override
+    protected boolean isTargetPending() {
+        SeekerBlockEntity blockEntity = getSeeker();
+        return super.isTargetPending() || (blockEntity != null
+                && (sliderMin != blockEntity.getMinDistance() || sliderMax != blockEntity.getMaxDistance()));
     }
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShaderTexture(0, GUI_TEXTURE);
-        int gui_x = (width - imageWidth) / 2;
-        int gui_y = (height - imageHeight) / 2;
-        guiGraphics.blit(GUI_TEXTURE, gui_x, gui_y + 5, 0, 0, imageWidth, imageHeight);
+        super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
 
-        int cy = sliderY + 10;
-        int trackStart = sliderX + HANDLE_RADIUS;
-        int trackEnd = sliderX + sliderWidth - HANDLE_RADIUS;
-        int trackTop = cy - TRACK_HEIGHT / 2;
-        int trackBottom = trackTop + TRACK_HEIGHT;
+        int rowY = topPos + ROW_Y;
+        guiGraphics.blit(SLIDER_TEXTURE, leftPos + TRACK_X, rowY, 0, 0, TRACK_WIDTH, ROW_HEIGHT);
+        guiGraphics.blit(SLIDER_TEXTURE, leftPos + MIN_BOX_X, rowY, 0, BOX_V, BOX_WIDTH, ROW_HEIGHT);
+        guiGraphics.blit(SLIDER_TEXTURE, leftPos + MAX_BOX_X, rowY, 0, BOX_V, BOX_WIDTH, ROW_HEIGHT);
+        renderBand(guiGraphics);
+
+        drawHandle(guiGraphics, valueToX(sliderMin) - HANDLE_WIDTH, MIN_HANDLE_U, isMinActive(mouseX, mouseY));
+        drawHandle(guiGraphics, valueToX(sliderMax), MAX_HANDLE_U, isMaxActive(mouseX, mouseY));
+    }
+
+    private void renderBand(GuiGraphics guiGraphics) {
         int minX = valueToX(sliderMin);
         int maxX = valueToX(sliderMax);
+        int bandX = leftPos + BAND_X;
 
-        guiGraphics.fill(trackStart - 1, trackTop - 1, trackEnd + 1, trackBottom + 1, TRACK_BORDER_COLOR);
-
-        for (int x = trackStart; x < trackEnd; x++) {
-            int color;
-            if (x < minX) {
-                color = colorForPowerF(15.0F);
-            } else if (x > maxX) {
-                color = TRACK_INACTIVE_COLOR;
-            } else {
-                double t = (maxX > minX) ? (double) (x - minX) / (double) (maxX - minX) : 0.0;
-                float power = (float) ((1.0 - t) * 15.0);
-                color = colorForPowerF(power);
-            }
-            guiGraphics.fill(x, trackTop, x + 1, trackBottom, color);
+        for (int column = 0; column < BAND_WIDTH; column++) {
+            float shade = shadeForPower(powerAt(bandX + column, minX, maxX));
+            guiGraphics.setColor(shade, shade, shade, 1.0F);
+            guiGraphics.blit(SLIDER_TEXTURE, bandX + column, topPos + BAND_Y, column, BAND_V, 1, BAND_HEIGHT);
         }
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
 
+    private static int powerAt(int x, int minX, int maxX) {
+        if (x < minX) return 15;
+        if (x >= maxX) return 0;
+        return Math.round(15.0F * (maxX - x) / (maxX - minX));
+    }
 
-        drawHandle(guiGraphics, minX, cy,
-                Math.abs(mouseX - minX) <= HANDLE_RADIUS && Math.abs(mouseY - cy) <= HANDLE_RADIUS || draggingMin);
-        drawHandle(guiGraphics, maxX, cy,
-                Math.abs(mouseX - maxX) <= HANDLE_RADIUS && Math.abs(mouseY - cy) <= HANDLE_RADIUS || draggingMax);
+    private static float shadeForPower(int power) {
+        if (power == 0) return BAND_OFF_SHADE;
+        return BAND_DIM_SHADE + (1.0F - BAND_DIM_SHADE) * power / 15.0F;
+    }
+
+    private void drawHandle(GuiGraphics guiGraphics, int x, int u, boolean active) {
+        guiGraphics.blit(
+                SLIDER_TEXTURE, x, topPos + HANDLE_Y,
+                active ? u + HANDLE_ACTIVE_U_OFFSET : u, HANDLE_V, HANDLE_WIDTH, HANDLE_HEIGHT
+        );
+    }
+
+    private boolean isMinActive(int mouseX, int mouseY) {
+        return draggingMin || (!draggingMax && isOverMinHandle(mouseX, mouseY));
+    }
+
+    private boolean isMaxActive(int mouseX, int mouseY) {
+        return draggingMax || (!draggingMin && isOverMaxHandle(mouseX, mouseY));
+    }
+
+    private boolean isOverMinHandle(double mouseX, double mouseY) {
+        int x = valueToX(sliderMin);
+        return isOverRow(mouseY) && mouseX >= x - HANDLE_WIDTH && mouseX < x;
+    }
+
+    private boolean isOverMaxHandle(double mouseX, double mouseY) {
+        int x = valueToX(sliderMax);
+        return isOverRow(mouseY) && mouseX >= x && mouseX < x + HANDLE_WIDTH;
+    }
+
+    private boolean isOverRow(double mouseY) {
+        return mouseY >= topPos + ROW_Y && mouseY < topPos + ROW_Y + ROW_HEIGHT;
     }
 
     @Override
     protected void renderLabels(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
         super.renderLabels(guiGraphics, mouseX, mouseY);
-        SeekerBlockEntity blockEntity = this.menu.blockEntity;
-        if (blockEntity == null) return;
 
-        FormattedText target = FormattedText.of(GraphicsUtils.getCoordinateString(blockEntity.getTarget()));
-        int gui_x = (width - imageWidth) / 2;
-        int gui_y = (height - imageHeight) / 2;
+        drawValue(guiGraphics, MIN_BOX_X, MIN_LABEL, sliderMin, isMinActive(mouseX, mouseY));
+        drawValue(guiGraphics, MAX_BOX_X, MAX_LABEL, sliderMax, isMaxActive(mouseX, mouseY));
+    }
 
-        guiGraphics.drawString(this.font, "X", gui_x + 39, gui_y + 51, 0xFFFFFFFF, false);
-        guiGraphics.drawString(this.font, "Y", gui_x + 39, gui_y + 74, 0xFFFFFFFF, false);
-        guiGraphics.drawString(this.font, "Z", gui_x + 39, gui_y + 97, 0xFFFFFFFF, false);
-
-        int cy = sliderY + 10;
-        int trackBottom = (cy - TRACK_HEIGHT / 2) + TRACK_HEIGHT;
-        int minX = valueToX(sliderMin);
-        int maxX = valueToX(sliderMax);
-        int labelY = trackBottom + HANDLE_RADIUS + 2;
-
-        String minText = "Min:" + sliderMin;
-        String maxText = "Max:" + sliderMax;
-        guiGraphics.drawString(this.font, minText, minX - this.font.width(minText) / 2, labelY, 0xFFAAAAAA, false);
-        guiGraphics.drawString(this.font, maxText, maxX - this.font.width(maxText) / 2, labelY, 0xFFAAAAAA, false);
-
-        guiGraphics.drawString(this.font, "target: " + target.getString(),
-                (width - this.font.width(target)) / 2 - 30, (height - this.font.lineHeight) / 2 + 73, 0xFFFFFFFF, false);
+    private void drawValue(GuiGraphics guiGraphics, int x, Component label, int value, boolean active) {
+        String text = String.valueOf(value);
+        guiGraphics.drawString(
+                font, label,
+                x + (BOX_WIDTH - font.width(label)) / 2, LABEL_Y,
+                LABEL_COLOR, false
+        );
+        guiGraphics.drawString(
+                font, text,
+                x + (BOX_WIDTH - font.width(text)) / 2, VALUE_Y,
+                active ? ACTIVE_LABEL_COLOR : LABEL_COLOR, false
+        );
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            int cy = sliderY + 20;
-            double dY = Math.abs(mouseY - cy);
-            if (dY <= HANDLE_RADIUS + 6) {
-                int minHandleX = valueToX(sliderMin);
-                int maxHandleX = valueToX(sliderMax);
-                double dMin = Math.abs(mouseX - minHandleX);
-                double dMax = Math.abs(mouseX - maxHandleX);
-                double handleHitRadius = HANDLE_RADIUS * 1.5;
-
-                if (dMax <= handleHitRadius && dMax <= dMin) {
-                    draggingMax = true;
-                    return true;
-                }
-                if (dMin <= handleHitRadius) {
-                    draggingMin = true;
-                    return true;
-                }
+            if (isOverMinHandle(mouseX, mouseY)) {
+                draggingMin = true;
+                dragOffset = (int) mouseX - valueToX(sliderMin);
+                return true;
+            }
+            if (isOverMaxHandle(mouseX, mouseY)) {
+                draggingMax = true;
+                dragOffset = (int) mouseX - valueToX(sliderMax);
+                return true;
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -322,8 +228,7 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (button == 0 && (draggingMin || draggingMax)) {
-            int value = xToValue((int) mouseX);
-            value = Math.max(0, Math.min(MAX_DISTANCE, value));
+            int value = xToValue((int) mouseX - dragOffset);
 
             if (draggingMin) {
                 sliderMin = Math.min(value, sliderMax);
@@ -341,126 +246,18 @@ public class SeekerDistanceScreen extends AbstractContainerScreen<SeekerDistance
         if (draggingMin || draggingMax) {
             draggingMin = false;
             draggingMax = false;
-            SeekerBlockEntity blockEntity = getBlockEntity();
-            if (blockEntity != null) {
-                blockEntity.setMinMaxDistance(sliderMin, sliderMax);
-            }
             return true;
         }
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
-    @Override
-    public boolean isPauseScreen() { return false; }
-
-    private void accessWayPointScreen() {
-        Level level = Minecraft.getInstance().level;
-        if (level == null || !XaerosCompat.isLoaded()) return;
-
-        XaerosCompat.invalidateCache();
-        var waypoints = XaerosCompat.getCurrentWaypoints(level);
-        Minecraft.getInstance().setScreen(
-                new WaypointPickerScreen(this, pos, waypoints, wpd -> {
-                    pendingWaypoint = wpd;
-                })
-        );
-    }
-
-    private void sendUpdate(int x, int y, int z, int min, int max) {
-        try {
-            PacketDistributor.sendToServer(new SeekerDistancePayloads.UpdateSeekerDistancePayload(pos, x, y, z, min, max));
-        } catch (NumberFormatException ignored) {}
-    }
-
-    private static int parseCoordinate(String value) {
-        try {
-            return Mth.floor(Double.parseDouble(value));
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
-    private SeekerBlockEntity getBlockEntity() {
-        Level level = Minecraft.getInstance().level;
-        if (level != null && level.getBlockEntity(pos) instanceof SeekerBlockEntity blockEntity) return blockEntity;
-        return null;
-    }
-
-    private int trackX() { return sliderX + HANDLE_RADIUS; }
-    private int trackWidth() { return sliderWidth - HANDLE_RADIUS * 2; }
-
     private int valueToX(int value) {
-        return trackX() + (int) ((double) value / MAX_DISTANCE * trackWidth());
+        return leftPos + BAND_X + Math.round((float) value / MAX_DISTANCE * BAND_WIDTH);
     }
 
     private int xToValue(int x) {
-        double t = (double) (x - trackX()) / trackWidth();
+        double t = (double) (x - leftPos - BAND_X) / BAND_WIDTH;
         t = Math.max(0, Math.min(1, t));
         return (int) Math.round(t * MAX_DISTANCE);
-    }
-
-    private void drawHandle(GuiGraphics graphics, int cx, int cy, boolean active) {
-        int r = HANDLE_RADIUS;
-        int border = active ? HANDLE_ACTIVE_BORDER : HANDLE_BORDER_COLOR;
-        guiGraphics_fillCircle(graphics, cx, cy, r, border);
-        guiGraphics_fillCircle(graphics, cx, cy, r - 2, HANDLE_FILL_COLOR);
-    }
-
-    private static void guiGraphics_fillCircle(GuiGraphics graphics, int cx, int cy, int r, int color) {
-        for (int y = -r; y <= r; y++) {
-            int dx = (int) Math.sqrt((double) (r * r - y * y));
-            graphics.fill(cx - dx, cy + y, cx + dx + 1, cy + y + 1, color);
-        }
-    }
-
-    private static class ModulatingSetButton extends AbstractWidget {
-        private final OnPress onPress;
-        private static final float BASE_SCALE = 20f;
-        private static final float ROTATION_SPEED = 45f;
-
-        public ModulatingSetButton(int x, int y, int width, int height, OnPress onPress) {
-            super(x, y, width, height, Component.translatable("screen.joc.seeker.set"));
-            this.onPress = onPress;
-        }
-
-        @Override
-        protected void renderWidget(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-            boolean hovered = isHovered();
-            float scale = hovered ? BASE_SCALE * 1.1f : BASE_SCALE;
-            float time = (Util.getMillis() % 360000L) / 1000f;
-            float yaw = (time * ROTATION_SPEED) % 360f;
-
-            PoseStack ms = graphics.pose();
-            ms.pushPose();
-            ms.translate(getX() + width / 2.0, getY() + height / 2.0, 100.0);
-            ms.scale(scale, -scale, scale);
-            ms.mulPose(com.mojang.math.Axis.XP.rotationDegrees(25f));
-            ms.mulPose(com.mojang.math.Axis.YP.rotationDegrees(yaw));
-            ms.translate(-0.5, -0.5, -0.5);
-
-            MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
-            SuperByteBuffer superBuffer = CachedBuffers.partial(
-                    SeekerPartialModels.SEEKER_MODULATING,
-                    net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
-            if (hovered) superBuffer.color(0x99FF99);
-            else superBuffer.color(0xFFFFFF);
-            superBuffer.light(LightTexture.FULL_BRIGHT).renderInto(ms, buffer.getBuffer(RenderType.cutoutMipped()));
-            buffer.endBatch();
-            ms.popPose();
-        }
-
-        public void onClick(double mouseX, double mouseY) {
-            onPress.onPress(this);
-            setFocused(false);
-        }
-
-        @Override
-        public void updateWidgetNarration(@NotNull NarrationElementOutput output) {
-            defaultButtonNarrationText(output);
-        }
-
-        public interface OnPress {
-            void onPress(ModulatingSetButton button);
-        }
     }
 }

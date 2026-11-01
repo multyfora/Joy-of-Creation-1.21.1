@@ -30,6 +30,6 @@ public class JocItemModelProvider extends ItemModelProvider {
 
         getBuilder("shatter_assembler").parent(new ModelFile.UncheckedModelFile(
                 ResourceLocation.fromNamespaceAndPath("simulated", "block/physics_assembler/item")));
-        withExistingParent("gyroscopic_seat", modLoc("block/gyroscopic_seat"));
+        withExistingParent("gyroscopic_seat", modLoc("block/gyroscopic_seat/item"));
     }
 }

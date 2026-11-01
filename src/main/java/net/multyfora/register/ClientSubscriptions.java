@@ -1,24 +1,35 @@
 package net.multyfora.register;
 
+import com.simibubi.create.foundation.block.connected.CTModel;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.multyfora.AeronauticsJoyofcreation;
+import net.multyfora.client.balloon.BalloonCTBehaviour;
+import net.multyfora.client.balloon.BalloonInflateLayer;
 import net.multyfora.client.seeker.SeekerLinkedHighlightRenderer;
 import net.multyfora.client.seeker.SpyglassTargetOutlineRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
+import net.multyfora.client.GyroscopicSeatBlockEntityRenderer;
 import net.multyfora.client.SeekerBlockEntityRenderer;
 import net.multyfora.client.JocPartialModels;
 import net.multyfora.client.SeekerPartialModels;
 import net.multyfora.client.seeker.SeekerBakedModel;
+import net.multyfora.client.seeker.SeekerDistanceScreen;
 import net.multyfora.client.seeker.SeekerRenderer;
+import net.multyfora.client.seeker.SeekerScreen;
+import net.multyfora.client.seeker.SeekerTableMap;
+import net.multyfora.client.seeker.SeekerTableRenderer;
+import net.multyfora.client.seeker.MapPinRenderer;
 import net.multyfora.client.portable_throttle.PortableThrottleClientHandler;
 import net.multyfora.client.portable_throttle.PortableThrottleGripHandler;
 import net.multyfora.client.portable_throttle.PortableThrottleHandRenderer;
@@ -39,6 +50,7 @@ import net.multyfora.content.physics_staff.EntityGrabClientState;
 import net.multyfora.content.shears_cut.ShearsCutRemoteState;
 import net.multyfora.content.shears_cut.ShearsCutState;
 import net.multyfora.index.JocBlockEntityTypes;
+import net.multyfora.index.JocBlocks;
 import net.multyfora.index.JocEntityTypes;
 import net.multyfora.index.JocMenuTypes;
 import net.multyfora.network.EntityGrabPayloads;
@@ -63,8 +75,11 @@ public class ClientSubscriptions {
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER.get(), SeekerBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(JocBlockEntityTypes.SEEKER_TABLE.get(), SeekerTableRenderer::new);
         event.registerBlockEntityRenderer(JocBlockEntityTypes.SHATTER_ASSEMBLER.get(), ShatterAssemblerRenderer::new);
+        event.registerBlockEntityRenderer(JocBlockEntityTypes.GYROSCOPIC_SEAT.get(), GyroscopicSeatBlockEntityRenderer::new);
         event.registerEntityRenderer((EntityType<GyroscopicSeatEntity>) (EntityType<?>) JocEntityTypes.GYROSCOPIC_SEAT.get(), GyroscopicSeatRenderer::new);
+        event.registerEntityRenderer(JocEntityTypes.MAP_PIN.get(), MapPinRenderer::new);
     }
 
     @SubscribeEvent
@@ -72,6 +87,7 @@ public class ClientSubscriptions {
         for (PlayerSkin.Model model : event.getSkins()) {
             if (event.getSkin(model) instanceof PlayerRenderer renderer) {
                 renderer.addLayer(new TypewriterHeldLayer(renderer));
+                renderer.addLayer(new BalloonInflateLayer(renderer));
             }
         }
     }
@@ -80,6 +96,8 @@ public class ClientSubscriptions {
     static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(JocMenuTypes.TYPEWRITER_SCREEN.get(), PortableTypewriterScreen::new);
         event.register(JocMenuTypes.THROTTLE_SCREEN.get(), PortableThrottleLinkScreen::new);
+        event.register(JocMenuTypes.SEEKER_SCREEN.get(), SeekerScreen::new);
+        event.register(JocMenuTypes.SEEKER_DISTANCE_SCREEN.get(), SeekerDistanceScreen::new);
     }
 
     @SubscribeEvent
@@ -92,6 +110,12 @@ public class ClientSubscriptions {
 
     @SubscribeEvent
     static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        for (DyeColor color : DyeColor.values()) {
+            event.getModels().computeIfPresent(
+                    BlockModelShaper.stateToModelLocation(JocBlocks.BALLOONS.get(color).get().defaultBlockState()),
+                    (key, model) -> new CTModel(model, BalloonCTBehaviour.get(color)));
+        }
+
         var seekerBlockId = ResourceLocation.fromNamespaceAndPath("joc", "seeker");
         var modelDefault = ResourceLocation.fromNamespaceAndPath("joc", "block/seeker");
         var modelActive = ResourceLocation.fromNamespaceAndPath("joc", "block/seeker_active");
@@ -128,6 +152,7 @@ public class ClientSubscriptions {
     static {
         SeekerPartialModels.init();
         JocPartialModels.init();
+        BalloonCTBehaviour.init();
     }
 
     @EventBusSubscriber(modid = AeronauticsJoyofcreation.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
@@ -137,6 +162,12 @@ public class ClientSubscriptions {
             if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
                 SeekerLinkedHighlightRenderer.render(event);
             }
+        }
+
+        @SubscribeEvent
+        static void onLevelUnload(net.neoforged.neoforge.event.level.LevelEvent.Unload event) {
+            if (event.getLevel().isClientSide())
+                SeekerTableMap.releaseAll();
         }
 
         @SubscribeEvent

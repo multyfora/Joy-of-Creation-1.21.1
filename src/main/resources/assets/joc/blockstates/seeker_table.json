@@ -1,0 +1,493 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "up"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/core"
+      }
+    },
+    {
+      "when": {
+        "facing": "up",
+        "north": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/edge"
+      }
+    },
+    {
+      "when": {
+        "facing": "up",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/edge",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "up",
+        "south": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/edge",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "up",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/edge",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "up",
+        "north": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/corner"
+      }
+    },
+    {
+      "when": {
+        "facing": "up",
+        "north": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/corner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "up",
+        "south": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/corner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "up",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/corner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/core",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "north": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_north",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_east",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "south": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_south",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_west",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "north": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_nw",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "north": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_ne",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "south": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_se",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_sw",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/core",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "north": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_north",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_east",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "south": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_south",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_west",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "north": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_nw",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "north": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_ne",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "south": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_se",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_sw",
+        "x": 270,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/core",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "north": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_north",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_east",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "south": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_south",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_west",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "north": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_nw",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "north": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_ne",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "south": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_se",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_sw",
+        "x": 270,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/core",
+        "x": 270,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "north": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_north",
+        "x": 270,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_east",
+        "x": 270,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "south": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_south",
+        "x": 270,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/edge_west",
+        "x": 270,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "north": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_nw",
+        "x": 270,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "north": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_ne",
+        "x": 270,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "south": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_se",
+        "x": 270,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "joc:block/seeker_table/wall/corner_sw",
+        "x": 270,
+        "y": 270
+      }
+    }
+  ]
+}

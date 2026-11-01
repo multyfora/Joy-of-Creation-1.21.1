@@ -66,6 +66,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     private Vec3 currentTarget;
     private boolean hasTarget;
     private boolean use3D = true;
+    private Vec3 offset = Vec3.ZERO;
 
     private int minDistance = 0;
     private int maxDistance = 256;
@@ -79,6 +80,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     private UUID trackedPlayerUUID = null;
     private boolean playerDirPowered = false;
     private static final double PLAYER_DIR_EPSILON = 1.0e-6;
+    public static final double MAX_OFFSET = 30_000_000;
 
     private static final float INSERT_ANIM_DURATION_TICKS = 12f;
     private int lastClientTextureVariant = -1;
@@ -86,8 +88,11 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
 
 
     private ModuleType module = ModuleType.NONE;
+    private SeekerLinkBehaviour links;
 
     private final Set<BlockPos> linkedSeekers = new HashSet<>();
+    @Nullable
+    private BlockPos linkedTable;
     private transient boolean isSyncingFromLink = false;
 
     private int ticks;
@@ -111,7 +116,10 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {}
+    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        links = new SeekerLinkBehaviour(this);
+        behaviours.add(links);
+    }
 
     @Override
     public void tick() {
@@ -166,6 +174,11 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             }
         }
 
+        if (linkedTable != null && level.getGameTime() % 10 == 0
+            && (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING)) {
+            followTable();
+        }
+
         if (!lostTarget) {
             if (module == ModuleType.SPYGLASS) {
                 tickSpyglass();
@@ -181,9 +194,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         updateTarget();
         Vec3 targetLocal = getTargetPosition(false);
         if (targetLocal != null) {
-            distanceToTarget = SpaceUtils
-                    .getProjectedSelfPos(subLevel, worldPosition)
-                    .distanceTo(getTargetCenter());
+            distanceToTarget = getSeekingPosition().distanceTo(getTargetCenter());
             if (distanceToTarget >= 5000) {
                 lastDistanceToTarget = distanceToTarget;
             }
@@ -205,9 +216,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             if (ticks >= 10) {
                 ticks = 0;
                 lastDistanceToTarget = distanceToTarget;
-                distanceToTarget = SpaceUtils
-                        .getProjectedSelfPos(subLevel, worldPosition)
-                        .distanceTo(getTargetCenter());
+                distanceToTarget = getSeekingPosition().distanceTo(getTargetCenter());
             }
         }
     }
@@ -251,7 +260,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
                 subLevel = Sable.HELPER.getContaining(this);
             } catch (Exception ignored) {}
         }
-        Vec3 selfPos = SpaceUtils.getProjectedSelfPos(subLevel, worldPosition);
+        Vec3 selfPos = getSeekingPosition();
         Vec3 targetWorld = getTargetCenter();
         if (targetWorld == null) return -1;
         return selfPos.distanceTo(targetWorld);
@@ -480,12 +489,14 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         if (!hasModule()) return false;
 
         ItemStack drop = itemForModuleType(module);
+        ItemStack core = links.takeCore();
         this.module = ModuleType.NONE;
 
         spyglassPointer.setYaw(0);
         spyglassPointer.setPitch(0);
         minDistance = 0;
         maxDistance = 256;
+        offset = Vec3.ZERO;
         playerDirLookDir = Vec3.ZERO;
         java.util.UUID oldTracked = trackedPlayerUUID;
         trackedPlayerUUID = null;
@@ -501,9 +512,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         lostTarget = false;
         clearTarget();
 
-        if (!drop.isEmpty()) {
-            if (!player.getInventory().add(drop)) {
-                player.drop(drop, false);
+        for (ItemStack stack : List.of(drop, core)) {
+            if (!stack.isEmpty() && !player.getInventory().add(stack)) {
+                player.drop(stack, false);
             }
         }
 
@@ -513,6 +524,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         }
 
         onModuleChanged();
+        if (level != null) {
+            SeekerTableMultiblock.tryForm(level, worldPosition, player);
+        }
         return true;
     }
 
@@ -551,6 +565,43 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         return linkedSeekers;
     }
 
+    public void linkToTable(BlockPos tablePos) {
+        linkedTable = tablePos.subtract(worldPosition);
+        setChanged();
+        sendData();
+        if (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING) {
+            followTable();
+        }
+    }
+
+    public boolean isFollowingTable() {
+        return linkedTable != null;
+    }
+
+    private void followTable() {
+        if (level == null || linkedTable == null) return;
+        BlockPos tablePos = worldPosition.offset(linkedTable);
+        if (!level.isLoaded(tablePos)) return;
+
+        SeekerTableBlockEntity table = SeekerTableBlock.getController(level, tablePos);
+        if (table == null) {
+            linkedTable = null;
+            setChanged();
+            sendData();
+            return;
+        }
+
+        BlockPos marker = table.getMarkerTarget();
+        if (marker == null) {
+            if (hasTarget) clearTarget();
+            return;
+        }
+        if (!hasTarget || targetX != marker.getX() || targetY != marker.getY() || targetZ != marker.getZ()) {
+            trackedSubLevel = null;
+            setTarget(marker.getX(), marker.getY(), marker.getZ());
+        }
+    }
+
     private void onModuleChanged() {
         setChanged();
         sendData();
@@ -584,7 +635,22 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     }
 
 
+    public SeekerLinkBehaviour getLinks() { return links; }
+    public boolean hasLogicCore() { return links.hasCore(); }
+
+    void onLogicCoreChanged() {
+        onModuleChanged();
+    }
+
     public int getRedstoneStrength(Direction direction) {
+        return links.hasCore() ? 0 : getPointingStrength(direction);
+    }
+
+    int getSideStrength(Direction side) {
+        return getPointingStrength(side.getOpposite());
+    }
+
+    private int getPointingStrength(Direction direction) {
         return switch (module) {
             case SPYGLASS -> getSpyglassRedstoneStrength(direction);
             case PLAYER_DIR -> getPlayerDirRedstoneStrength(direction);
@@ -623,7 +689,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         Vec3 targetWorld = getTargetCenter();
         if (targetWorld == null) return 0;
 
-        Vec3 selfPos = SpaceUtils.getProjectedSelfPos(subLevel, worldPosition);
+        Vec3 selfPos = getSeekingPosition();
         Vec3 diffWorld = targetWorld.subtract(selfPos);
 
         if (diffWorld.lengthSqr() < 1e-6) return 0;
@@ -679,6 +745,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     private boolean selectivelyUpdateNeighbors() {
         if (level == null || level.isClientSide) return false;
 
+        links.updateStrengths();
+
         BlockState state = getBlockState();
         boolean updated = false;
 
@@ -705,6 +773,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         tag.putDouble("target_z", targetZ);
         tag.putBoolean("has_target", hasTarget);
         tag.putBoolean("use_3d", use3D);
+        tag.putDouble("offset_x", offset.x);
+        tag.putDouble("offset_y", offset.y);
+        tag.putDouble("offset_z", offset.z);
         tag.putString("module", module.name());
         tag.putInt("min_distance", minDistance);
         tag.putInt("max_distance", maxDistance);
@@ -729,6 +800,9 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             list.add(net.minecraft.nbt.NbtUtils.writeBlockPos(p));
         }
         tag.put("linked_seekers", list);
+        if (linkedTable != null) {
+            tag.put("linked_table", net.minecraft.nbt.NbtUtils.writeBlockPos(linkedTable));
+        }
     }
 
     @Override
@@ -739,6 +813,7 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
         targetZ   = tag.getDouble("target_z");
         hasTarget = tag.getBoolean("has_target");
         use3D     = tag.contains("use_3d") ? tag.getBoolean("use_3d") : true;
+        offset    = new Vec3(tag.getDouble("offset_x"), tag.getDouble("offset_y"), tag.getDouble("offset_z"));
 
         if (tag.contains("module")) {
             try {
@@ -807,6 +882,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             }
         }
 
+        linkedTable = net.minecraft.nbt.NbtUtils.readBlockPos(tag, "linked_table").orElse(null);
+
         if (clientPacket) {
             int variant = getTextureVariant();
             if (variant != lastClientTextureVariant) {
@@ -871,6 +948,22 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             }
         }
 
+        if (hasOffset() && (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING)) {
+            Lang.builder("joc")
+                    .translate("goggles.seeker.offset")
+                    .text(ChatFormatting.WHITE,
+                            fmt(offset.x) + ", " + fmt(offset.y) + ", " + fmt(offset.z))
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip, 1);
+        }
+
+        if (linkedTable != null && (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING)) {
+            Lang.builder("joc")
+                    .translate("goggles.seeker.following_table")
+                    .style(ChatFormatting.GOLD)
+                    .forGoggles(tooltip, 1);
+        }
+
         if (module == ModuleType.MODULATING) {
             Lang.builder("joc")
                     .translate("goggles.seeker.range")
@@ -915,6 +1008,13 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
                     shown++;
                 }
             }
+        }
+
+        if (hasLogicCore()) {
+            Lang.builder("joc")
+                    .translate("goggles.seeker.logic_core")
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip, 1);
         }
 
         if (lostTarget) {
@@ -971,6 +1071,8 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     public double getTargetZ() { return targetZ; }
     public boolean hasTarget() { return hasTarget; }
     public boolean isUse3D()   { return use3D; }
+    public Vec3 getOffset()    { return offset; }
+    public boolean hasOffset() { return offset.lengthSqr() > 0; }
 
     public int getMinDistance() { return minDistance; }
     public int getMaxDistance() { return maxDistance; }
@@ -986,6 +1088,25 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
             selectivelyUpdateNeighbors();
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
+    }
+
+    public void setOffset(double x, double y, double z) {
+        this.offset = new Vec3(clampOffset(x), clampOffset(y), clampOffset(z));
+        setChanged();
+        sendData();
+
+        if (level != null && !level.isClientSide) {
+            if (module == ModuleType.SPYGLASS || module == ModuleType.MODULATING) {
+                spyglassPointer.calculateRelativeAngle(this);
+            }
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            selectivelyUpdateNeighbors();
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    private static double clampOffset(double value) {
+        return Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, value));
     }
 
     public void setUse3D(boolean use3D) {
@@ -1023,6 +1144,11 @@ public class SeekerBlockEntity extends SmartBlockEntity implements MenuProvider,
     }
 
     public BlockPos getWorldPosition() { return worldPosition; }
+
+    public Vec3 getSeekingPosition() {
+        return SpaceUtils.getProjectedSelfPos(subLevel, worldPosition, offset);
+    }
+
     public SubLevel getSubLevel() { return subLevel; }
 
     @Override

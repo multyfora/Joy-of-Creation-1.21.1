@@ -1,7 +1,28 @@
 {
   "variants": {
-    "": {
-      "model": "joc:block/gyroscopic_seat"
+    "part=0": {
+      "model": "joc:block/gyroscopic_seat/frame"
+    },
+    "part=1": {
+      "model": "joc:block/gyroscopic_seat/part"
+    },
+    "part=2": {
+      "model": "joc:block/gyroscopic_seat/part"
+    },
+    "part=3": {
+      "model": "joc:block/gyroscopic_seat/part"
+    },
+    "part=4": {
+      "model": "joc:block/gyroscopic_seat/part"
+    },
+    "part=5": {
+      "model": "joc:block/gyroscopic_seat/part"
+    },
+    "part=6": {
+      "model": "joc:block/gyroscopic_seat/part"
+    },
+    "part=7": {
+      "model": "joc:block/gyroscopic_seat/part"
     }
   }
 }

@@ -33,7 +33,7 @@ public class EntitySubLevelRotationHelperMixin {
         Entity current = cameraEntity;
         while (current != null) {
             if (current instanceof GyroscopicSeatEntity) {
-                cir.setReturnValue(null);
+                cir.setReturnValue(type == EntitySubLevelRotationHelper.Type.ENTITY ? new Quaterniond() : null);
                 return;
             }
             current = current.getVehicle();

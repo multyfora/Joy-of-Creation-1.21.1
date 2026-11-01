@@ -2,6 +2,7 @@ package net.multyfora.content.balloon;
 
 import com.simibubi.create.foundation.block.IBE;
 
+import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 import dev.ryanhcode.sable.api.block.BlockSubLevelLiftProvider;
 import dev.ryanhcode.sable.companion.math.Pose3d;
@@ -10,20 +11,26 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import net.multyfora.config.JocConfig;
 import net.multyfora.index.JocBlockEntityTypes;
@@ -34,7 +41,17 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class BalloonBlock extends Block implements IBE<BalloonBlockEntity>, BlockSubLevelAssemblyListener, BlockSubLevelLiftProvider {
+
+    private static final int MAX_POP_SOUNDS = 5;
+    private static final int MAX_POP_BURSTS = 128;
 
     protected final DyeColor color;
 
@@ -45,6 +62,11 @@ public class BalloonBlock extends Block implements IBE<BalloonBlockEntity>, Bloc
 
     public DyeColor getColor() {
         return color;
+    }
+
+    @Override
+    protected boolean skipRendering(BlockState state, BlockState adjacent, Direction side) {
+        return adjacent.getBlock() instanceof BalloonBlock || super.skipRendering(state, adjacent, side);
     }
 
     @Override
@@ -61,6 +83,46 @@ public class BalloonBlock extends Block implements IBE<BalloonBlockEntity>, Bloc
             return ItemInteractionResult.SUCCESS;
         }
         return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
+    }
+
+    @Override
+    protected void onProjectileHit(Level level, BlockState state, BlockHitResult hit, Projectile projectile) {
+        if (level instanceof ServerLevel serverLevel && projectile.getType().is(EntityTypeTags.ARROWS))
+            pop(serverLevel, hit.getBlockPos());
+    }
+
+    public static void pop(ServerLevel level, BlockPos origin) {
+        BlockState state = level.getBlockState(origin);
+        if (!(state.getBlock() instanceof BalloonBlock balloon))
+            return;
+
+        List<BlockPos> popped = new ArrayList<>();
+        Set<BlockPos> visited = new HashSet<>(Set.of(origin));
+        Deque<BlockPos> queue = new ArrayDeque<>(visited);
+        while (!queue.isEmpty()) {
+            BlockPos pos = queue.poll();
+            popped.add(pos);
+            for (Direction direction : Direction.values()) {
+                BlockPos next = pos.relative(direction);
+                if (level.isLoaded(next) && level.getBlockState(next).is(balloon) && visited.add(next))
+                    queue.add(next);
+            }
+        }
+
+        ItemParticleOption rubber = new ItemParticleOption(ParticleTypes.ITEM,
+                JocBlocks.BALLOON_ITEMS.get(balloon.color).get().getDefaultInstance());
+        int burstStep = Math.max(1, popped.size() / MAX_POP_BURSTS);
+        int soundStep = Math.max(1, popped.size() / MAX_POP_SOUNDS);
+        for (int i = 0; i < popped.size(); i++) {
+            BlockPos pos = popped.get(i);
+            Vec3 world = Sable.HELPER.projectOutOfSubLevel(level, pos.getCenter());
+            if (i % burstStep == 0)
+                level.sendParticles(rubber, world.x, world.y, world.z, 6, 0.3, 0.3, 0.3, 0.12);
+            if (i % soundStep == 0)
+                level.playSound(null, world.x, world.y, world.z, SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.BLOCKS,
+                        1.5f, 1.5f + level.random.nextFloat() * 0.4f);
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        }
     }
 
     @Override

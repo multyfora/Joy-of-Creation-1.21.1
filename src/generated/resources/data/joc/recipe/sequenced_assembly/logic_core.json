@@ -1,0 +1,94 @@
+{
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "item": "create:iron_sheet"
+  },
+  "loops": 4,
+  "results": [
+    {
+      "id": "joc:logic_core"
+    }
+  ],
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "joc:unfinished_logic_core"
+        },
+        {
+          "item": "minecraft:redstone"
+        }
+      ],
+      "results": [
+        {
+          "id": "joc:unfinished_logic_core"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "joc:unfinished_logic_core"
+        },
+        {
+          "item": "create:polished_rose_quartz"
+        }
+      ],
+      "results": [
+        {
+          "id": "joc:unfinished_logic_core"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "joc:unfinished_logic_core"
+        },
+        {
+          "item": "minecraft:iron_nugget"
+        }
+      ],
+      "results": [
+        {
+          "id": "joc:unfinished_logic_core"
+        }
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredients": [
+        {
+          "item": "joc:unfinished_logic_core"
+        }
+      ],
+      "results": [
+        {
+          "id": "joc:unfinished_logic_core"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "joc:unfinished_logic_core"
+        },
+        {
+          "item": "create:transmitter"
+        }
+      ],
+      "results": [
+        {
+          "id": "joc:unfinished_logic_core"
+        }
+      ]
+    }
+  ],
+  "transitional_item": {
+    "id": "joc:unfinished_logic_core"
+  }
+}

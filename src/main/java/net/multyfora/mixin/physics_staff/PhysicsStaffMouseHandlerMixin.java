@@ -42,7 +42,7 @@ public class PhysicsStaffMouseHandlerMixin {
             return;
         }
 
-        if(client.player == null || !CreativeStaffCaptureHandler.isHoldingStaff(client.player)) {
+        if (client.player == null || !CreativeStaffCaptureHandler.isHoldingStaff(client.player)) {
             return;
         }
 

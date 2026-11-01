@@ -127,6 +127,10 @@ dependencies {
         localRuntime("dev.emi:emi-neoforge:${emi_version}")
     }
 
+    if (project.findProperty('enableCreateAddition') != 'false') {
+        localRuntime "maven.modrinth:createaddition:${createaddition_version}"
+    }
+
     compileOnly("xaero.minimap:xaerominimap-neoforge-${minecraft_version}:${xaeros_minimap_version}")
     if (project.findProperty('enableXaeros') != 'false') {
         localRuntime("xaero.minimap:xaerominimap-neoforge-${minecraft_version}:${xaeros_minimap_version}")

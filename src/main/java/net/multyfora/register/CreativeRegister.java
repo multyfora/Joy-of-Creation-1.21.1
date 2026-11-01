@@ -31,11 +31,15 @@ public class CreativeRegister {
                                             if (JocFeatures.isEnabled(stack)) rawOutput.accept(stack, visibility);
                                         };
                                         output.accept( JocItems.SEEKER.get() );
+                                        output.accept( JocItems.MAP_PIN.get() );
                                         output.accept( JocItems.SHATTER_ASSEMBLER.get() );
                                         output.accept( JocItems.GYROSCOPIC_SEAT.get() );
 
                                         output.accept( JocItems.PORTABLE_THROTTLE.get() );
                                         output.accept( JocItems.PORTABLE_TYPEWRITER.get() );
+
+                                        output.accept( JocItems.CHAIN_COUPLING.get() );
+                                        output.accept( JocItems.LOGIC_CORE.get() );
 
                                         output.accept( JocItems.DEFLATED_BALLOONS.get(DyeColor.RED).get() );
                                         for (DyeColor color : DyeColor.values()) {

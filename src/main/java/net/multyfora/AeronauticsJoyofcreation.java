@@ -35,8 +35,10 @@ import net.multyfora.client.portable_throttle.ThrottleVisualState;
 import dev.simulated_team.simulated.index.SimClickInteractions;
 import net.multyfora.index.JocItems;
 
+import net.multyfora.content.chain_rope.ChainRopeEnergyStorage;
 import net.multyfora.config.FeatureEnabledCondition;
 import net.multyfora.config.JocConfig;
+import net.multyfora.config.JocClientConfig;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
 import net.multyfora.register.JocTooltips;
 
@@ -64,6 +66,7 @@ public class AeronauticsJoyofcreation {
         JocBlocks.register();
         JocItems.register();
         JocMenuTypes.register();
+        modEventBus.addListener(ChainRopeEnergyStorage::registerCapabilities);
         JocSounds.register(modEventBus);
         JocDataComponents.register(modEventBus);
         JocRecipeTypes.RECIPE_TYPES.register(modEventBus);
@@ -78,6 +81,7 @@ public class AeronauticsJoyofcreation {
         ITEMS.register(modEventBus);
 
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, JocConfig.SPEC);
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, JocClientConfig.SPEC);
 
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::clientSetup);

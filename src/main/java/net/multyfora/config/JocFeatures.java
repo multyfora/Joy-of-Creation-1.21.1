@@ -22,6 +22,7 @@ public class JocFeatures {
     public static final String PORTABLE_TYPEWRITER = "portableTypewriter";
     public static final String SHEARS_CUTTING = "shearsCutting";
     public static final String MULTI_ROPE = "multiRope";
+    public static final String CHAIN_ROPE = "chainRope";
 
     private static Map<Item, String> itemFeatures;
     private static Map<Block, String> blockFeatures;
@@ -51,10 +52,12 @@ public class JocFeatures {
             putAll(map, JocItems.DEFLATED_BALLOONS.values(), DEFLATED_BALLOONS);
             putAll(map, JocBlocks.SYMMETRIC_CROSS_SAIL_ITEMS.values(), SYMMETRIC_CROSS_SAILS);
             map.put(JocItems.SEEKER.get(), SEEKER);
+            map.put(JocItems.MAP_PIN.get(), SEEKER);
             map.put(JocItems.SHATTER_ASSEMBLER.get(), SHATTER_ASSEMBLER);
             map.put(JocItems.GYROSCOPIC_SEAT.get(), GYROSCOPIC_SEAT);
             map.put(JocItems.PORTABLE_THROTTLE.get(), PORTABLE_THROTTLE);
             map.put(JocItems.PORTABLE_TYPEWRITER.get(), PORTABLE_TYPEWRITER);
+            map.put(JocItems.CHAIN_COUPLING.get(), CHAIN_ROPE);
             itemFeatures = map;
         }
         return itemFeatures;
@@ -66,6 +69,7 @@ public class JocFeatures {
             putAll(map, JocBlocks.BALLOONS.values(), BALLOONS);
             putAll(map, JocBlocks.SYMMETRIC_CROSS_SAILS.values(), SYMMETRIC_CROSS_SAILS);
             map.put(JocBlocks.SEEKER.get(), SEEKER);
+            map.put(JocBlocks.SEEKER_TABLE.get(), SEEKER);
             map.put(JocBlocks.SHATTER_ASSEMBLER.get(), SHATTER_ASSEMBLER);
             map.put(JocBlocks.GYROSCOPIC_SEAT.get(), GYROSCOPIC_SEAT);
             blockFeatures = map;

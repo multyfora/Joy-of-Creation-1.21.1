@@ -93,15 +93,26 @@ public class PayloadRegister {
             }
         ;
 
+        IPayloadHandler<SeekerPayloads.SetOffsetPayload> SetOffsetPayloader =
+            (payload, context) -> {
+                context.enqueueWork(
+                    () -> {
+                        if (!(context.player() instanceof ServerPlayer sp) || sp.isSpectator()) return;
+                        if (!sp.serverLevel().isLoaded(payload.pos())) return;
+                        if (sp.distanceToSqr(payload.pos().getX() + 0.5, payload.pos().getY() + 0.5, payload.pos().getZ() + 0.5) > 256.0) return;
+                        if (!Double.isFinite(payload.x()) || !Double.isFinite(payload.y()) || !Double.isFinite(payload.z())) return;
+                        if (context.player().level().getBlockEntity(payload.pos()) instanceof SeekerBlockEntity seekerBlockEntity) {
+                            seekerBlockEntity.setOffset(payload.x(), payload.y(), payload.z());
+                        }
+                    }
+                );
+            }
+        ;
+
         modEventBus.addListener(
             net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent.class,
             (event) -> {
                 var registrar = event.registrar("1.0.0");
-                registrar.playToClient(
-                    SeekerPayloads.OpenSeekerPayload.TYPE,
-                    SeekerPayloads.OpenSeekerPayload.CODEC,
-                    (payload, context) -> ClientPayloadHandlers.handleOpenSeeker(payload, context)
-                );
                 registrar.playToServer(
                     SeekerPayloads.UpdateSeekerPayload.TYPE,
                     SeekerPayloads.UpdateSeekerPayload.CODEC,
@@ -111,6 +122,11 @@ public class PayloadRegister {
                         SeekerPayloads.ToggleModePayload.TYPE,
                         SeekerPayloads.ToggleModePayload.CODEC,
                         ToggleModePayloader
+                );
+                registrar.playToServer(
+                    SeekerPayloads.SetOffsetPayload.TYPE,
+                    SeekerPayloads.SetOffsetPayload.CODEC,
+                    SetOffsetPayloader
                 );
                 registrar.playToServer(
                     SeekerPayloads.SetSpyglassTargetPayload.TYPE,
@@ -140,11 +156,6 @@ public class PayloadRegister {
                         );
                     }
                 ;
-                registrar.playToClient(
-                    SeekerDistancePayloads.OpenSeekerDistancePayload.TYPE,
-                    SeekerDistancePayloads.OpenSeekerDistancePayload.CODEC,
-                    (payload, context) -> ClientPayloadHandlers.handleOpenSeekerDistance(payload, context)
-                );
                 registrar.playToServer(
                     SeekerDistancePayloads.UpdateSeekerDistancePayload.TYPE,
                     SeekerDistancePayloads.UpdateSeekerDistancePayload.CODEC,

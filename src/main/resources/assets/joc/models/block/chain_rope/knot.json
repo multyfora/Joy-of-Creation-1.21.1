@@ -1,0 +1,10 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made by Hollow_Egg",
+	"parent": "minecraft:block/block",
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "joc:block/chain_rope",
+		"particle": "joc:block/chain_rope"
+	}
+}

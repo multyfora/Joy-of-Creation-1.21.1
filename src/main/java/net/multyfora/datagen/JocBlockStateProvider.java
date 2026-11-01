@@ -13,6 +13,7 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
 import net.multyfora.AeronauticsJoyofcreation;
 import net.multyfora.content.crosssail.SymmetricCrossSailBlock;
+import net.multyfora.content.gyroseat.GyroscopicSeatBlock;
 import net.multyfora.content.shatter_assembler.ShatterAssemblerBlock;
 import net.multyfora.index.JocBlocks;
 
@@ -63,12 +64,16 @@ public class JocBlockStateProvider extends BlockStateProvider {
     }
 
     private void registerGyroscopicSeat() {
-        ModelFile model = models()
-                .getBuilder("block/gyroscopic_seat")
-                .parent(new ModelFile.UncheckedModelFile(
-                        ResourceLocation.fromNamespaceAndPath("create", "block/gray_seat")));
+        ModelFile frame = models().getExistingFile(modLoc("block/gyroscopic_seat/frame"));
+        ModelFile part = models()
+                .getBuilder("block/gyroscopic_seat/part")
+                .texture("particle", modLoc("block/gyroscopic_seat"));
 
-        simpleBlock(JocBlocks.GYROSCOPIC_SEAT.get(), model);
+        getVariantBuilder(JocBlocks.GYROSCOPIC_SEAT.get()).forAllStatesExcept(state ->
+                ConfiguredModel.builder()
+                        .modelFile(state.getValue(GyroscopicSeatBlock.PART) == 0 ? frame : part)
+                        .build(),
+                GyroscopicSeatBlock.WATERLOGGED);
     }
 
     private void registerSymmetricCrossSail(SymmetricCrossSailBlock block, DyeColor color) {
